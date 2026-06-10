@@ -62,6 +62,15 @@ Konsultantai, Renginiai), `city`, `risk` (credit risk, Lithuanian labels:
 5. Footer must keep: "Created by **Adomas** on behalf of **Fabula** · © 2026 Fabula
    ir partneriai, UAB. All rights reserved."
 
+## ⚠️ Parallel sessions warning
+
+Multiple AI sessions have worked on this repo simultaneously and once produced two
+diverged `main` histories (one overwrote the other's template features). Before any
+work: `git fetch origin main` and rebase/merge. **Never resolve a template.html
+conflict by taking one side wholesale** — check both sides feature-by-feature
+(version badge, SP history modal, My-company section, turnover/revenue split,
+Data Explorer view) and keep all of them.
+
 ## Environment notes
 
 - `rekvizitai.vz.lt` is **blocked** by the sandbox network allowlist (WebFetch and
@@ -83,6 +92,8 @@ Konsultantai, Renginiai), `city`, `risk` (credit risk, Lithuanian labels:
 | v0.1.2.0 | 4 | (Lithuanian) Reorder top KPIs: Market turnover, Turnover CAGR, then Market revenue = spėjamos pajamos, Revenue CAGR; profit % from revenue not turnover ("margin from revenue") + YoY. Market overview: revenue primary but show turnover too. Doughnut, segment trend, rankings (add), growth leaders, size-vs-profitability (and net profit), revenue-per-employee, explorer (add) → all to spėjamos pajamos. Footer: created by Adomas on behalf of Fabula, copyright. | Turnover/revenue split across every chart; thresholds and tooltips recalibrated; explorer got both columns; My-company section aligned; footer credit added. |
 | v0.1.2.1 | 1 | "Save the info about this project and my prompts in an md file so other AIs can read it." | This file + CLAUDE.md pointer. |
 | v0.1.2.2 | 0.5 | "Merge changes with main always." | Standing instruction #4 made explicit: all work lands in `main` immediately. |
+| — | 3 | (Parallel AI session) Data explorer page from all Excel sheets, merged into single-page app. | Top-nav SPA: Dashboard + Data Explorer views; `sheets_data.json` (5 sheets) embedded via `__SHEETS_DATA__`; search/sort/pagination/CSV export. **But it overwrote all features from the other session's template.** |
+| v0.1.3.0 | 4 | "Two AIs both saying the index is from main and both are different." | Real merge of the two diverged mains: full-featured template kept as base, Data Explorer SPA ported into it (top-nav, dataView, explorer JS). Everything from both lines now coexists. |
 
 ## Open / deferred items
 
