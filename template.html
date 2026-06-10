@@ -80,7 +80,7 @@
 <body>
 <div class="wrap">
   <header>
-    <h1>🇱🇹 Lithuanian Communication & Marketing Agencies <span class="version">v0.1.1.0</span> <button class="hist-btn" id="histBtn">📋 SP history</button></h1>
+    <h1>🇱🇹 Lithuanian Communication & Marketing Agencies <span class="version">v0.1.2.0</span> <button class="hist-btn" id="histBtn">📋 SP history</button></h1>
     <p>Competitor landscape dashboard · 113 brands · Financials 2019–2024 (revenue, profit, headcount, salaries) · Source: rekvizitai.vz.lt data export</p>
   </header>
 
@@ -109,18 +109,18 @@
   <h2 class="section">Market overview</h2>
   <div class="grid">
     <div class="card full">
-      <h2>Total market: revenue, profit & headcount (2019–2024)</h2>
-      <div class="desc">Sum across all 113 tracked companies. Bars = revenue, lines = total net profit and total employees.</div>
+      <h2>Total market: revenue (spėjamos pajamos), turnover, profit & headcount (2019–2024)</h2>
+      <div class="desc">Sum across all 113 tracked companies. Blue bars = revenue (spėjamos pajamos), grey bars = turnover (apyvarta), lines = total net profit and total employees.</div>
       <div class="chartbox"><canvas id="chMarket"></canvas></div>
     </div>
     <div class="card">
-      <h2>2024 revenue by service segment</h2>
-      <div class="desc">Companies may belong to multiple segments; revenue is attributed to each segment they operate in.</div>
+      <h2>2024 revenue (spėjamos pajamos) by service segment</h2>
+      <div class="desc">Companies may belong to multiple segments; revenue (spėjamos pajamos) is attributed to each segment they operate in.</div>
       <div class="chartbox"><canvas id="chSegments"></canvas></div>
     </div>
     <div class="card">
-      <h2>Segment revenue trend</h2>
-      <div class="desc">Total segment revenue per year — who is gaining share of the market.</div>
+      <h2>Segment revenue trend (spėjamos pajamos)</h2>
+      <div class="desc">Total segment revenue (spėjamos pajamos) per year — who is gaining share of the market.</div>
       <div class="chartbox"><canvas id="chSegTrend"></canvas></div>
     </div>
   </div>
@@ -131,7 +131,8 @@
       <h2>Top 20 companies</h2>
       <div class="controls">
         <select id="rankMetric">
-          <option value="revenue">Revenue (€)</option>
+          <option value="estimatedIncome">Revenue – spėjamos pajamos (€)</option>
+          <option value="revenue">Turnover – apyvarta (€)</option>
           <option value="profit">Net profit (€)</option>
           <option value="employees">Employees</option>
           <option value="avgSalary">Avg. salary (€/mo)</option>
@@ -143,13 +144,13 @@
       <div class="chartbox tall"><canvas id="chTop"></canvas></div>
     </div>
     <div class="card">
-      <h2>Growth leaders & laggards (revenue 2021 → 2024)</h2>
-      <div class="desc">Companies with ≥ €300k revenue in 2024 and ≥ €50k in 2021. Top 8 growers vs bottom 8 decliners.</div>
+      <h2>Growth leaders & laggards (revenue – spėjamos pajamos, 2021 → 2024)</h2>
+      <div class="desc">Companies with ≥ €150k revenue (spėjamos pajamos) in 2024 and ≥ €30k in 2021. Top 8 growers vs bottom 8 decliners.</div>
       <div class="chartbox tall"><canvas id="chGrowth"></canvas></div>
     </div>
     <div class="card">
       <h2>Size vs profitability (2024)</h2>
-      <div class="desc">X = revenue (log scale), Y = net margin %, bubble size = employees. Healthy zone is up & right.</div>
+      <div class="desc">X = revenue (spėjamos pajamos, log scale), Y = net profit margin % from revenue, bubble size = employees. Healthy zone is up & right.</div>
       <div class="chartbox tall"><canvas id="chScatter"></canvas></div>
     </div>
   </div>
@@ -162,8 +163,8 @@
       <div class="chartbox"><canvas id="chSalary"></canvas></div>
     </div>
     <div class="card">
-      <h2>Revenue per employee by segment (2024)</h2>
-      <div class="desc">Median revenue per employee across companies in each segment — a productivity proxy. Media agencies pass through ad spend, inflating the number.</div>
+      <h2>Revenue (spėjamos pajamos) per employee by segment (2024)</h2>
+      <div class="desc">Median revenue (spėjamos pajamos) per employee across companies in each segment — a productivity proxy. Pass-through ad spend is already excluded.</div>
       <div class="chartbox"><canvas id="chRevPerEmp"></canvas></div>
     </div>
   </div>
@@ -181,7 +182,8 @@
           <th data-k="brand">Brand</th>
           <th data-k="segs">Segments</th>
           <th data-k="city">City</th>
-          <th data-k="rev24">Revenue 2024</th>
+          <th data-k="ei24">Revenue 2024 (spėj. pajamos)</th>
+          <th data-k="rev24">Turnover 2024</th>
           <th data-k="growth">Δ Rev 21→24</th>
           <th data-k="profit24">Profit 2024</th>
           <th data-k="margin">Margin</th>
@@ -194,7 +196,8 @@
     </div>
   </div>
 
-  <footer>Built from Komunikacija-konsultacija-konkurentai.xlsx · figures in EUR · profit = net profit (grynasis pelnas) · generated 2026-06</footer>
+  <footer>Built from Komunikacija-konsultacija-konkurentai.xlsx · figures in EUR · profit = net profit (grynasis pelnas) · revenue = spėjamos pajamos, turnover = apyvarta · generated 2026-06<br>
+  Created by <b>Adomas</b> on behalf of <b>Fabula</b> · © 2026 Fabula ir partneriai, UAB. All rights reserved.</footer>
 </div>
 
 <div class="modal-overlay" id="histModal">
@@ -252,18 +255,20 @@ function rankOf(metricFn){
   return {pos, total:sorted.length, pct, val:mineVal};
 }
 const mRev = rankOf(d=>d.revenue);
+const mEI = rankOf(d=>d.estimatedIncome);
 const mProfit = rankOf(d=>d.profit);
 const mEmp = rankOf(d=>d.employees);
 const mSal = rankOf(d=>d.avgSalary>500?d.avgSalary:null);
-const mMargin = rankOf(d=>(d.revenue>50000 && d.profit!=null)? d.profit/d.revenue*100 : null);
+const mMargin = rankOf(d=>(d.estimatedIncome>50000 && d.profit!=null)? d.profit/d.estimatedIncome*100 : null);
 const mCagr = (m24.revenue && mFirst.revenue)? Math.pow(m24.revenue/mFirst.revenue, 1/(LAST-mineYears[0]))-1 : null;
 
 document.getElementById('mineNote').innerHTML =
   `The company at <b>rekvizitai.vz.lt/imone/viesuju_rysiu_partneriai</b> — <b>Viešųjų ryšių partneriai (VRP)</b>, company code <b>124099127</b>, founded 1997 — now trades as <b>Fabula ir partneriai, UAB</b> and is already tracked here. The panels below pull out its figures and rank it against all ${BRANDS.length} competitors.`;
 
 const mineKpiCards = [
-  {label:'Revenue '+LAST, value:fmtEur(m24.revenue), sub:(m23.revenue?fmtPct(m24.revenue/m23.revenue-1)+' YoY · ':'')+(mRev?`<span class="rank">#${mRev.pos} of ${mRev.total}</span>`:''), cls:m24.revenue>=m23.revenue?'pos':'neg'},
-  {label:'Net profit '+LAST, value:fmtEur(m24.profit), sub:(m24.revenue?(m24.profit/m24.revenue*100).toFixed(1)+'% margin · ':'')+(mProfit?`<span class="rank">#${mProfit.pos}</span>`:''), cls:m24.profit>=0?'pos':'neg'},
+  {label:'Turnover '+LAST, value:fmtEur(m24.revenue), sub:(m23.revenue?fmtPct(m24.revenue/m23.revenue-1)+' YoY · ':'')+(mRev?`<span class="rank">#${mRev.pos} of ${mRev.total}</span>`:''), cls:m24.revenue>=m23.revenue?'pos':'neg'},
+  {label:'Revenue '+LAST+' (spėj. pajamos)', value:fmtEur(m24.estimatedIncome), sub:(m23.estimatedIncome?fmtPct(m24.estimatedIncome/m23.estimatedIncome-1)+' YoY · ':'')+(mEI?`<span class="rank">#${mEI.pos} of ${mEI.total}</span>`:''), cls:m24.estimatedIncome>=m23.estimatedIncome?'pos':'neg'},
+  {label:'Net profit '+LAST, value:fmtEur(m24.profit), sub:(m24.estimatedIncome?(m24.profit/m24.estimatedIncome*100).toFixed(1)+'% margin from revenue · ':'')+(mProfit?`<span class="rank">#${mProfit.pos}</span>`:''), cls:m24.profit>=0?'pos':'neg'},
   {label:'Employees '+LAST, value:m24.employees!=null?Math.round(m24.employees):'–', sub:(m23.employees?fmtPct(m24.employees/m23.employees-1)+' YoY · ':'')+(mEmp?`<span class="rank">#${mEmp.pos}</span>`:''), cls:m24.employees>=m23.employees?'pos':'neg'},
   {label:'Avg salary '+LAST, value:m24.avgSalary?'€'+Math.round(m24.avgSalary).toLocaleString()+'/mo':'–', sub:(m23.avgSalary?fmtPct(m24.avgSalary/m23.avgSalary-1)+' YoY · ':'')+(mSal?`<span class="rank">#${mSal.pos}</span>`:''), cls:'pos'},
   {label:'Revenue CAGR 19–24', value:fmtPct(mCagr), sub:'€'+fmtM(mFirst.revenue)+' → €'+fmtM(m24.revenue), cls:mCagr>=0?'pos':'neg'},
@@ -275,7 +280,8 @@ document.getElementById('mineKpis').innerHTML = mineKpiCards.map(k=>
 new Chart(chMine, {data:{
   labels: mineYears,
   datasets:[
-    {type:'bar', label:'Revenue (€M)', data:mineYears.map(y=>(mine[y].revenue||0)/1e6), backgroundColor:'rgba(244,197,66,.55)', borderColor:'#f4c542', borderWidth:1, borderRadius:6, yAxisID:'y'},
+    {type:'bar', label:'Revenue – spėj. pajamos (€M)', data:mineYears.map(y=>(mine[y].estimatedIncome||0)/1e6), backgroundColor:'rgba(244,197,66,.75)', borderColor:'#f4c542', borderWidth:1, borderRadius:6, yAxisID:'y'},
+    {type:'bar', label:'Turnover – apyvarta (€M)', data:mineYears.map(y=>(mine[y].revenue||0)/1e6), backgroundColor:'rgba(139,147,167,.35)', borderRadius:6, yAxisID:'y'},
     {type:'line', label:'Net profit (€k)', data:mineYears.map(y=>(mine[y].profit||0)/1e3), borderColor:'#34c98e', backgroundColor:'#34c98e', tension:.3, yAxisID:'y2'},
     {type:'line', label:'Employees', data:mineYears.map(y=>mine[y].employees||0), borderColor:'#4f8ef7', backgroundColor:'#4f8ef7', borderDash:[6,4], tension:.3, yAxisID:'y2'},
   ]},
@@ -286,7 +292,7 @@ new Chart(chMine, {data:{
 });
 
 const rankData = [
-  {label:'Revenue', r:mRev}, {label:'Net profit', r:mProfit}, {label:'Profit margin', r:mMargin},
+  {label:'Revenue (spėj. pajamos)', r:mEI}, {label:'Turnover', r:mRev}, {label:'Net profit', r:mProfit}, {label:'Profit margin', r:mMargin},
   {label:'Employees', r:mEmp}, {label:'Avg salary', r:mSal},
 ].filter(x=>x.r);
 new Chart(chMineRank, {type:'bar', data:{
@@ -299,20 +305,23 @@ new Chart(chMineRank, {type:'bar', data:{
 
 // ---------- KPIs ----------
 function yearTotals(y){
-  let rev=0, profit=0, emp=0;
-  DATA.forEach(d=>{ if(d.year===y){ rev+=d.revenue||0; profit+=d.profit||0; emp+=d.employees||0; }});
-  return {rev, profit, emp};
+  let rev=0, profit=0, emp=0, ei=0;
+  DATA.forEach(d=>{ if(d.year===y){ rev+=d.revenue||0; profit+=d.profit||0; emp+=d.employees||0; ei+=d.estimatedIncome||0; }});
+  return {rev, profit, emp, ei};
 }
 const t24 = yearTotals(LAST), t23 = yearTotals(LAST-1), t19 = yearTotals(YEARS[0]);
 const cagr = Math.pow(t24.rev/t19.rev, 1/(LAST-YEARS[0]))-1;
+const cagrEI = Math.pow(t24.ei/t19.ei, 1/(LAST-YEARS[0]))-1;
 function medianSalary(y){
   const s = DATA.filter(d=>d.year===y && d.avgSalary>500).map(d=>d.avgSalary).sort((a,b)=>a-b);
   return s[Math.floor(s.length/2)];
 }
 const kpis = [
-  {label:'Market revenue '+LAST, value:'€'+fmtM(t24.rev), sub:fmtPct(t24.rev/t23.rev-1)+' YoY', cls:t24.rev>=t23.rev?'pos':'neg'},
-  {label:'Revenue CAGR 19–24', value:fmtPct(cagr), sub:'€'+fmtM(t19.rev)+' → €'+fmtM(t24.rev), cls:'pos'},
-  {label:'Net profit '+LAST, value:'€'+fmtM(t24.profit), sub:(t24.profit/t24.rev*100).toFixed(1)+'% market margin', cls:''},
+  {label:'Market turnover '+LAST, value:'€'+fmtM(t24.rev), sub:fmtPct(t24.rev/t23.rev-1)+' YoY', cls:t24.rev>=t23.rev?'pos':'neg'},
+  {label:'Turnover CAGR 19–24', value:fmtPct(cagr), sub:'€'+fmtM(t19.rev)+' → €'+fmtM(t24.rev), cls:'pos'},
+  {label:'Market revenue '+LAST+' (spėjamos pajamos)', value:'€'+fmtM(t24.ei), sub:fmtPct(t24.ei/t23.ei-1)+' YoY', cls:t24.ei>=t23.ei?'pos':'neg'},
+  {label:'Revenue CAGR 19–24', value:fmtPct(cagrEI), sub:'€'+fmtM(t19.ei)+' → €'+fmtM(t24.ei), cls:cagrEI>=0?'pos':'neg'},
+  {label:'Net profit '+LAST, value:'€'+fmtM(t24.profit), sub:(t24.profit/t24.ei*100).toFixed(1)+'% margin from revenue · '+fmtPct(t24.profit/t23.profit-1)+' YoY', cls:t24.profit>=t23.profit?'pos':'neg'},
   {label:'Total employees '+LAST, value:Math.round(t24.emp).toLocaleString(), sub:fmtPct(t24.emp/t23.emp-1)+' YoY', cls:t24.emp>=t23.emp?'pos':'neg'},
   {label:'Median salary '+LAST, value:'€'+medianSalary(LAST).toLocaleString()+'/mo', sub:fmtPct(medianSalary(LAST)/medianSalary(YEARS[0])-1)+' vs '+YEARS[0], cls:'pos'},
   {label:'Companies tracked', value:BRANDS.length, sub:SEGMENTS.length+' service segments', cls:''},
@@ -336,12 +345,13 @@ document.getElementById('insights').innerHTML = insights.map(i=>
 new Chart(chMarket, {data:{
   labels: YEARS,
   datasets:[
-    {type:'bar', label:'Revenue (€M)', data:YEARS.map(y=>yearTotals(y).rev/1e6), backgroundColor:'rgba(79,142,247,.55)', borderRadius:6, yAxisID:'y'},
+    {type:'bar', label:'Revenue – spėjamos pajamos (€M)', data:YEARS.map(y=>yearTotals(y).ei/1e6), backgroundColor:'rgba(79,142,247,.75)', borderRadius:6, yAxisID:'y'},
+    {type:'bar', label:'Turnover – apyvarta (€M)', data:YEARS.map(y=>yearTotals(y).rev/1e6), backgroundColor:'rgba(139,147,167,.35)', borderRadius:6, yAxisID:'y'},
     {type:'line', label:'Net profit (€M)', data:YEARS.map(y=>yearTotals(y).profit/1e6), borderColor:'#34c98e', backgroundColor:'#34c98e', tension:.3, yAxisID:'y2'},
     {type:'line', label:'Employees (×100)', data:YEARS.map(y=>yearTotals(y).emp/100), borderColor:'#f0b04f', backgroundColor:'#f0b04f', borderDash:[6,4], tension:.3, yAxisID:'y2'},
   ]},
   options:{maintainAspectRatio:false, scales:{
-    y:{title:{display:true,text:'Revenue €M'}, grid:{color:'#222a3a'}},
+    y:{title:{display:true,text:'Revenue / Turnover €M'}, grid:{color:'#222a3a'}},
     y2:{position:'right', grid:{drawOnChartArea:false}, title:{display:true,text:'Profit €M / Employees ×100'}}
   }}
 });
@@ -349,7 +359,7 @@ new Chart(chMarket, {data:{
 // ---------- Segments doughnut ----------
 function segTotals(y){
   const s={};
-  DATA.forEach(d=>{ if(d.year===y && d.revenue) d.activities.forEach(a=>s[a]=(s[a]||0)+d.revenue); });
+  DATA.forEach(d=>{ if(d.year===y && d.estimatedIncome) d.activities.forEach(a=>s[a]=(s[a]||0)+d.estimatedIncome); });
   return s;
 }
 const seg24 = segTotals(LAST);
@@ -380,10 +390,10 @@ let chTopObj;
 function drawTop(){
   const metric = rankMetric.value, year = +rankYear.value, seg = rankSegment.value;
   let rows = DATA.filter(d=>d.year===year && (!seg || d.activities.includes(seg)));
-  rows = rows.map(d=>({brand:d.brand, val: metric==='margin' ? (d.revenue>100000 && d.profit!=null ? d.profit/d.revenue*100 : null) : d[metric]}))
+  rows = rows.map(d=>({brand:d.brand, val: metric==='margin' ? (d.estimatedIncome>50000 && d.profit!=null ? d.profit/d.estimatedIncome*100 : null) : d[metric]}))
              .filter(r=>r.val!=null && r.val!==0)
              .sort((a,b)=>b.val-a.val).slice(0,20);
-  const isEur = ['revenue','profit'].includes(metric);
+  const isEur = ['revenue','profit','estimatedIncome'].includes(metric);
   if(chTopObj) chTopObj.destroy();
   chTopObj = new Chart(chTop, {type:'bar', data:{
     labels:rows.map(r=>r.brand),
@@ -399,8 +409,8 @@ drawTop();
 // ---------- Growth leaders ----------
 const growthRows = BRANDS.map(b=>{
   const d21=byBrand[b][2021], d24=byBrand[b][LAST];
-  if(!d21||!d24||!d21.revenue||!d24.revenue||d21.revenue<50000||d24.revenue<300000) return null;
-  return {brand:b, g:(d24.revenue/d21.revenue-1)*100, rev:d24.revenue};
+  if(!d21||!d24||!d21.estimatedIncome||!d24.estimatedIncome||d21.estimatedIncome<30000||d24.estimatedIncome<150000) return null;
+  return {brand:b, g:(d24.estimatedIncome/d21.estimatedIncome-1)*100, rev:d24.estimatedIncome};
 }).filter(Boolean).sort((a,b)=>b.g-a.g);
 const gShow = [...growthRows.slice(0,8), ...growthRows.slice(-8)];
 new Chart(chGrowth, {type:'bar', data:{
@@ -408,12 +418,12 @@ new Chart(chGrowth, {type:'bar', data:{
   datasets:[{data:gShow.map(r=>r.g), backgroundColor:gShow.map(r=>r.g>=0?'rgba(52,201,142,.75)':'rgba(240,106,106,.75)'), borderRadius:5}]},
   options:{indexAxis:'y', maintainAspectRatio:false, plugins:{legend:{display:false},
     tooltip:{callbacks:{label:c=>{const r=gShow[c.dataIndex]; return ` ${c.parsed.x.toFixed(0)}% · 2024 rev €${fmtM(r.rev)}`}}}},
-    scales:{x:{title:{display:true,text:'Revenue change 2021→2024, %'}, grid:{color:'#222a3a'}}}}
+    scales:{x:{title:{display:true,text:'Revenue (spėjamos pajamos) change 2021→2024, %'}, grid:{color:'#222a3a'}}}}
 });
 
 // ---------- Scatter ----------
-const scatterRows = DATA.filter(d=>d.year===LAST && d.revenue>100000 && d.profit!=null && d.employees>0)
-  .map(d=>({x:d.revenue, y:d.profit/d.revenue*100, r:Math.max(4,Math.sqrt(d.employees)*2.2), brand:d.brand, emp:d.employees,
+const scatterRows = DATA.filter(d=>d.year===LAST && d.estimatedIncome>50000 && d.profit!=null && d.employees>0)
+  .map(d=>({x:d.estimatedIncome, y:d.profit/d.estimatedIncome*100, r:Math.max(4,Math.sqrt(d.employees)*2.2), brand:d.brand, emp:d.employees,
             seg:d.activities[0]||'Other'}));
 new Chart(chScatter, {type:'bubble', data:{
   datasets: topSegs.concat(['Other']).map(s=>({
@@ -428,9 +438,9 @@ new Chart(chScatter, {type:'bubble', data:{
   options:{maintainAspectRatio:false,
     plugins:{tooltip:{callbacks:{label:c=>{const p=c.raw; return ` ${p.brand}: €${fmtM(p.x)} rev, ${p.y.toFixed(1)}% margin, ${p.emp} empl.`}}}},
     scales:{
-      x:{type:'logarithmic', title:{display:true,text:'Revenue 2024 (€, log)'}, grid:{color:'#222a3a'},
-         ticks:{callback:v=>[1e5,3e5,1e6,3e6,1e7,3e7].includes(v)?'€'+fmtM(v):''}},
-      y:{title:{display:true,text:'Net margin %'}, grid:{color:'#222a3a'}, suggestedMin:-30, suggestedMax:45}
+      x:{type:'logarithmic', title:{display:true,text:'Revenue 2024 (spėjamos pajamos, €, log)'}, grid:{color:'#222a3a'},
+         ticks:{callback:v=>[5e4,1e5,3e5,1e6,3e6,1e7].includes(v)?'€'+fmtM(v):''}},
+      y:{title:{display:true,text:'Net profit margin % (from revenue)'}, grid:{color:'#222a3a'}, suggestedMin:-30, suggestedMax:45}
     }}
 });
 
@@ -453,8 +463,8 @@ new Chart(chSalary, {type:'line', data:{
 
 // ---------- Revenue per employee ----------
 const rpe = SEGMENTS.map(s=>{
-  const vals = DATA.filter(d=>d.year===LAST && d.activities.includes(s) && d.revenue>0 && d.employees>2)
-                   .map(d=>d.revenue/d.employees).sort((a,b)=>a-b);
+  const vals = DATA.filter(d=>d.year===LAST && d.activities.includes(s) && d.estimatedIncome>0 && d.employees>2)
+                   .map(d=>d.estimatedIncome/d.employees).sort((a,b)=>a-b);
   return {seg:s, med: vals.length? vals[Math.floor(vals.length/2)] : 0, n:vals.length};
 }).filter(r=>r.n>=3).sort((a,b)=>b.med-a.med);
 new Chart(chRevPerEmp, {type:'bar', data:{
@@ -475,12 +485,13 @@ const tblRows = BRANDS.map(b=>{
   return {
     brand:b, segs:(d24.activities||first.activities||[]),
     city:d24.city||first.city||'', risk:d24.risk||first.risk||'',
-    rev24:d24.revenue, growth:(d21.revenue>10000 && d24.revenue)? d24.revenue/d21.revenue-1 : null,
-    profit24:d24.profit, margin:(d24.revenue>50000 && d24.profit!=null)? d24.profit/d24.revenue : null,
+    ei24:d24.estimatedIncome, rev24:d24.revenue,
+    growth:(d21.estimatedIncome>10000 && d24.estimatedIncome)? d24.estimatedIncome/d21.estimatedIncome-1 : null,
+    profit24:d24.profit, margin:(d24.estimatedIncome>50000 && d24.profit!=null)? d24.profit/d24.estimatedIncome : null,
     emp24:d24.employees, sal24:(d24.avgSalary>500)? d24.avgSalary : null,
   };
 });
-let sortK='rev24', sortDir=-1;
+let sortK='ei24', sortDir=-1;
 function riskCls(r){ return /Žemiausia|Žema/.test(r)?'risk-low':/Vidutinė/.test(r)?'risk-mid':r?'risk-high':''; }
 function renderTable(){
   const q = search.value.toLowerCase(), seg = tblSegment.value, city = tblCity.value;
@@ -496,6 +507,7 @@ function renderTable(){
     <td><b>${r.brand}${r.brand===MY_BRAND?' ⭐':''}</b></td>
     <td>${r.segs.map(s=>`<span class="tag">${s}</span>`).join('')}</td>
     <td>${r.city}</td>
+    <td>${fmtEur(r.ei24)}</td>
     <td>${fmtEur(r.rev24)}</td>
     <td class="${r.growth>0?'pos':r.growth<0?'neg':''}">${fmtPct(r.growth)}</td>
     <td class="${r.profit24>0?'pos':r.profit24<0?'neg':''}">${fmtEur(r.profit24)}</td>
@@ -513,6 +525,7 @@ renderTable();
 
 // ---------- SP & version history ----------
 const VERSIONS = [
+  {v:'v0.1.2.0', date:'2026-06-10', sp:4,   desc:'Turnover vs revenue (spėjamos pajamos) split across the whole dashboard: reordered KPI strip (turnover, turnover CAGR, revenue, revenue CAGR, profit margin from revenue + YoY), market chart shows both, segments/rankings/growth/scatter/rev-per-employee/explorer switched or extended to spėjamos pajamos, footer credit added. Touched every chart — each threshold and tooltip had to be re-checked.'},
   {v:'v0.1.1.0', date:'2026-06-10', sp:3,   desc:'SP &amp; version history: this button + history overlay, with the version log embedded.'},
   {v:'v0.1.0.0', date:'2026-06-10', sp:0.5, desc:'Version badge added to the header.'},
   {v:'v0.0.1.0', date:'2026-06-10', sp:5,   desc:'“My company” section — researched the VRP→Fabula rebrand (live scraping was blocked, resolved via web search + shared company code 124099127), added KPI cards with market rank, a 2019–2024 trend chart, a percentile-vs-market chart, gold highlight in the scatter plot and a pinned row in the explorer.'},
