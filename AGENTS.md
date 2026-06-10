@@ -57,7 +57,8 @@ Konsultantai, Renginiai), `city`, `risk` (credit risk, Lithuanian labels:
    high). Logged in the `VERSIONS` array inside `template.html`, displayed via the
    "📋 SP history" button/modal in the dashboard.
 3. **Always send the rebuilt `index.html` to the user after every change.**
-4. Commit and push every change to branch **`main`**.
+4. **Every change must end up in `main`** — commit directly to `main` (or merge your
+   working branch into `main` immediately). Never leave work stranded on a side branch.
 5. Footer must keep: "Created by **Adomas** on behalf of **Fabula** · © 2026 Fabula
    ir partneriai, UAB. All rights reserved."
 
@@ -81,6 +82,7 @@ Konsultantai, Renginiai), `city`, `risk` (credit risk, Lithuanian labels:
 | v0.1.1.0 | 3 | "Evaluate each update with SP (0.5–10, effort-based, not LOC). Create a button to see SP/version history." | SP evaluation done retroactively; "📋 SP history" button + modal with `VERSIONS` log. |
 | v0.1.2.0 | 4 | (Lithuanian) Reorder top KPIs: Market turnover, Turnover CAGR, then Market revenue = spėjamos pajamos, Revenue CAGR; profit % from revenue not turnover ("margin from revenue") + YoY. Market overview: revenue primary but show turnover too. Doughnut, segment trend, rankings (add), growth leaders, size-vs-profitability (and net profit), revenue-per-employee, explorer (add) → all to spėjamos pajamos. Footer: created by Adomas on behalf of Fabula, copyright. | Turnover/revenue split across every chart; thresholds and tooltips recalibrated; explorer got both columns; My-company section aligned; footer credit added. |
 | v0.1.2.1 | 1 | "Save the info about this project and my prompts in an md file so other AIs can read it." | This file + CLAUDE.md pointer. |
+| v0.1.2.2 | 0.5 | "Merge changes with main always." | Standing instruction #4 made explicit: all work lands in `main` immediately. |
 
 ## Open / deferred items
 
