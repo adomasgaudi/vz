@@ -17,6 +17,20 @@
   header{margin-bottom:24px}
   header h1{font-size:26px;font-weight:700}
   header h1 .version{font-size:13px;font-weight:600;color:var(--muted);background:var(--panel2);border:1px solid var(--border);border-radius:20px;padding:2px 10px;vertical-align:middle;margin-left:8px}
+  header h1 .hist-btn{font-size:12px;font-weight:600;color:var(--accent);background:var(--panel2);border:1px solid var(--border);border-radius:20px;padding:3px 11px;vertical-align:middle;margin-left:4px;cursor:pointer;font-family:inherit}
+  header h1 .hist-btn:hover{border-color:var(--accent);color:var(--text)}
+  .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.65);display:none;align-items:flex-start;justify-content:center;padding:40px 20px;z-index:50;overflow:auto}
+  .modal-overlay.open{display:flex}
+  .modal{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:24px;max-width:840px;width:100%}
+  .modal-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+  .modal-head h2{font-size:20px;font-weight:700}
+  .modal-close{background:var(--panel2);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:5px 12px;cursor:pointer;font-size:13px;font-family:inherit}
+  .modal-close:hover{border-color:var(--red);color:var(--red)}
+  .sp-total{font-size:14px;color:var(--muted);margin-bottom:12px}
+  .sp-total b{color:var(--gold);font-size:24px;font-weight:700}
+  .modal table th,.modal table td{white-space:normal;text-align:left;vertical-align:top}
+  .modal .vcol{font-weight:600;color:var(--text);white-space:nowrap}
+  .sp-badge{display:inline-block;min-width:34px;text-align:center;background:rgba(244,197,66,.15);border:1px solid var(--gold);color:var(--gold);border-radius:20px;padding:1px 8px;font-weight:700;font-size:12px}
   header p{color:var(--muted);font-size:14px;margin-top:4px}
   .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:14px;margin-bottom:24px}
   .kpi{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:16px}
@@ -66,7 +80,7 @@
 <body>
 <div class="wrap">
   <header>
-    <h1>🇱🇹 Lithuanian Communication & Marketing Agencies <span class="version">v0.1.0.0</span></h1>
+    <h1>🇱🇹 Lithuanian Communication & Marketing Agencies <span class="version">v0.1.1.0</span> <button class="hist-btn" id="histBtn">📋 SP history</button></h1>
     <p>Competitor landscape dashboard · 113 brands · Financials 2019–2024 (revenue, profit, headcount, salaries) · Source: rekvizitai.vz.lt data export</p>
   </header>
 
@@ -181,6 +195,21 @@
   </div>
 
   <footer>Built from Komunikacija-konsultacija-konkurentai.xlsx · figures in EUR · profit = net profit (grynasis pelnas) · generated 2026-06</footer>
+</div>
+
+<div class="modal-overlay" id="histModal">
+  <div class="modal">
+    <div class="modal-head">
+      <h2>📋 SP &amp; version history</h2>
+      <button class="modal-close" id="histClose">✕ Close</button>
+    </div>
+    <div class="sp-total">Total effort logged: <b id="spTotal">0</b> SP &nbsp;·&nbsp; <span id="verCount">0</span> versions</div>
+    <p class="desc" style="margin-bottom:14px;font-size:12.5px">Story points reflect <b style="color:var(--text)">effort &amp; time</b>, not lines of code (0.5 = trivial patch · 10 = deep change in convoluted code). A big template dump scores low; a small edit threading many connections scores high.</p>
+    <table>
+      <thead><tr><th>Version</th><th>Date</th><th>SP</th><th>Change</th></tr></thead>
+      <tbody id="histBody"></tbody>
+    </table>
+  </div>
 </div>
 
 <script>
@@ -481,6 +510,24 @@ document.querySelectorAll('#tbl th').forEach(th=>th.addEventListener('click',()=
 }));
 [search, tblSegment, tblCity].forEach(el=>el.addEventListener('input', renderTable));
 renderTable();
+
+// ---------- SP & version history ----------
+const VERSIONS = [
+  {v:'v0.1.1.0', date:'2026-06-10', sp:3,   desc:'SP &amp; version history: this button + history overlay, with the version log embedded.'},
+  {v:'v0.1.0.0', date:'2026-06-10', sp:0.5, desc:'Version badge added to the header.'},
+  {v:'v0.0.1.0', date:'2026-06-10', sp:5,   desc:'“My company” section — researched the VRP→Fabula rebrand (live scraping was blocked, resolved via web search + shared company code 124099127), added KPI cards with market rank, a 2019–2024 trend chart, a percentile-vs-market chart, gold highlight in the scatter plot and a pinned row in the explorer.'},
+  {v:'v0.0.0.0', date:'2026-06-10', sp:5,   desc:'Initial competitor dashboard — 113 agencies, KPI strip, key insights, market/segment/ranking/salary charts and a searchable explorer.'},
+];
+const spTotal = VERSIONS.reduce((s,v)=>s+v.sp,0);
+document.getElementById('spTotal').textContent = spTotal;
+document.getElementById('verCount').textContent = VERSIONS.length;
+document.getElementById('histBody').innerHTML = VERSIONS.map(v=>
+  `<tr><td class="vcol">${v.v}</td><td>${v.date}</td><td><span class="sp-badge">${v.sp}</span></td><td>${v.desc}</td></tr>`).join('');
+const histModal = document.getElementById('histModal');
+document.getElementById('histBtn').addEventListener('click', ()=>histModal.classList.add('open'));
+document.getElementById('histClose').addEventListener('click', ()=>histModal.classList.remove('open'));
+histModal.addEventListener('click', e=>{ if(e.target===histModal) histModal.classList.remove('open'); });
+document.addEventListener('keydown', e=>{ if(e.key==='Escape') histModal.classList.remove('open'); });
 </script>
 </body>
 </html>
