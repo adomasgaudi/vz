@@ -1,129 +1,85 @@
-# CLAUDE.md — Project context for AI assistants
+# CLAUDE.md — vz project context (for AIs; read fully before changes)
 
-Read this file fully before making changes. It is the **single source of truth**:
-the project's purpose, data semantics, working conventions, and the full
-prompt/decision history all live here.
+Single source of truth: purpose, data semantics, conventions, full history.
+Rules system → **[GOVERNANCE.md](GOVERNANCE.md)** (the Codex: Gates + Nudges + the Gate Test).
+Hooks → **[HOOKS.md](HOOKS.md)** (currently none).
 
-The standing **Gates** (machine-enforced, hard-stop) and **Nudges** (judgment,
-reminder-only) live in **[GOVERNANCE.md](GOVERNANCE.md)** — the vz Codex. Its
-**Gate Test** decides which kind any new rule is. Read it before adding any rule.
+## Non-negotiables
+- Edit **`template.html`**, never `index.html`; rebuild: `python3 build_site.py`.
+- Every change: bump version badge + add a `VERSIONS` entry (with SP).
+- Push to `main`, then send the rebuilt `index.html` to the user.
+- `revenue` = turnover/apyvarta · `estimatedIncome` = revenue/spėjamos pajamos.
 
-## Non-negotiables (fast scan — detail in the sections below)
-
-- Edit `template.html`, never `index.html`; rebuild with `python3 build_site.py`.
-- Bump the version badge + add a `VERSIONS` entry (with SP) on every change.
-- Push to `main` and send the rebuilt `index.html` to the user afterwards.
-- `revenue` = turnover/apyvarta; `estimatedIncome` = revenue/spėjamos pajamos.
-
-## What this project is
-
-A **self-contained HTML competitor dashboard** of 113 Lithuanian communication,
-marketing and consulting agencies (financials 2019–2024), built for **Adomas**
-(g@cool.lt) on behalf of his company **Fabula**. Data originates from a
-rekvizitai.vz.lt export (`Komunikacija-konsultacija-konkurentai.xlsx`).
-
-**Key fact:** the owner's company is **Fabula ir partneriai, UAB** — formerly
-*Viešųjų ryšių partneriai (VRP)*, company code **124099127**, founded 1997-07-03.
-Same legal entity, rebranded. In the data its `brand` is `Fabula`. It gets special
-treatment throughout the dashboard (own section at top, gold highlight in charts,
-pinned row in the explorer table).
+## What this is
+- Self-contained HTML competitor dashboard: **113 LT** communication/marketing/consulting agencies, financials **2019–2024**.
+- Built for **Adomas** (g@cool.lt) for his company **Fabula**. Source: rekvizitai.vz.lt export `Komunikacija-konsultacija-konkurentai.xlsx`.
+- **Fabula = Fabula ir partneriai, UAB** — formerly *Viešųjų ryšių partneriai (VRP)*, code **124099127**, founded 1997-07-03; same entity, rebranded. Its `brand` = `Fabula`.
+- Fabula gets special treatment: own section at top, gold highlight in charts, pinned explorer row.
 
 ## Files & build
-
-| File | Purpose |
-|---|---|
-| `template.html` | Source of truth for all HTML/CSS/JS. Has `__DATA__` placeholder. **Edit this, never index.html.** |
-| `data.json` | 660 records: per-company per-year (2019–2024), 113 brands. |
-| `build_site.py` | `python3 build_site.py` injects data.json into template → `index.html`. |
-| `index.html` | Generated, self-contained output (Chart.js from CDN). The deliverable. |
-
-Workflow after any change: edit `template.html` → `python3 build_site.py` →
-syntax-check the embedded JS (`node --check`) → commit & push to `main` →
-**send the rebuilt `index.html` file to the user** (standing instruction).
+- `template.html` — source of all HTML/CSS/JS; placeholders `__DATA__` + `__SHEETS_DATA__`. **Edit this.**
+- `data.json` — 660 records (113 brands × 2019–2024).
+- `sheets_data.json` — 7 raw Excel sheets (Data Explorer source).
+- `build_site.py` — injects both JSONs into template → `index.html`.
+- `index.html` — generated, self-contained (Chart.js CDN). **The deliverable; never hand-edit.**
+- `fabula.html` — standalone Fabula profile page (off-dashboard one-off; not linked from the app).
+- Workflow: edit template → `python3 build_site.py` → `node --check` the JS → commit + push `main` → send `index.html`.
 
 ## Data dictionary (data.json record)
+- Fields: `company`, `brand` (the key everywhere), `year`, `activities` (Media, Digital media, Kūryba, PR, PA, BTL, Production house, Konsultantai, Renginiai), `city`, `risk` (LT labels: Žemiausia/Žema/Vidutinė/…), `employees`, `avgSalary` (€/mo), `salaryCosts`, `revenue`, `profit` (net / grynasis pelnas), `nonSalaryCosts`, `estimatedIncome`.
+- **Terminology (decided v0.1.2.0):**
+  - `revenue` = **turnover / apyvarta** (incl. pass-through media ad spend).
+  - `estimatedIncome` = **revenue / spėjamos pajamos** (fee income, pass-through excluded); 625/660 records have it. 2024: €362M turnover vs €100M est. income.
+  - UI labels: "Turnover (apyvarta)" = `revenue`; "Revenue (spėjamos pajamos)" = `estimatedIncome`.
+  - **Margins computed from `estimatedIncome`**, labelled "margin from revenue".
 
-`company` (legal name), `brand` (display name, used as key everywhere), `year`,
-`activities` (segments: Media, Digital media, Kūryba, PR, PA, BTL, Production house,
-Konsultantai, Renginiai), `city`, `risk` (credit risk, Lithuanian labels:
-Žemiausia/Žema/Vidutinė/…), `employees`, `avgSalary` (€/mo), `salaryCosts`,
-`revenue`, `profit` (net profit / grynasis pelnas), `nonSalaryCosts`, `estimatedIncome`.
+## Standing instructions
+- **Version badge** in header `<h1>` (e.g. `v0.1.2.1`), every change. Scheme `vA.B.C.D`: bump **C** normal, **D** small patch; **B** only when owner says; **A** reserved.
+- **SP** per update, 0.5–10, **effort/time not LOC** (a big template dump = low; a small edit in gnarly code = high). Logged in the `VERSIONS` array in `template.html`, shown via the "📋 SP history" modal.
+- **Always send the rebuilt `index.html`** after every change.
+- **Every change lands in `main`** — commit direct or merge immediately; never strand work on a side branch.
+- **Footer must keep:** "Created by **Adomas** on behalf of **Fabula** · © 2026 Fabula ir partneriai, UAB. All rights reserved."
 
-### CRITICAL terminology (decided in v0.1.2.0)
+## Git
+- Work from `main`; merge to `main` after finishing.
 
-- `revenue` field = **turnover / apyvarta** (includes pass-through media ad spend).
-- `estimatedIncome` field = **revenue / spėjamos pajamos** (estimated fee income,
-  pass-through excluded). 625/660 records have it. 2024 totals: €362M turnover vs
-  €100M estimated income.
-- In all UI labels: "Turnover (apyvarta)" = `revenue`; "Revenue (spėjamos pajamos)"
-  = `estimatedIncome`. **Margins are computed from `estimatedIncome`**, labelled
-  "margin from revenue".
+## ⚠️ Parallel sessions
+- Multiple AIs have edited this repo at once and once diverged `main` (one overwrote the other's features).
+- Before work: `git fetch origin main` + rebase/merge.
+- **Never resolve a `template.html` conflict by taking one side wholesale** — merge feature-by-feature (badge, SP modal, My-company section, turnover/revenue split, Data Explorer) and keep them all.
 
-## Standing instructions from the owner
+## Environment
+- `rekvizitai.vz.lt` blocked by the sandbox (WebFetch + curl fail); company facts verified via web search.
+- Repo private → no free GitHub Pages deploy; used as a local file.
+- Branches: `main` (canonical) + historical `claude/*`.
 
-1. **Version badge** in the header `<h1>` (e.g. `v0.1.2.1`), updated after every change.
-   Scheme `vA.B.C.D`: bump **C** for normal changes, **D** for small patches.
-   **B only when the owner says so**; A reserved.
-2. **Story points (SP)** per update, 0.5–10, reflecting **effort/time, not lines of
-   code** (a big template dump scores low; a small edit in convoluted code can score
-   high). Logged in the `VERSIONS` array inside `template.html`, displayed via the
-   "📋 SP history" button/modal in the dashboard.
-3. **Always send the rebuilt `index.html` to the user after every change.**
-4. **Every change must end up in `main`** — commit directly to `main` (or merge your
-   working branch into `main` immediately). Never leave work stranded on a side branch.
-5. Footer must keep: "Created by **Adomas** on behalf of **Fabula** · © 2026 Fabula
-   ir partneriai, UAB. All rights reserved."
+## Open / deferred
+- "Key insights" texts still quote **turnover** figures (€362M etc.) — rewrite to spėjamos pajamos only if asked.
+- Old `claude/*` branches not deleted.
 
-## Git workflow
-
-- Always work from the `main` branch.
-- Always merge to `main` after finishing work.
-
-## ⚠️ Parallel sessions warning
-
-Multiple AI sessions have worked on this repo simultaneously and once produced two
-diverged `main` histories (one overwrote the other's template features). Before any
-work: `git fetch origin main` and rebase/merge. **Never resolve a template.html
-conflict by taking one side wholesale** — check both sides feature-by-feature
-(version badge, SP history modal, My-company section, turnover/revenue split,
-Data Explorer view) and keep all of them.
-
-## Environment notes
-
-- `rekvizitai.vz.lt` is **blocked** by the sandbox network allowlist (WebFetch and
-  curl both fail). Company facts were verified via web search instead.
-- Repo is **private**, so GitHub Pages can't deploy on the free plan. Owner decided
-  not to deploy; the dashboard is used as a local file.
-- Remote branches: `main` (canonical), plus two historical `claude/*` branches.
-
-## Prompt & version history
+## Prompt & version history (archive — AI reference, skip when scanning)
 
 | Version | SP | Owner's request (paraphrased) | What was done |
 |---|---|---|---|
 | v0.0.0.0 | 5 | (Initial) Build competitor dashboard from the Excel data. | 113-agency dashboard: KPI strip, insights, market/segment/ranking/salary charts, explorer table. |
-| v0.0.1.0 | 5 | "https://rekvizitai.vz.lt/imone/viesuju_rysiu_partneriai/ — I want to see my company data in my personal html dashboard." | Discovered VRP→Fabula rebrand (same code 124099127, already in data). Added "My company" section: KPI cards with market ranks, 2019–24 trend chart, percentile-vs-market chart, gold scatter marker, pinned explorer row. |
-| — | — | "Create a new branch called main, merge and push changes from all branches, index not nested for GitHub Pages." | `main` created from the combined tip (one branch contained the other); index.html confirmed at repo root. Later: "nevermind, can't deploy private repo." |
-| v0.1.0.0 | 0.5 | "Write the version number at the top after every change. v0.1.0.0 now. Update 3rd num, or 4th for small patches; I'll say when to bump the 2nd." | Version badge in header. |
-| — | — | "Always give html after updating." | Standing instruction #3 above. |
-| v0.1.1.0 | 3 | "Evaluate each update with SP (0.5–10, effort-based, not LOC). Create a button to see SP/version history." | SP evaluation done retroactively; "📋 SP history" button + modal with `VERSIONS` log. |
-| v0.1.2.0 | 4 | (Lithuanian) Reorder top KPIs: Market turnover, Turnover CAGR, then Market revenue = spėjamos pajamos, Revenue CAGR; profit % from revenue not turnover ("margin from revenue") + YoY. Market overview: revenue primary but show turnover too. Doughnut, segment trend, rankings (add), growth leaders, size-vs-profitability (and net profit), revenue-per-employee, explorer (add) → all to spėjamos pajamos. Footer: created by Adomas on behalf of Fabula, copyright. | Turnover/revenue split across every chart; thresholds and tooltips recalibrated; explorer got both columns; My-company section aligned; footer credit added. |
-| v0.1.2.1 | 1 | "Save the info about this project and my prompts in an md file so other AIs can read it." | Created `AGENTS.md` + a `CLAUDE.md` pointer. (Merged back into this single `CLAUDE.md` later.) |
-| v0.1.2.2 | 0.5 | "Merge changes with main always." | Standing instruction #4 made explicit: all work lands in `main` immediately. |
-| — | 3 | (Parallel AI session) Data explorer page from all Excel sheets, merged into single-page app. | Top-nav SPA: Dashboard + Data Explorer views; `sheets_data.json` (5 sheets) embedded via `__SHEETS_DATA__`; search/sort/pagination/CSV export. **But it overwrote all features from the other session's template.** |
-| v0.1.3.0 | 4 | "Two AIs both saying the index is from main and both are different." | Real merge of the two diverged mains: full-featured template kept as base, Data Explorer SPA ported into it (top-nav, dataView, explorer JS). Everything from both lines now coexists. |
-| — (off-dashboard) | 1 | "Create a CSV from my company page on rekvizitai.vz.lt." | User pasted page text; `fabula_ir_partneriai.csv` created with 65 fields: company info, 4-year financials, debts, workforce, ESG. |
-| — (off-dashboard) | 2 | "Create an HTML based just on this data alone." | `fabula.html` — standalone company profile page: header, contact card, rating, workforce, full financial table, debts, ESG. |
-| — (off-dashboard) | 0.5 | "Keep a score of SP points even when working off the main dashboard." | SP tracking section added to the docs. |
-| — (off-dashboard) | 1.5 | "Fix fabula.html for mobile — out of bounds on smartphone. Deploy properly on GitHub Pages." | Added media queries: single-column grid on ≤640px, header wraps, table wrapped in overflow-x:auto div, font/padding tweaks. Pushed to main. |
-| v0.1.3.1 | 1 | "Not looking great on phone" (main dashboard at adomasgaudi.github.io/vz/). | Mobile nav fix: hide nav-sub on ≤600px, shrink logo/btn padding, add content padding tweaks. Bumped version badge. |
-| v0.1.3.2 | 2 | "All derived values should show formulas how they are calculated." | Added inline formula lines below each My-company KPI card sub-label: YoY % with actual values, margin formula, CAGR formula, rank explanation. Monospace styled, muted. |
-| v0.1.3.3 | 2 | "Create tabs to view other companies that we will add data for later. Currently only Fabula." | `MY_COMPANIES` array drives a tab strip above the My companies section. `renderCompany(brand)` redraws all KPIs and charts on tab click. Adding a company = one push to the array. |
-| — (off-dashboard) | 2 | "Hard-enforce what a dumb computer can check; nag what needs judgment. We need better names and the first principle written." | Founded the **vz Codex** (`GOVERNANCE.md`): the **Gate Test** meta-principle, plus the two named kinds — **Gate** (deterministic → hook, hard-stop) and **Nudge** (judgment → reminder only). Seeded the Gates/Nudges tables; hooks still TODO. |
-| — (off-dashboard) | 0.5 | "Why two doc files? Just merge AGENTS.md into CLAUDE.md and delete AGENTS.md." | Folded all of `AGENTS.md` into this single `CLAUDE.md` (the file Claude Code auto-loads) and deleted `AGENTS.md`. One source, no drift. |
-| — (off-dashboard) | 0.5 | "Write a human-readable MD listing the vz repo's hooks." | Added `HOOKS.md` (plain-English): documents that vz currently has **no hooks**, explains what hooks are + the three events (SessionStart/UserPromptSubmit/Stop), and clarifies the pop-up/reminder behaviour seen in chats comes from the Data repo, not vz. |
-
-## Open / deferred items
-
-- "Key insights" texts still quote **turnover-based** figures (€362M market, etc.) —
-  owner was told; rewrite to spėjamos pajamos only if asked.
-- Old `claude/*` branches not deleted (owner never answered).
+| v0.0.1.0 | 5 | "I want to see my company data in my personal html dashboard." | Discovered VRP→Fabula rebrand (code 124099127, already in data). Added "My company" section: KPI cards with market ranks, 2019–24 trend, percentile-vs-market chart, gold scatter marker, pinned explorer row. |
+| — | — | "Create a branch main, merge all branches, index not nested for Pages." | `main` created from combined tip; index.html at repo root. Later: "can't deploy private repo." |
+| v0.1.0.0 | 0.5 | "Write the version number at the top after every change." | Version badge in header. |
+| — | — | "Always give html after updating." | Standing instruction #3. |
+| v0.1.1.0 | 3 | "Evaluate each update with SP; button to see SP/version history." | SP done retroactively; "📋 SP history" button + modal with `VERSIONS` log. |
+| v0.1.2.0 | 4 | (LT) Turnover vs revenue split across KPIs/charts; margins from revenue; footer credit. | Turnover/revenue split everywhere; thresholds + tooltips recalibrated; explorer got both columns; My-company aligned; footer added. |
+| v0.1.2.1 | 1 | "Save project info + my prompts in an md file for other AIs." | Created `AGENTS.md` + a `CLAUDE.md` pointer. (Merged into this single `CLAUDE.md` later.) |
+| v0.1.2.2 | 0.5 | "Merge changes with main always." | Standing instruction #4 made explicit. |
+| — | 3 | (Parallel session) Data Explorer page from all Excel sheets. | Top-nav SPA: Dashboard + Data Explorer; `sheets_data.json` via `__SHEETS_DATA__`; search/sort/pagination/CSV. **But it overwrote the other session's template.** |
+| v0.1.3.0 | 4 | "Two AIs both say index is from main and both differ." | Real merge of the two diverged mains: full template kept as base, Data Explorer ported in. Both lines coexist. |
+| — (off) | 1 | "Create a CSV from my company page on rekvizitai.vz.lt." | `fabula_ir_partneriai.csv` (65 fields). |
+| — (off) | 2 | "Create an HTML based just on this data alone." | `fabula.html` — standalone company profile page. |
+| — (off) | 0.5 | "Keep SP score even when working off the main dashboard." | SP tracking section added. |
+| — (off) | 1.5 | "Fix fabula.html for mobile." | Media queries: single-column ≤640px, header wraps, table overflow-x, font/padding. |
+| v0.1.3.1 | 1 | "Not looking great on phone." | Mobile nav fix: hide nav-sub ≤600px, shrink logo/btn padding. |
+| v0.1.3.2 | 2 | "All derived values should show their formulas." | Inline formula lines under each My-company KPI (YoY, margin, CAGR, rank). Monospace, muted. |
+| v0.1.3.3 | 2 | "Tabs to view other companies we'll add later." | `MY_COMPANIES` array drives a tab strip; `renderCompany(brand)` redraws on click. Add a company = one array push. |
+| — (off) | 2 | "Hard-enforce what a computer can check; nag what needs judgment. Better names + first principle." | Founded the **vz Codex** (`GOVERNANCE.md`): the **Gate Test** + **Gate** (deterministic → hook) and **Nudge** (judgment → reminder). Gates/Nudges seeded; hooks TODO. |
+| — (off) | 0.5 | "Merge AGENTS.md into CLAUDE.md and delete AGENTS.md." | Folded `AGENTS.md` into this single `CLAUDE.md`; deleted it. One source, no drift. |
+| — (off) | 0.5 | "Human-readable MD listing the vz hooks." | Added `HOOKS.md`: vz has no hooks; explains the 3 events; pop-ups seen in chats are Data's, not vz. |
+| — (off) | 1 | "Docs too long to read; make them succinct without hurting AI comprehension." | Reformatted CLAUDE/GOVERNANCE/HOOKS to tight bold-lead bullets (one file each, no AI/human split — avoids drift). Same facts, less prose. |
