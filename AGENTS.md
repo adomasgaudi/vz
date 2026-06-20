@@ -100,6 +100,7 @@ Data Explorer view) and keep all of them.
 | — (off-dashboard) | 1.5 | "Fix fabula.html for mobile — out of bounds on smartphone. Deploy properly on GitHub Pages." | Added media queries: single-column grid on ≤640px, header wraps, table wrapped in overflow-x:auto div, font/padding tweaks. Pushed to main. |
 | v0.1.3.1 | 1 | "Not looking great on phone" (main dashboard at adomasgaudi.github.io/vz/). | Mobile nav fix: hide nav-sub on ≤600px, shrink logo/btn padding, add content padding tweaks. Bumped version badge. |
 | v0.1.3.2 | 2 | "All derived values should show formulas how they are calculated." | Added inline formula lines below each My-company KPI card sub-label: YoY % with actual values, margin formula, CAGR formula, rank explanation. Monospace styled, muted. |
+| v0.1.3.3 | 2 | "Create tabs to view other companies that we will add data for later. Currently only Fabula." | `MY_COMPANIES` array drives a tab strip above the My companies section. `renderCompany(brand)` redraws all KPIs and charts on tab click. Adding a company = one push to the array. |
 
 ## Open / deferred items
 
