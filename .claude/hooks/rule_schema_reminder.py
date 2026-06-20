@@ -3,11 +3,33 @@
 rule, inject Schema.md's hook-vs-context decision framework into context so the
 AI decides *how* to add the rule (build a Hook vs. write advisory Context).
 
-Reads the hook JSON from stdin. If the user's prompt looks like a request to
-add/change a rule, it reads Schema.md and prints a JSON object whose
-hookSpecificOutput.additionalContext is injected into Claude's context. For any
-other prompt it prints nothing and exits 0 — never fires where it doesn't apply,
-never blocks (no exit 2, no decision:block).
+Mechanistically, step by step:
+
+1. Claude Code runs this script *before the AI reads your prompt* and pipes the
+   hook JSON to stdin. `json.load(sys.stdin)` parses it; on any parse error,
+   `sys.exit(0)` (exit 0, no output -> hook does nothing, prompt passes through).
+2. `data.get("prompt")` is your raw message; `.lower()` makes the matching
+   case-insensitive.
+3. The trigger is two regexes ANDed, plus an OR escape hatch:
+   - `has_rule`  -> `\brules?\b` matches the word "rule"/"rules" (word
+     boundaries so "ruler" doesn't count).
+   - `has_verb`  -> matches an add/change verb (add, new, create, make,
+     introduce, enforce, change, modify, update, write, define, set up).
+   - `mentions_nonneg` -> the literal "non-negotiable"/"nonnegotiable".
+   Fires only if `(has_rule AND has_verb) OR mentions_nonneg`. Anything else ->
+   `sys.exit(0)`, silent. Kept tight on purpose: a false *miss* costs only a bit
+   of context, but a false *fire* injects a wall of text on unrelated prompts.
+4. Locates Schema.md relative to THIS file (`__file__` -> `.claude/hooks/`, so
+   `../../Schema.md` is the repo root). Read failure -> `sys.exit(0)`.
+5. Slices Schema.md from the `# hooks vs context` marker to EOF, so only the
+   decision framework is injected, not the whole event/permission map. If the
+   marker is absent it falls back to the entire file.
+6. Prepends a short "apply the hook test" instruction, then `print`s a JSON
+   object. Claude Code injects `hookSpecificOutput.additionalContext` into the
+   model's context for this turn — that string is the entire effect.
+
+It cannot block or force anything: no `exit 2`, no `decision: block`. It only
+injects context — the AI may still ignore it.
 """
 import os
 import re

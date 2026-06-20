@@ -1,33 +1,68 @@
-# Rules and context
+# Events Hooks Rules Context
 
 Hook-vs-context framework + full events/hooks/permissions map → [Schema.md](Schema.md).
 
-## Events & the hooks on them
-
-- **SessionStart** — chat opens/resumes; stdout is injected into context.
-  - **Hook** (global ): if the project has no `.git`, tell the AI to offer `git init` + a first commit. Silent in vz (already has git).
-- **UserPromptSubmit** — your message, before the AI reads it; exit `2` blocks it.
-  - **Hook** (vz): `rule_schema_reminder.py` — when your message is about adding/changing a rule, it reads `Schema.md` and injects its hook-vs-context decision framework, so the AI decides *how* to add the rule before writing it. Non-blocking.
-- **Stop** — the AI finishes responding; a hook here can block until conditions are met.
-  - No hook (would be **H7**: block unless working tree is clean + `main` pushed to `origin` — i.e. "Save"; the owner only ever sees the live site).
-
-*(Three hooks touch vz: the global SessionStart one above, and vz's own two in `.claude/settings.local.json` — **PostToolUse** `version_reminder.py` (version-badge rule below) and **UserPromptSubmit** `rule_schema_reminder.py` (rule-change → Schema.md guide). Full map → [Schema.md](Schema.md).)*
-
-- **EVENT a new rule:** apply the hook test (Schema.md) — a program can verify it → **Hook** (`.claude/settings.json`; non-blocking injects context, or a blocking script/pre-commit enforces); needs judgment → **Context** (advisory). `rule_schema_reminder.py` now auto-injects that framework whenever you ask for a rule.
-
-## Rules/hooks/ect
 
 
-| Name                        | Description                                                                                                | Type       | Hook                                                         |
-| --------------------------- | ---------------------------------------------------------------------------------------------------------- | ---------- | ------------------------------------------------------------ |
-| **Edit source, not output** | Edit `template.html`, never `index.html`; rebuild `python3 build_site.py`                                  | verifiable | → H2                                                         |
-| **Save**                    | commit + push to `main` after every change — owner only sees the live site; then send rebuilt `index.html` | verifiable | → H7                                                         |
-| **Version badge**           | `<h1>` badge every change. `vA.B.C`: bump **C**; **B** owner-only; **A** owner-only                        | verifiable | ✅ `version_reminder.py` (reminder); enforce → H3/H4          |
-| **SP**                      | 0.5–10 per update, effort/time not LOC; logged in `VERSIONS` array, shown via "📋 SP history" modal        | mixed      | reminder via `version_reminder.py`; numeric → H5, fair? → C1 |
-| **Terminology**             | `revenue` = turnover/apyvarta · `estimatedIncome` = revenue/spėjamos pajamos                               | judgment   | — (C4)                                                       |
-| **Branch**                  | work from `main`; merge back immediately — never strand work on a side branch                              | verifiable | → H7                                                         |
-| **Sync first**              | before work, `git fetch origin main` + rebase/merge (parallel AIs edit at once)                            | verifiable | → H8                                                         |
-| **Merge conflicts**         | never take one `template.html` side wholesale — merge feature-by-feature (badge, SP modal, My-company, turnover/revenue, Data Explorer), keep all | judgment   | — (C5)                                                       |
+
+
+
+
+##
+
+
+## Rules
+
+
+
+
+Grade = importance. Kind = Hook (fires) or Context (just text). 3rd row = runtime weight.
+
+### TOP
+
+| Rule | Description |
+| --- | --- |
+| **BULD-01** Edit source | Edit `template.html`, never `index.html`; rebuild `python3 build_site.py` |
+| <br /> | Context · verifiable |
+| <br /> | ~12 always-on tokens; no runtime |
+| **REPO-01** Save | commit + push to `main` after every change — owner only sees the live site; then send rebuilt `index.html` |
+| <br /> | Context · verifiable |
+| <br /> | ~25 always-on tokens; no runtime |
+| **REPO-03** Sync first | before work, `git fetch origin main` + rebase/merge (parallel AIs edit at once) |
+| <br /> | Context · verifiable |
+| <br /> | ~15 always-on tokens; no runtime |
+| **REPO-04** Merge conflicts | never take one `template.html` side wholesale — merge feature-by-feature (badge, SP modal, My-company, turnover/revenue, Data Explorer), keep all |
+| <br /> | Context · judgment |
+| <br /> | ~30 always-on tokens; no runtime |
+
+### MED
+
+| Rule | Description |
+| --- | --- |
+| **BULD-02** Version badge | `<h1>` badge every change. `vA.B.C`: bump **C**; **B** owner-only; **A** owner-only |
+| <br /> | Hook [`version_reminder.py`](.claude/hooks/version_reminder.py) · verifiable |
+| <br /> | ~30ms Python per Edit/Write; ~40 tokens only on template edit |
+| **BULD-03** Story points | 0.5–10 per update, effort/time not LOC; logged in `VERSIONS` array, shown via "📋 SP history" modal |
+| <br /> | Hook [`version_reminder.py`](.claude/hooks/version_reminder.py) · mixed |
+| <br /> | shares BULD-02's hook spawn; no extra cost |
+| **REPO-02** Branch | work from `main`; merge back immediately — never strand work on a side branch |
+| <br /> | Context · verifiable |
+| <br /> | ~15 always-on tokens; no runtime |
+| **WORD-01** Terminology | `revenue` = turnover/apyvarta · `estimatedIncome` = revenue/spėjamos pajamos |
+| <br /> | Context · judgment |
+| <br /> | ~15 always-on tokens; no runtime |
+
+### LOW
+
+| Rule | Description |
+| --- | --- |
+| **WORD-02** Explanation length | keep explanatory blurbs 5–15 words; doesn't apply to deliberately long docstrings (e.g. the mechanistic hook headers) |
+| <br /> | Context · judgment |
+| <br /> | ~20 always-on tokens; no runtime |
+| **CONV-01** Brevity | answer simple conversational questions in 5–15 words; no preamble |
+| <br /> | Context · judgment |
+| <br /> | ~15 always-on tokens; no runtime |
+
 
 ---
 
@@ -38,7 +73,7 @@ Hook-vs-context framework + full events/hooks/permissions map → [Schema.md](Sc
 ## Project idea
 
 - Self-contained HTML competitor dashboard: **113 LT** communication/marketing/consulting agencies, financials **2019–2024**.
-- Built by **Adomas** working under ([g@cool.lt](mailto:g@cool.lt)) account for a company **Fabula**. 
+- Built by **Adomas** working under (<g@cool.lt>) account for a company **Fabula**.
 - Source: rekvizitai.vz.lt export `Komunikacija-konsultacija-konkurentai.xlsx`.
 - **Fabula = Fabula ir partneriai, UAB** — formerly *Viešųjų ryšių partneriai (VRP)*, code **124099127**, founded 1997-07-03; same entity, rebranded. Its `brand` = `Fabula`.
 - Fabula gets special treatment: own section at top, gold highlight in charts, pinned explorer row.
@@ -66,12 +101,12 @@ Hook-vs-context framework + full events/hooks/permissions map → [Schema.md](Sc
 
 - `rekvizitai.vz.lt` blocked by the sandbox (WebFetch + curl fail); company facts verified via web search.
 - Repo private → no free GitHub Pages deploy; used as a local file.
-- Branches: `main` (canonical) + historical `claude/`*.
+- Branches: `main` (canonical) + historical `claude/`\*.
 
 ## Open / deferred
 
 - "Key insights" texts still quote **turnover** figures (€362M etc.) — rewrite to spėjamos pajamos only if asked.
-- Old `claude/`* branches not deleted.
+- Old `claude/`\* branches not deleted.
 
 ## Prompt & version history
 
