@@ -37,6 +37,7 @@
   .kpi .label{color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.06em}
   .kpi .value{font-size:26px;font-weight:700;margin-top:4px}
   .kpi .sub{font-size:12px;margin-top:2px}
+  .kpi .formula{font-size:11px;color:var(--muted);margin-top:5px;padding-top:5px;border-top:1px solid var(--border);font-family:monospace;line-height:1.4;opacity:.7}
   .pos{color:var(--green)} .neg{color:var(--red)}
   .grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:18px}
   .grid .full{grid-column:1/-1}
@@ -152,7 +153,7 @@
 <div class="view active" id="dashView">
 <div class="wrap">
   <header>
-    <h1>🇱🇹 Lithuanian Communication & Marketing Agencies <span class="version">v0.1.3.1</span> <button class="hist-btn" id="histBtn">📋 SP history</button></h1>
+    <h1>🇱🇹 Lithuanian Communication & Marketing Agencies <span class="version">v0.1.3.2</span> <button class="hist-btn" id="histBtn">📋 SP history</button></h1>
     <p>Competitor landscape dashboard · 113 brands · Financials 2019–2024 (revenue, profit, headcount, salaries) · Source: rekvizitai.vz.lt data export</p>
   </header>
 
@@ -376,17 +377,36 @@ const mCagr = (m24.revenue && mFirst.revenue)? Math.pow(m24.revenue/mFirst.reven
 document.getElementById('mineNote').innerHTML =
   `The company at <b>rekvizitai.vz.lt/imone/viesuju_rysiu_partneriai</b> — <b>Viešųjų ryšių partneriai (VRP)</b>, company code <b>124099127</b>, founded 1997 — now trades as <b>Fabula ir partneriai, UAB</b> and is already tracked here. The panels below pull out its figures and rank it against all ${BRANDS.length} competitors.`;
 
+const E = v => v!=null ? '€'+Math.round(v).toLocaleString() : '–';
 const mineKpiCards = [
-  {label:'Turnover '+LAST, value:fmtEur(m24.revenue), sub:(m23.revenue?fmtPct(m24.revenue/m23.revenue-1)+' YoY · ':'')+(mRev?`<span class="rank">#${mRev.pos} of ${mRev.total}</span>`:''), cls:m24.revenue>=m23.revenue?'pos':'neg'},
-  {label:'Revenue '+LAST+' (spėj. pajamos)', value:fmtEur(m24.estimatedIncome), sub:(m23.estimatedIncome?fmtPct(m24.estimatedIncome/m23.estimatedIncome-1)+' YoY · ':'')+(mEI?`<span class="rank">#${mEI.pos} of ${mEI.total}</span>`:''), cls:m24.estimatedIncome>=m23.estimatedIncome?'pos':'neg'},
-  {label:'Net profit '+LAST, value:fmtEur(m24.profit), sub:(m24.estimatedIncome?(m24.profit/m24.estimatedIncome*100).toFixed(1)+'% margin from revenue · ':'')+(mProfit?`<span class="rank">#${mProfit.pos}</span>`:''), cls:m24.profit>=0?'pos':'neg'},
-  {label:'Employees '+LAST, value:m24.employees!=null?Math.round(m24.employees):'–', sub:(m23.employees?fmtPct(m24.employees/m23.employees-1)+' YoY · ':'')+(mEmp?`<span class="rank">#${mEmp.pos}</span>`:''), cls:m24.employees>=m23.employees?'pos':'neg'},
-  {label:'Avg salary '+LAST, value:m24.avgSalary?'€'+Math.round(m24.avgSalary).toLocaleString()+'/mo':'–', sub:(m23.avgSalary?fmtPct(m24.avgSalary/m23.avgSalary-1)+' YoY · ':'')+(mSal?`<span class="rank">#${mSal.pos}</span>`:''), cls:'pos'},
-  {label:'Revenue CAGR 19–24', value:fmtPct(mCagr), sub:'€'+fmtM(mFirst.revenue)+' → €'+fmtM(m24.revenue), cls:mCagr>=0?'pos':'neg'},
-  {label:'Credit risk', value:m24.risk||'–', sub:'Segments: '+(m24.activities||[]).join(', '), cls:''},
+  {label:'Turnover '+LAST, value:fmtEur(m24.revenue),
+   sub:(m23.revenue?fmtPct(m24.revenue/m23.revenue-1)+' YoY · ':'')+(mRev?`<span class="rank">#${mRev.pos} of ${mRev.total}</span>`:''),
+   cls:m24.revenue>=m23.revenue?'pos':'neg',
+   formula: m23.revenue ? `YoY = ${E(m24.revenue)} ÷ ${E(m23.revenue)} − 1 = ${fmtPct(m24.revenue/m23.revenue-1)}\nRank = position by turnover among ${mRev?.total} companies` : ''},
+  {label:'Revenue '+LAST+' (spėj. pajamos)', value:fmtEur(m24.estimatedIncome),
+   sub:(m23.estimatedIncome?fmtPct(m24.estimatedIncome/m23.estimatedIncome-1)+' YoY · ':'')+(mEI?`<span class="rank">#${mEI.pos} of ${mEI.total}</span>`:''),
+   cls:m24.estimatedIncome>=m23.estimatedIncome?'pos':'neg',
+   formula: m23.estimatedIncome ? `YoY = ${E(m24.estimatedIncome)} ÷ ${E(m23.estimatedIncome)} − 1 = ${fmtPct(m24.estimatedIncome/m23.estimatedIncome-1)}\nRank = position by spėj. pajamos among ${mEI?.total} companies` : ''},
+  {label:'Net profit '+LAST, value:fmtEur(m24.profit),
+   sub:(m24.estimatedIncome?(m24.profit/m24.estimatedIncome*100).toFixed(1)+'% margin from revenue · ':'')+(mProfit?`<span class="rank">#${mProfit.pos}</span>`:''),
+   cls:m24.profit>=0?'pos':'neg',
+   formula: m24.estimatedIncome ? `Margin = net profit ÷ revenue (spėj. pajamos)\n= ${E(m24.profit)} ÷ ${E(m24.estimatedIncome)} = ${(m24.profit/m24.estimatedIncome*100).toFixed(1)}%\nRank = position by net profit among ${mProfit?.total} companies` : ''},
+  {label:'Employees '+LAST, value:m24.employees!=null?Math.round(m24.employees):'–',
+   sub:(m23.employees?fmtPct(m24.employees/m23.employees-1)+' YoY · ':'')+(mEmp?`<span class="rank">#${mEmp.pos}</span>`:''),
+   cls:m24.employees>=m23.employees?'pos':'neg',
+   formula: m23.employees ? `YoY = ${Math.round(m24.employees)} ÷ ${Math.round(m23.employees)} − 1 = ${fmtPct(m24.employees/m23.employees-1)}\nRank = position by headcount among ${mEmp?.total} companies` : ''},
+  {label:'Avg salary '+LAST, value:m24.avgSalary?'€'+Math.round(m24.avgSalary).toLocaleString()+'/mo':'–',
+   sub:(m23.avgSalary?fmtPct(m24.avgSalary/m23.avgSalary-1)+' YoY · ':'')+(mSal?`<span class="rank">#${mSal.pos}</span>`:''),
+   cls:'pos',
+   formula: m23.avgSalary ? `YoY = €${Math.round(m24.avgSalary).toLocaleString()} ÷ €${Math.round(m23.avgSalary).toLocaleString()} − 1 = ${fmtPct(m24.avgSalary/m23.avgSalary-1)}\nRank = position by avg salary among ${mSal?.total} companies` : ''},
+  {label:'Revenue CAGR 19–24', value:fmtPct(mCagr),
+   sub:'€'+fmtM(mFirst.revenue)+' → €'+fmtM(m24.revenue),
+   cls:mCagr>=0?'pos':'neg',
+   formula: mCagr!=null ? `CAGR = (${E(m24.revenue)} ÷ ${E(mFirst.revenue)}) ^ (1 ÷ ${LAST-mineYears[0]}) − 1\n= ${fmtPct(mCagr)} over ${LAST-mineYears[0]} years` : ''},
+  {label:'Credit risk', value:m24.risk||'–', sub:'Segments: '+(m24.activities||[]).join(', '), cls:'', formula:'Source: rekvizitai.vz.lt credit rating\nSegments = activity tags from the dataset'},
 ];
 document.getElementById('mineKpis').innerHTML = mineKpiCards.map(k=>
-  `<div class="kpi mine"><div class="label">${k.label}</div><div class="value">${k.value}</div><div class="sub ${k.cls}">${k.sub}</div></div>`).join('');
+  `<div class="kpi mine"><div class="label">${k.label}</div><div class="value">${k.value}</div><div class="sub ${k.cls}">${k.sub}</div>${k.formula?`<div class="formula">${k.formula.replace(/\n/g,'<br>')}</div>`:''}</div>`).join('');
 
 new Chart(chMine, {data:{
   labels: mineYears,
@@ -636,6 +656,7 @@ renderTable();
 
 // ---------- SP & version history ----------
 const VERSIONS = [
+  {v:'v0.1.3.2', date:'2026-06-20', sp:2,   desc:'Show calculation formulas on all derived KPI values in the "My company" section: YoY % formula with actual numbers, margin formula, CAGR formula, rank explanation — each shown inline below the sub-label.'},
   {v:'v0.1.3.1', date:'2026-06-20', sp:1,   desc:'Mobile nav fix: hide nav-sub subtitle on ≤600px, reduce logo/button padding, add padding tweaks for content areas and h1 font size. Fixes overflow on smartphones.'},
   {v:'v0.1.3.0', date:'2026-06-10', sp:4,   desc:'Merged two parallel AI sessions that had diverged on main: a second session shipped a Data Explorer SPA but overwrote every feature from this line of work. Resolved by porting its top-nav + Data Explorer (5 Excel sheets, search, sort, pagination, CSV export) into the full-featured template, keeping all dashboard features intact.'},
   {v:'—',        date:'2026-06-10', sp:3,   desc:'(Parallel session) Data Explorer view: raw Excel sheets browsable with tabs, search, sorting, pagination and CSV export; sheets_data.json + build pipeline extended.'},
