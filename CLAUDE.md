@@ -1,8 +1,6 @@
 # vz — project context
 
-**This whole file is _context_** — text injected into the model's window. It *influences* behaviour; it does not *enforce* anything. The only thing that enforces is a **hook** (code that runs — none yet, see [HOOKS.md](HOOKS.md)). Which behaviours can be hooks vs must stay context → [GOVERNANCE.md](GOVERNANCE.md).
-
-Single source of truth: purpose, data, conventions, history.
+Mechanisms / which rules can be enforced → [GOVERNANCE.md](GOVERNANCE.md) · Hooks → [HOOKS.md](HOOKS.md) (none yet).
 
 ## Non-negotiables
 *(All four are currently context = advisory. The ones a program could check are hooks H1–H6 in GOVERNANCE.md — build those to actually enforce them.)*
