@@ -1,4 +1,4 @@
-# HOOKS.md — what runs automatically in vz (plain English, for humans)
+# vz hooks (plain English)
 
 Hooks = small scripts the AI's tool (Claude Code) runs **automatically** at fixed
 moments (chat start · your message · AI reply-end). Nobody types them; they fire on

@@ -1,4 +1,4 @@
-# GOVERNANCE.md — the vz Codex
+# the vz Codex
 
 The rules that keep this repo correct. Every entry is a **Gate** or a **Nudge**,
 decided by the **Gate Test**. No third kind; "rule" is too vague to use.

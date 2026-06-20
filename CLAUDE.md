@@ -1,8 +1,7 @@
-# CLAUDE.md — vz project context (for AIs; read fully before changes)
+# vz — project context
 
-Single source of truth: purpose, data semantics, conventions, full history.
-Rules system → **[GOVERNANCE.md](GOVERNANCE.md)** (the Codex: Gates + Nudges + the Gate Test).
-Hooks → **[HOOKS.md](HOOKS.md)** (currently none).
+Single source of truth: purpose, data, conventions, history.
+Rules → **[GOVERNANCE.md](GOVERNANCE.md)** (Gates + Nudges + the Gate Test) · Hooks → **[HOOKS.md](HOOKS.md)** (none yet).
 
 ## Non-negotiables
 - Edit **`template.html`**, never `index.html`; rebuild: `python3 build_site.py`.
