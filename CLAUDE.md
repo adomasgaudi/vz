@@ -1,7 +1,7 @@
 # vz — project context
 
 Single source of truth: purpose, data, conventions, history.
-Rules → **[GOVERNANCE.md](GOVERNANCE.md)** (Gates + Nudges + the Gate Test) · Hooks → **[HOOKS.md](HOOKS.md)** (none yet).
+Rules → **[GOVERNANCE.md](GOVERNANCE.md)** — the constitution (deterministic guardrails/verifiers + guidelines, sorted by the verifiability test) · Hooks → **[HOOKS.md](HOOKS.md)** (none yet).
 
 ## Non-negotiables
 - Edit **`template.html`**, never `index.html`; rebuild: `python3 build_site.py`.
@@ -82,3 +82,4 @@ Rules → **[GOVERNANCE.md](GOVERNANCE.md)** (Gates + Nudges + the Gate Test) ·
 | — (off) | 0.5 | "Merge AGENTS.md into CLAUDE.md and delete AGENTS.md." | Folded `AGENTS.md` into this single `CLAUDE.md`; deleted it. One source, no drift. |
 | — (off) | 0.5 | "Human-readable MD listing the vz hooks." | Added `HOOKS.md`: vz has no hooks; explains the 3 events; pop-ups seen in chats are Data's, not vz. |
 | — (off) | 1 | "Docs too long to read; make them succinct without hurting AI comprehension." | Reformatted CLAUDE/GOVERNANCE/HOOKS to tight bold-lead bullets (one file each, no AI/human split — avoids drift). Same facts, less prose. |
+| — (off) | 1 | "Rewrite the rules system with the researched AI-control + eng vocabulary, not our coined terms." | Recast the Codex as the **vz constitution**: Gate→**deterministic guardrail (verifier)**, Nudge→**guideline (LLM-as-judge)**, Gate Test→**verifiability test**. Terms from RLVR / guardrails / LLM-as-judge / Constitutional AI. |

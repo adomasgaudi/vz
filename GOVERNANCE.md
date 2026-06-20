@@ -1,37 +1,39 @@
-# the vz Codex
+# the vz constitution
 
-The rules that keep this repo correct. Every entry is a **Gate** or a **Nudge**,
-decided by the **Gate Test**. No third kind; "rule" is too vague to use.
+The principles that keep this repo correct — named the way AI systems are actually
+governed. Every principle is one of two kinds, sorted by the **verifiability test**.
+(*constitution* = a governing set of principles, after Constitutional AI.)
 
-## Principle 0 — the Gate Test (meta-rule; classifies every entry)
-- **Can a dumb computer decide it for certain — yes/no, no judgment?**
-  - **Yes → Gate.** Write a hook that blocks. Never let it slip.
-  - **No → Nudge.** Needs a mind; surface as a reminder, never auto-block.
-- Prevents two failures:
-  - **Gate left as a Nudge** — a provable thing left to memory, so it slips (was: "forgot to rebuild").
-  - **Nudge faked as a Gate** — a judgment call wired into a dumb script.
-- Adding anything → apply the Gate Test first, then file it.
+## The verifiability test (meta-principle; sorts every principle)
+- **Can a program decide it for certain — binary, no judgment?**
+  - **Yes → a deterministic guardrail.** Back it with a **verifier** (a hook that checks and blocks). Reliable, cheap, every run.
+  - **No → a guideline.** Needs judgment; at most an **LLM-as-judge** can grade it. Surface as a reminder, never auto-block.
+- Why this split (from the research):
+  - **Verifiable rewards (RLVR)** beat learned judges on reliability + cost — *deterministic verifiers, binary feedback, less reward hacking.* So verify whenever you can.
+  - **LLM-as-judge** carries verbosity/position/self-enhancement bias (~65% expert agreement) → a model-graded rule is a hint, not an enforcement.
+  - **Reward hacking** caveat: even a verifier gets gamed if its check is loose — pin the real goal, not a proxy.
 
-## Definitions
-- **Gate** — a check a dumb computer decides for certain (string==string, diff touches a file, n>m, pattern match). Enforced by a **hook that blocks**. Binary, no judgment. If it needs a human/AI to "look and decide", it's not a Gate.
-- **Nudge** — a check needing judgment (compact? right abstraction? SP fair? whole bug-class fixed?). Enforced by a **reminder only**. Never auto-blocked.
-- *Modern AI names (if useful):* Gate ≈ verifier / verifiable reward · Nudge ≈ LLM-as-judge / reward model · this whole file ≈ a constitution.
+## The two kinds
+- **Deterministic guardrail (verifier)** — a program decides it for certain (`string==string`, diff touches a file, `n>m`, `node --check`). Enforced by a **hook that blocks**. Binary, no judgment.
+  - AI term: *verifier / verifiable check (RLVR)* · eng term: *error-level lint rule / CI gate*.
+- **Guideline (LLM-as-judge)** — needs judgment (compact? right abstraction? SP fair? whole bug-class fixed?). Graded at most by an **LLM-as-judge**, else a human call. Reminder only, never auto-blocked.
+  - AI term: *LLM-as-judge / reward model* · eng term: *warning / code smell*.
 
-## Gates (deterministic → hook; each should become a hook)
-- **G1** `index.html` == `build_site.py` output → block · *TODO hook*
-- **G2** `index.html` never hand-edited (diff touches index w/o template) → block · *TODO*
-- **G3** version badge == latest `VERSIONS` entry → block · *TODO*
-- **G4** `template.html` changed ⇒ badge bumped → block · *TODO*
-- **G5** new `VERSIONS` entry has a numeric SP → block · *TODO*
-- **G6** embedded JS valid (`node --check`) → block · *TODO*
-- *TODO = agreed, hook not written yet. A Gate with no hook is a Nudge in disguise — writing the hooks is the next job.*
+## Deterministic guardrails (verifiers — each should become a hook)
+- **V1** `index.html` == `build_site.py` output → block · *no hook yet*
+- **V2** `index.html` never hand-edited (diff touches index w/o template) → block · *no hook yet*
+- **V3** version badge == latest `VERSIONS` entry → block · *no hook yet*
+- **V4** `template.html` changed ⇒ badge bumped → block · *no hook yet*
+- **V5** new `VERSIONS` entry has a numeric SP → block · *no hook yet*
+- **V6** embedded JS valid (`node --check`) → block · *no hook yet*
+- *No hook yet = verifier agreed, unwritten. An unenforced verifier is just a guideline — writing the hooks is the next job.*
 
-## Nudges (judgment → reminder only, never auto-block)
-- **N1** is the SP estimate fair? (effort-vs-value, not measurable)
-- **N2** is the design compact / on-brand? (taste)
-- **N3** fixed the whole bug *class*, not just the shown case?
-- **N4** terminology right? (turnover vs revenue)
+## Guidelines (LLM-as-judge / human call — reminder only)
+- **G1** is the SP estimate fair? (effort-vs-value, not measurable)
+- **G2** is the design compact / on-brand? (taste)
+- **G3** fixed the whole bug *class*, not just the shown case?
+- **G4** terminology right? (turnover vs revenue)
 
-## Adding to the Codex
-- One line → apply the Gate Test → file as **Gate** (+hook TODO) or **Nudge**.
-- A Gate isn't done until its hook exists.
+## Adding a principle
+- One line → apply the verifiability test → file as a **deterministic guardrail** (+ hook to write) or a **guideline**.
+- A guardrail isn't real until its verifier (hook) exists.
