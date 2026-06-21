@@ -88,7 +88,7 @@ Each rule = two rows: **description**, then *kind · type*.
 | **BULD-03** Story points | 0.5–10 per update, effort/time not LOC; logged in `VERSIONS` array, shown via "📋 SP history" modal |
 | <br /> | Hook - [`version_reminder.py`](.claude/hooks/version_reminder.py) - mixed |
 | **REPO-02** Branch | work from `main`; merge back immediately — never strand work on a side branch |
-| <br /> | Context - verifiable |
+| <br /> | Hook [`guard_main_push.py`](.claude/hooks/guard_main_push.py) · verifiable · Stable |
 | **WORD-01** Terminology | `revenue` = turnover/apyvarta · `estimatedIncome` = revenue/spėjamos pajamos |
 | <br /> | Context - judgment |
 | **PROC-05** Fix root, not symptom | ask why the bug is possible until the design flaw; fix the whole class |
