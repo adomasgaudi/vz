@@ -121,7 +121,13 @@
   .badge{background:var(--panel2);border:1px solid var(--border);border-radius:20px;padding:3px 12px;font-size:12px;color:var(--muted)}
   .btn{background:var(--panel2);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:6px 14px;font-size:13px;cursor:pointer;transition:.15s;font-family:inherit}
   .btn:hover{border-color:var(--accent);color:var(--accent)}
-  .sheet-desc{color:var(--muted);font-size:13px;margin-bottom:14px;padding:10px 14px;background:var(--panel);border-radius:8px;border-left:3px solid var(--accent)}
+  .sheet-desc{font-size:13px;margin-bottom:14px;padding:11px 14px;background:var(--panel);border-radius:8px;border-left:3px solid var(--accent)}
+  .sheet-desc .sd-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:5px}
+  .sheet-desc .sd-title{color:var(--text);font-size:14px;font-weight:600}
+  .sheet-desc .sd-tier{font-size:10.5px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;border:1px solid;border-radius:6px;padding:1px 7px}
+  .sheet-desc .sd-what{color:var(--muted);line-height:1.45}
+  .sheet-desc .sd-best{color:var(--muted);font-size:12px;margin-top:5px}
+  .sheet-desc .sd-best b{color:var(--text);font-weight:600}
   .table-wrap{overflow:auto;border:1px solid var(--border);border-radius:10px;background:var(--panel);min-height:200px;max-height:65vh}
   #dataView table{width:100%;border-collapse:separate;border-spacing:0;font-size:13px}
   #dataView thead{position:sticky;top:0;z-index:2}
@@ -162,7 +168,7 @@
 <div class="view active" id="dashView">
 <div class="wrap">
   <header>
-    <h1>🇱🇹 Lithuanian Communication & Marketing Agencies <span class="version">v0.1.39</span></h1>
+    <h1>🇱🇹 Lithuanian Communication & Marketing Agencies <span class="version">v0.1.40</span></h1>
     <p>Competitor landscape dashboard · 113 brands · Financials 2019–2024 (revenue, profit, headcount, salaries) · Source: rekvizitai.vz.lt data export</p>
   </header>
 
@@ -720,6 +726,7 @@ renderTable();
 
 // ---------- SP & version history ----------
 const VERSIONS = [
+  {v:'v0.1.40', date:'2026-06-21', sp:2,   desc:'Data Explorer tabs explained for newcomers: each tab now shows a plain-language title, a one-line “what this is”, a “Best for” hint, and an importance tag (Start here / Focused view / Advanced-raw) so a non-expert knows where to begin and what to skip. Also merged the orphaned NonActiveRules.md into notactiverules.md.'},
   {v:'v0.1.39', date:'2026-06-21', sp:3,   desc:'Fix Data Explorer blank (#persistent ROOT FOUND): the on-screen banner exposed “MY_BRAND is not defined” — a leftover reference from the MY_COMPANIES refactor threw at the scatter chart and halted the whole script before the explorer could init. Defined MY_BRAND = MY_COMPANIES[0].brand.'},
   {v:'v0.1.38', date:'2026-06-21', sp:2,   desc:'Changelog as a floating button: moved “SP history” out of the h1 into a small fixed bottom-right “📋 Changelog” button; paginated the history list (8 per page, Newer/Older) so you can scan what’s new in-page without opening the code.'},
   {v:'v0.1.37', date:'2026-06-21', sp:2,   desc:'Data Explorer still blank (#persistent): added on-screen JS error banner (phones have no devtools) + wrapped eager initDataExplorer() in try/catch so a thrown error is surfaced visibly instead of silently halting the whole script. Diagnostic to pinpoint the real root on the owner’s device.'},
@@ -764,13 +771,27 @@ document.addEventListener('keydown', e=>{ if(e.key==='Escape') histModal.classLi
 
 // ---------- Data explorer ----------
 const SHEET_ORDER=['Įmonės','Įmonės-analizei','Kūryba','PR','Raw'];
+// Each tab gets a plain-language title, a one-line "what this is", a "best for"
+// hint, and an importance tag so a newcomer knows where to start vs. what to skip.
+// tier: 'start' (begin here) · 'detail' (rich but wide) · 'niche' (specialist/raw).
 const SHEET_DESC={
-  'Įmonės':'Master company list — 169 agencies with full contact details, yearly employee counts, salaries, revenue, profit (2019–2024), social links, and credit risk ratings.',
-  'Įmonės-analizei':'Panel data reshaped for analysis — one row per company per year (2019–2024). 660 records covering 110+ brands with financials and segment tags.',
-  'Kūryba':'Creative (kūryba) agencies sub-view — filtered to companies active in the creative/advertising segment with per-company and segment totals.',
-  'PR':'Public relations agencies sub-view — filtered to PR firms with per-company and segment totals.',
-  'Raw':'Original raw data import — 103 companies as sourced, before cleaning and normalization.',
+  'Įmonės':{title:'Company directory',tier:'start',
+    what:'The master list — one row per agency (169 in all) with everything we know: contacts, website & socials, headcount, salaries, turnover and profit for every year 2019–2024, plus a credit-risk rating.',
+    best:'Looking up a single company and seeing its whole profile at a glance.'},
+  'Įmonės-analizei':{title:'Year-by-year table',tier:'start',
+    what:'The same companies, but one row per company per year (660 rows). Easier to compare or sort a single metric across time — this is the data behind the dashboard charts.',
+    best:'Sorting or filtering by one number (e.g. biggest turnover in 2024) and spotting trends.'},
+  'Kūryba':{title:'Creative agencies only',tier:'detail',
+    what:'A filtered slice — only firms doing creative / advertising work (kūryba), with their yearly figures and segment totals.',
+    best:'Sizing up just the creative corner of the market.'},
+  'PR':{title:'PR agencies only',tier:'detail',
+    what:'A filtered slice — only public-relations firms, with their yearly figures and segment totals.',
+    best:'Sizing up just the PR corner of the market.'},
+  'Raw':{title:'Original import (raw)',tier:'niche',
+    what:'The untouched source export of 103 companies before cleaning. Has duplicates and messy headers — kept only for traceability.',
+    best:'Checking provenance; most people can ignore this and use the two tables above.'},
 };
+const TIER_LABEL={start:{t:'Start here',c:'var(--green)'},detail:{t:'Focused view',c:'var(--accent)'},niche:{t:'Advanced / raw',c:'var(--muted)'}};
 const MONEY_COLS=new Set(['Apyvarta','Apyvarta 2019','Apyvarta 2020','Apyvarta 2021','Apyvarta 2022','Apyvarta 2023','Apyvarta 2024','Grynasis pelnas 2019','Grynasis pelnas 2020','Grynasis pelnas 2021','Grynasis pelnas 2022','Grynasis pelnas 2023','Grynasis pelnas 2024','Pelnas','DU sąnaudos','Ne-atlyginimų sąnaudos','Spėjamos pajamos','Atlyginimų sąnaudos 2019','Atlyginimų sąnaudos 2020','Atlyginimų sąnaudos 2021','Atlyginimų sąnaudos 2022','Atlyginimų sąnaudos 2023','Atlyginimų sąnaudos 2024','Atlyginimų sąnaudos 2025 05','Skola Sodrai','Apyvarta (1)','Spėjamos pajamos (1)','DU sąnaudos (1)','Ne-atlyginimų sąnaudos (1)','Pelnas (1)']);
 const PCT_PARTIAL=['Pokytis','pokytis'];
 const URL_PARTIAL=['URL','Svetainė','svetainė','Facebook','Instagram','LinkedIn','http'];
@@ -812,7 +833,12 @@ function buildDataTabs(){
 function renderDataSheet(){
   const sheet=SHEETS[dtSheet];if(!sheet)return;
   const cols=sheet.columns;
-  document.getElementById('sheetDesc').textContent=SHEET_DESC[dtSheet]||'';
+  const sd=SHEET_DESC[dtSheet], tl=sd&&TIER_LABEL[sd.tier];
+  document.getElementById('sheetDesc').innerHTML = sd
+    ? `<div class="sd-head"><span class="sd-title">${sd.title}</span><span class="sd-tier" style="color:${tl.c};border-color:${tl.c}">${tl.t}</span></div>`
+      + `<div class="sd-what">${sd.what}</div>`
+      + `<div class="sd-best"><b>Best for:</b> ${sd.best}</div>`
+    : '';
   const colTypes=cols.map((c,i)=>{
     const sample=sheet.rows.slice(0,20).map(r=>r[i]);
     const isMoney=MONEY_COLS.has(c);
