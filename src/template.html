@@ -147,6 +147,11 @@
   .data-tab.active{color:var(--accent);border-bottom-color:var(--accent);background:var(--panel)}
   .data-controls{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
   /* ── Rekvizitai source toggle (pressable pills) + source colours ── */
+  /* Rekvizitai company picker (pill row) */
+  .co-pills{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+  .co-pill{padding:7px 16px;font-size:13px;font-weight:600;border-radius:8px;border:1px solid var(--border);background:var(--panel);color:var(--muted);cursor:pointer;transition:.15s;font-family:inherit}
+  .co-pill:hover{color:var(--text);border-color:var(--muted)}
+  .co-pill.active{background:var(--accent);border-color:var(--accent);color:#fff}
   .seg{display:inline-flex;border:1px solid var(--border);border-radius:8px;overflow:hidden}
   .seg button{font-family:inherit;font-size:12.5px;font-weight:600;padding:6px 14px;background:var(--panel2);color:var(--muted);border:none;border-right:1px solid var(--border);cursor:pointer;transition:.12s}
   .seg button:last-child{border-right:none}
@@ -384,6 +389,7 @@
 
 <div class="view" id="rekView">
 <div class="wrap">
+  <div class="co-pills" id="rekCompanies"></div>
   <div class="sheet-desc" id="rekIntro"></div>
   <div class="data-tabs" id="rekTabs"></div>
   <div class="data-controls">
@@ -1139,30 +1145,28 @@ function renderDataRows(){
   }).join('');
 }
 
-// ---------- Rekvizitai page (sub-tab per scraped tab + source toggle) ----------
-let rekTab = (REK_DATA.order && REK_DATA.order[0]) || null;
+// ---------- Rekvizitai page (company picker → sub-tabs → source toggle) ----------
+const REK_COMPANIES = (REK_DATA && REK_DATA.companies) || [];
+let rekCo = REK_COMPANIES[0] || null;                 // current company block
+let rekTab = (rekCo && rekCo.order && rekCo.order[0]) || null;
 let rekMode = 'merge';            // merge | scrape | original
 let rekSort = -1, rekDir = 1;
+let ORIG_TABS = {};               // rebuilt per company (see selectCompany)
 
-// The matching record in the dashboard's own dataset (data.json). 6 vijos, MB is
-// the brand "6 Loops" (website 6loops.lt, LinkedIn /company/6-loops).
-const REK_BRAND = '6 Loops';
-
-// Build the "original" rows per sub-tab from the dashboard record, using field
-// names that line up with the scrape so the merge can detect overlaps.
-function buildOrigTabs(){
-  const recs = DATA.filter(d=>d.brand===REK_BRAND).sort((a,b)=>a.year-b.year);
+// Build the "original" rows per sub-tab from the dashboard record for `brand`,
+// using field names that line up with the scrape so merge can detect overlaps.
+function buildOrigTabs(brand){
   const T = {'Įmonė':[], 'Finansai':[], 'Darbuotojai':[], 'Skolos':[]};
+  if(!brand) return T;
+  const recs = DATA.filter(d=>d.brand===brand).sort((a,b)=>a.year-b.year);
   if(!recs.length) return T;
   const last = recs[recs.length-1];
-  // Įmonė: flat company facts (names chosen to match scrape labels where shared)
   if(last.company) T['Įmonė'].push(['Pavadinimas', last.company]);
   if(last.brand)   T['Įmonė'].push(['Brandas', last.brand]);
   if(last.city)    T['Įmonė'].push(['Miestas', last.city]);
   if(last.risk)    T['Įmonė'].push(['Kreditavimo rizika', last.risk]);
   if(last.activities && last.activities.length)
     T['Įmonė'].push(['Veiklos sritys', last.activities.join(', ')]);
-  // Finansai + Darbuotojai: per-year metrics (same-year, matches scrape table years)
   const eur = v => (v==null) ? null : Math.round(v).toLocaleString('lt-LT').replace(/,/g,' ')+' €';
   recs.forEach(r=>{
     if(r.revenue!=null)         T['Finansai'].push([`Pardavimo pajamos ${r.year}`, eur(r.revenue)]);
@@ -1173,9 +1177,9 @@ function buildOrigTabs(){
   });
   return T;
 }
-const ORIG_TABS = buildOrigTabs();
 
-function scrapeRows(tab){ return (REK_DATA.tabs[tab] && REK_DATA.tabs[tab].rows) || []; }
+function rekTabs(){ return (rekCo && rekCo.tabs) || {}; }
+function scrapeRows(tab){ const t=rekTabs()[tab]; return (t && t.rows) || []; }
 function origRows(tab){ return ORIG_TABS[tab] || []; }
 
 // Normalise a value for "same fact?" comparison: strip €/%, spaces, unify decimals.
@@ -1247,10 +1251,30 @@ function rekFiltered(){
   return rows;
 }
 
+function buildRekCompanies(){
+  const el=document.getElementById('rekCompanies');
+  if(!el) return;
+  if(REK_COMPANIES.length<2){ el.innerHTML=''; return; }   // hide picker if only one
+  el.innerHTML=REK_COMPANIES.map(c=>
+    `<button class="co-pill${c===rekCo?' active':''}" data-slug="${c.slug}">${c.name||c.slug}</button>`).join('');
+  el.querySelectorAll('.co-pill').forEach(btn=>btn.addEventListener('click',()=>{
+    selectCompany(btn.dataset.slug);
+  }));
+}
+
+function selectCompany(slug){
+  rekCo = REK_COMPANIES.find(c=>c.slug===slug) || REK_COMPANIES[0] || null;
+  ORIG_TABS = buildOrigTabs(rekCo && rekCo.brand);
+  rekTab = (rekCo && rekCo.order && rekCo.order[0]) || null;
+  rekSort=-1; const s=document.getElementById('rekSearch'); if(s) s.value='';
+  buildRekCompanies(); buildRekTabs(); renderRek();
+}
+
 function buildRekTabs(){
   const el=document.getElementById('rekTabs');
-  if(!REK_DATA.order || !REK_DATA.order.length){ el.innerHTML=''; return; }
-  el.innerHTML=REK_DATA.order.map(t=>{
+  const order=(rekCo && rekCo.order) || [];
+  if(!order.length){ el.innerHTML=''; return; }
+  el.innerHTML=order.map(t=>{
     const n=rowsForMode(t).length;
     return `<button class="data-tab${t===rekTab?' active':''}" data-rt="${t}">${t} <span style="opacity:.55">(${n})</span></button>`;
   }).join('');
@@ -1270,14 +1294,15 @@ function syncModeButtons(){
 
 function renderRek(){
   const intro=document.getElementById('rekIntro');
-  if(!REK_DATA.order || !REK_DATA.order.length){
-    intro.innerHTML='<div class="sd-what">No scrape data yet. Run <b>scripts/scrape_6_vijos.py</b> then <b>scripts/parse_6_vijos.py</b>.</div>';
-    document.getElementById('rekHead').innerHTML=''; document.getElementById('rekBody').innerHTML='';
+  if(!rekCo || !rekCo.order || !rekCo.order.length){
+    intro.innerHTML='<div class="sd-what">No scrape data yet. Run <b>scripts/scrape_company.py &lt;slug&gt;</b> then <b>scripts/parse_company.py &lt;slug&gt;</b>.</div>';
+    document.getElementById('rekTableWrap').innerHTML='';
     document.getElementById('rekRowCount').textContent=''; return;
   }
   const modeWord={merge:'Original + scrape merged', scrape:'Scrape only', original:'Dashboard data only'}[rekMode];
-  intro.innerHTML=`<div class="sd-head"><span class="sd-title">6 vijos, MB — Rekvizitai</span><span class="sd-tier" style="color:var(--muted);border-color:var(--muted)">${modeWord}</span></div>`
-    +`<div class="sd-what">Sub-tab per source page. <b>Original</b> = the dashboard's own record for brand "${REK_BRAND}". <b>Scrape</b> = live rekvizitai.vz.lt data. <b>Merge</b> unions both; each row is <b>coloured</b> by source. Year metrics are laid out as a year-by-year grid; in Merge a differing cell stacks <span style="color:var(--green)">original</span> over <span style="color:var(--accent)">scrape</span>.</div>`;
+  const brandNote = rekCo.brand ? `the dashboard's own record for brand "${rekCo.brand}"` : 'not tracked in the dashboard dataset (no original to merge)';
+  intro.innerHTML=`<div class="sd-head"><span class="sd-title">${rekCo.name||rekCo.slug} — Rekvizitai</span><span class="sd-tier" style="color:var(--muted);border-color:var(--muted)">${modeWord}</span></div>`
+    +`<div class="sd-what">Sub-tab per source page. <b>Original</b> = ${brandNote}. <b>Scrape</b> = live rekvizitai.vz.lt data. <b>Merge</b> unions both; each row is <b>coloured</b> by source. Year metrics are laid out as a year-by-year grid; in Merge a differing cell stacks <span style="color:var(--green)">original</span> over <span style="color:var(--accent)">scrape</span>.</div>`;
 
   const rows=rekFiltered();
   document.getElementById('rekRowCount').textContent=`${rows.length} field${rows.length!==1?'s':''}`;
@@ -1322,7 +1347,9 @@ function renderRek(){
 }
 
 function initRek(){
+  ORIG_TABS = buildOrigTabs(rekCo && rekCo.brand);
   syncModeButtons();
+  buildRekCompanies();
   buildRekTabs();
   renderRek();
   document.querySelectorAll('#rekMode button').forEach(b=>b.addEventListener('click',()=>{

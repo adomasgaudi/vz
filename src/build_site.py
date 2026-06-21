@@ -22,8 +22,12 @@ def load(*parts):
 data = load('data', 'data.json')
 sheets = load('data', 'sheets_data.json')
 # rek_tabs.json is optional — the dashboard still builds without a scrape.
+# New shape: {"companies":[{slug,name,brand,order,tabs}, ...]}.
 rek_path = os.path.join(ROOT, 'data', 'rek_tabs.json')
-rek = load('data', 'rek_tabs.json') if os.path.exists(rek_path) else {'order': [], 'tabs': {}}
+rek = load('data', 'rek_tabs.json') if os.path.exists(rek_path) else {'companies': []}
+if 'companies' not in rek:  # tolerate the old single-company shape
+    rek = {'companies': [dict(slug='company', name='Company', brand=None,
+                              order=rek.get('order', []), tabs=rek.get('tabs', {}))]}
 
 html = open(os.path.join(HERE, 'template.html'), encoding='utf-8').read()
 html = html.replace('__DATA__', json.dumps(data, ensure_ascii=False))
