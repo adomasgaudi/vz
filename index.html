@@ -3,10 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>LT Communication Agencies — Competitor Dashboard 2019–2024 · v0.1.65</title>
+<title>LT Communication Agencies — Competitor Dashboard 2019–2024 · v0.1.66</title>
 <script>
-  // Apply saved theme before first paint to avoid a flash. Default = light.
-  (function(){ try{ var t=localStorage.getItem('theme'); if(t==='dark') document.documentElement.setAttribute('data-theme','dark'); }catch(e){} })();
+  // Apply saved theme before first paint to avoid a flash. Default = dark.
+  (function(){ try{ var t=localStorage.getItem('theme'); if(t!=='light') document.documentElement.setAttribute('data-theme','dark'); }catch(e){} })();
 </script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
 <style>
@@ -63,7 +63,12 @@
   .kpi .label{color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.06em}
   .kpi .value{font-size:26px;font-weight:700;margin-top:4px}
   .kpi .sub{font-size:12px;margin-top:2px}
-  .kpi .formula{font-size:11px;color:var(--muted);margin-top:5px;padding-top:5px;border-top:1px solid var(--border);font-family:monospace;line-height:1.4;opacity:.7}
+  .kpi .formula{margin-top:6px;border-top:1px solid var(--border);padding-top:6px}
+  .kpi .formula>summary{font-size:11px;color:var(--muted);cursor:pointer;list-style:none;display:flex;align-items:center;gap:5px;user-select:none;text-transform:uppercase;letter-spacing:.05em}
+  .kpi .formula>summary::-webkit-details-marker{display:none}
+  .kpi .formula>summary::before{content:'▸';font-size:9px;opacity:.7;transition:transform .15s}
+  .kpi .formula[open]>summary::before{transform:rotate(90deg)}
+  .kpi .formula .formula-body{font-size:11px;color:var(--muted);font-family:monospace;line-height:1.4;opacity:.75;margin-top:6px}
   .pos{color:var(--green)} .neg{color:var(--red)}
   .grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:18px}
   .grid .full{grid-column:1/-1}
@@ -229,7 +234,7 @@
     <button class="nav-btn" data-view="dataView">Data Explorer</button>
     <button class="nav-btn" data-view="rekView">Rekvizitai</button>
   </div>
-  <span class="nav-version">v0.1.65</span>
+  <span class="nav-version">v0.1.66</span>
   <div class="settings-wrap">
     <button class="settings-cog" id="settingsCog" title="Settings" aria-label="Settings">⚙️</button>
     <div class="settings-menu" id="settingsMenu">
@@ -242,7 +247,7 @@
 <div class="view active" id="dashView">
 <div class="wrap">
   <header>
-    <h1>🇱🇹 Lithuanian Communication & Marketing Agencies <span class="version">v0.1.65</span></h1>
+    <h1>🇱🇹 Lithuanian Communication & Marketing Agencies <span class="version">v0.1.66</span></h1>
     <p>Competitor landscape dashboard · 113 brands · Financials 2019–2024 (revenue, profit, headcount, salaries) · Source: rekvizitai.vz.lt data export</p>
   </header>
 
@@ -594,7 +599,7 @@ function renderCompany(brand){
     {label:'Credit risk', value:m24.risk||'–', sub:'Segments: '+(m24.activities||[]).join(', '), cls:'', formula:'Source: rekvizitai.vz.lt credit rating\nSegments = activity tags from the dataset'},
   ];
   document.getElementById('mineKpis').innerHTML = cards.map(k=>
-    `<div class="kpi mine"><div class="label">${k.label}</div><div class="value">${k.value}</div><div class="sub ${k.cls}">${k.sub}</div>${k.formula?`<div class="formula">${k.formula.replace(/\n/g,'<br>')}</div>`:''}</div>`).join('');
+    `<div class="kpi mine"><div class="label">${k.label}</div><div class="value">${k.value}</div><div class="sub ${k.cls}">${k.sub}</div>${k.formula?`<details class="formula"><summary>formula</summary><div class="formula-body">${k.formula.replace(/\n/g,'<br>')}</div></details>`:''}</div>`).join('');
 
   // Charts — destroy old instances before redrawing
   if(chMineInst){ chMineInst.destroy(); chMineInst=null; }
@@ -867,6 +872,9 @@ renderTable();
 // ---------- SP & version history ----------
 // Each entry: title (2-5 words) · desc (5-15 words) · detail (15-50 words).
 const VERSIONS = [
+  {v:'v0.1.66', date:'2026-06-21', sp:1.5, title:'Collapse KPI formulas, dark default',
+    desc:'KPI formula text now sits in a closed dropdown; dark theme is the default.',
+    detail:'Each Fabula KPI card now tucks its YoY/Rank formula into a native <details> disclosure that is closed by default — the cards read as value + YoY/rank at a glance, formula one tap away (DATA-16 cram, joy-of-less). Also flipped the default theme to dark: only an explicit saved "light" stays light, so first-time and unset visitors get dark.'},
   {v:'v0.1.65', date:'2026-06-21', sp:1.5, title:'Fix Rekvizitai column overlap',
     desc:'Year values no longer overlap; table scrolls horizontally instead.',
     detail:'Dropped table-layout:fixed on the Rekvizitai matrix — it had squeezed ~8 year columns into ~30px each on mobile, so the nowrap euro values overflowed and overlapped the next column and the year headers clipped to "201". Now columns size to content and the table scrolls horizontally inside its wrapper, matching the Data Explorer table (DBG-02 contrast fix).'},
