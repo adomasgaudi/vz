@@ -823,7 +823,7 @@ function initDataExplorer(){
 
 function buildDataTabs(){
   const el=document.getElementById('dataTabs');
-  el.innerHTML=SHEET_ORDER.map(s=>`<button class="data-tab${s===dtSheet?' active':''}" data-sheet="${s}">${s}</button>`).join('');
+  el.innerHTML=SHEET_ORDER.map(s=>`<button class="data-tab${s===dtSheet?' active':''}" data-sheet="${s}">${(SHEET_META[s]&&SHEET_META[s].title)||s}</button>`).join('');
   el.querySelectorAll('.data-tab').forEach(btn=>btn.addEventListener('click',()=>{
     dtSheet=btn.dataset.sheet;dtSortCol=-1;dtPage=0;document.getElementById('dataSearch').value='';
     buildDataTabs();renderDataSheet();
