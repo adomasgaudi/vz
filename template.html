@@ -17,8 +17,11 @@
   header{margin-bottom:24px}
   header h1{font-size:26px;font-weight:700}
   header h1 .version{font-size:13px;font-weight:600;color:var(--muted);background:var(--panel2);border:1px solid var(--border);border-radius:20px;padding:2px 10px;vertical-align:middle;margin-left:8px}
-  header h1 .hist-btn{font-size:12px;font-weight:600;color:var(--accent);background:var(--panel2);border:1px solid var(--border);border-radius:20px;padding:3px 11px;vertical-align:middle;margin-left:4px;cursor:pointer;font-family:inherit}
-  header h1 .hist-btn:hover{border-color:var(--accent);color:var(--text)}
+  .hist-fab{position:fixed;right:16px;bottom:16px;z-index:500;font-size:12px;font-weight:600;color:var(--accent);background:var(--panel2);border:1px solid var(--border);border-radius:20px;padding:8px 14px;cursor:pointer;font-family:inherit;box-shadow:0 2px 10px rgba(0,0,0,.4)}
+  .hist-fab:hover{border-color:var(--accent);color:var(--text)}
+  .hist-pager{display:flex;align-items:center;gap:10px;margin-top:12px;font-size:12.5px;color:var(--muted)}
+  .hist-pager button{font-family:inherit;font-size:12px;background:var(--panel2);border:1px solid var(--border);border-radius:8px;padding:4px 10px;color:var(--text);cursor:pointer}
+  .hist-pager button:disabled{opacity:.4;cursor:default}
   .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.65);display:none;align-items:flex-start;justify-content:center;padding:40px 20px;z-index:50;overflow:auto}
   .modal-overlay.open{display:flex}
   .modal{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:24px;max-width:840px;width:100%}
@@ -159,7 +162,7 @@
 <div class="view active" id="dashView">
 <div class="wrap">
   <header>
-    <h1>🇱🇹 Lithuanian Communication & Marketing Agencies <span class="version">v0.1.3.5</span> <button class="hist-btn" id="histBtn">📋 SP history</button></h1>
+    <h1>🇱🇹 Lithuanian Communication & Marketing Agencies <span class="version">v0.1.3.7</span></h1>
     <p>Competitor landscape dashboard · 113 brands · Financials 2019–2024 (revenue, profit, headcount, salaries) · Source: rekvizitai.vz.lt data export</p>
   </header>
 
@@ -305,6 +308,8 @@
 </div>
 </div>
 
+<button class="hist-fab" id="histBtn">📋 Changelog</button>
+
 <div class="modal-overlay" id="histModal">
   <div class="modal">
     <div class="modal-head">
@@ -317,10 +322,24 @@
       <thead><tr><th>Version</th><th>Date</th><th>SP</th><th>Change</th></tr></thead>
       <tbody id="histBody"></tbody>
     </table>
+    <div class="hist-pager">
+      <button id="histPrev">← Newer</button>
+      <button id="histNext">Older →</button>
+      <span id="histPageInfo"></span>
+    </div>
   </div>
 </div>
 
 <script>
+// On-screen error diagnostic (#persistent PB: Data Explorer blank on mobile) —
+// phones have no devtools, so surface any uncaught error as a visible banner.
+window.addEventListener('error', e => {
+  let b = document.getElementById('errBanner');
+  if (!b) { b = document.createElement('div'); b.id = 'errBanner';
+    b.style.cssText = 'position:fixed;left:0;right:0;bottom:0;z-index:9999;background:#b23;color:#fff;font:12px/1.4 monospace;padding:8px;white-space:pre-wrap;max-height:40vh;overflow:auto';
+    document.body.appendChild(b); }
+  b.textContent = 'JS error: ' + (e.message || e.error) + '\n@ ' + (e.filename||'') + ':' + (e.lineno||'') + ':' + (e.colno||'');
+});
 const DATA = __DATA__;
 const SHEETS = __SHEETS_DATA__;
 
@@ -696,6 +715,8 @@ renderTable();
 
 // ---------- SP & version history ----------
 const VERSIONS = [
+  {v:'v0.1.3.7', date:'2026-06-21', sp:2,   desc:'Changelog as a floating button: moved “SP history” out of the h1 into a small fixed bottom-right “📋 Changelog” button; paginated the history list (8 per page, Newer/Older) so you can scan what’s new in-page without opening the code.'},
+  {v:'v0.1.3.6', date:'2026-06-21', sp:2,   desc:'Data Explorer still blank (#persistent): added on-screen JS error banner (phones have no devtools) + wrapped eager initDataExplorer() in try/catch so a thrown error is surfaced visibly instead of silently halting the whole script. Diagnostic to pinpoint the real root on the owner’s device.'},
   {v:'v0.1.3.5', date:'2026-06-20', sp:1,   desc:'Fix Data Explorer table invisible on mobile: replace max-height:calc(100vh-280px) with min-height:200px+max-height:65vh; add overflow-x:auto on tab strip so tabs scroll instead of clip.'},
   {v:'v0.1.3.4', date:'2026-06-20', sp:1,   desc:'Fix Data Explorer blank on mobile: removed lazy-init guard, now calls initDataExplorer() eagerly on page load so tabs and table are always populated regardless of click order.'},
   {v:'v0.1.3.3', date:'2026-06-20', sp:2,   desc:'Company tabs in "My companies" section. MY_COMPANIES array drives tab strip — currently only Fabula. Adding a company = push one object to the array. Charts and KPIs re-render on tab switch; old Chart instances destroyed before redraw.'},
@@ -714,8 +735,21 @@ const VERSIONS = [
 const spTotal = VERSIONS.reduce((s,v)=>s+v.sp,0);
 document.getElementById('spTotal').textContent = spTotal;
 document.getElementById('verCount').textContent = VERSIONS.length;
-document.getElementById('histBody').innerHTML = VERSIONS.map(v=>
-  `<tr><td class="vcol">${v.v}</td><td>${v.date}</td><td><span class="sp-badge">${v.sp}</span></td><td>${v.desc}</td></tr>`).join('');
+// Paginated changelog (VERSIONS is newest-first)
+const HIST_PAGE_SIZE = 8;
+let histPage = 0;
+function renderHistPage(){
+  const total = VERSIONS.length, pages = Math.ceil(total/HIST_PAGE_SIZE);
+  const start = histPage*HIST_PAGE_SIZE;
+  document.getElementById('histBody').innerHTML = VERSIONS.slice(start, start+HIST_PAGE_SIZE).map(v=>
+    `<tr><td class="vcol">${v.v}</td><td>${v.date}</td><td><span class="sp-badge">${v.sp}</span></td><td>${v.desc}</td></tr>`).join('');
+  document.getElementById('histPageInfo').textContent = `Page ${histPage+1} of ${pages}`;
+  document.getElementById('histPrev').disabled = histPage===0;
+  document.getElementById('histNext').disabled = start+HIST_PAGE_SIZE>=total;
+}
+renderHistPage();
+document.getElementById('histPrev').addEventListener('click', ()=>{ if(histPage>0){histPage--;renderHistPage();} });
+document.getElementById('histNext').addEventListener('click', ()=>{ if((histPage+1)*HIST_PAGE_SIZE<VERSIONS.length){histPage++;renderHistPage();} });
 const histModal = document.getElementById('histModal');
 document.getElementById('histBtn').addEventListener('click', ()=>histModal.classList.add('open'));
 document.getElementById('histClose').addEventListener('click', ()=>histModal.classList.remove('open'));
@@ -829,7 +863,8 @@ function renderDataRows(){
 }
 
 // Initialize Data Explorer eagerly so it works on first visit without a click
-initDataExplorer();
+try { initDataExplorer(); }
+catch (err) { window.dispatchEvent(new ErrorEvent('error', {message:'initDataExplorer: '+err.message, error:err})); }
 </script>
 </body>
 </html>

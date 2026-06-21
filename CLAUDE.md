@@ -15,10 +15,7 @@ Hook-vs-context framework + full events/hooks/permissions map → [Schema.md](Sc
 Shorthands the owner may type; mostly inherited from the Data repo. Unknown tag → search for the closest, act on it, confirm (DATA-25).
 
 - **`#remember`** — persist a rule/preference durably, then confirm where saved
-- **`#design`** — a look/feel choice to remember + apply everywhere (sweep siblings)
-- **`#ui`** — think extra about a control's purpose/frequency/placement before building
-- **`#cram`** / **`#cramp`** — make UI maximally compact; drop redundant labels
-- **`#toggle`** — use pressable pills, not checkboxes/segmented rows
+- **`#co-work`** — other AIs editing at once: don't camp on hot files, merge often
 - **`#careful`** — risky/many-part work: split, plan first, one part per turn
 - **`#senior`** — reason like the long-term owner: SSOT, invariants, root cause, blast radius
 - **`#prune`** — fix the whole class, not just the shown case; sweep every sibling
@@ -26,12 +23,17 @@ Shorthands the owner may type; mostly inherited from the Data repo. Unknown tag 
 - **`#persistent`** / **`#repeating`** — a recurring bug; log it, fix the root not the symptom
 - **`#super-persistent`** — defied many fixes: bisect history + on-screen diagnostic
 - **`#max-debug`** / **`#max`** — escalate debugging effort
+- <br />
 - **`#research`** — research best practices inline, grade each source
-- **`#co-work`** — other AIs editing at once: don't camp on hot files, merge often
-- **`#tokens`** — analyse token/model efficiency, give one recommended action
+- **`#design`** — a look/feel choice to remember + apply everywhere (sweep siblings)
+- **`#ui`** — think extra about a control's purpose/frequency/placement before building
+- **`#cram`** / **`#cramp`** — make UI maximally compact; drop redundant labels
 - **`#ai-only`** — owner won't touch backend; automate it, don't hand off chores
+- <br />
+- <br />
+* **`#tokens`** — analyse token/model efficiency, give one recommended action
 - **`#joy-of-less`** — the reach ladder: more-used controls closer to hand
-- **`#athlete`** / **`#view`** / **`#theme`** — Data-app-specific selectors (not used in vz)
+- **`#toggle`** — use pressable pills, not checkboxes/segmented rows
 
 ## Rules
 
@@ -150,38 +152,9 @@ Each rule = two rows: **description**, then *kind · type*.
 | **DATA-36** Default model | use the cheapest capable model for routine work; escalate only on failure |
 | <br /> | Context - verifiable |
 
-### Specs / tasks — not rules
+### Not-active rules
 
-*A spec describes how a feature works (project-specific fact), not a way-of-working. Differentiated from Parked rules, which ARE rules we chose not to adopt.*
-
-| Item | Description |
-| --- | --- |
-| **DATA-49** Effective-load maths | calcs use effective load (added + bodyweight share); display shows added weight — a Data feature spec, not a rule |
-
-### Parked — not adopted
-
-| Rule | Description / mechanics |
-| --- | --- |
-| **PROC-02** No padded lists | tag suggestions with code + severity; list real items, never pad to a round count |
-| <br /> | LOW |
-| <br /> | Context - judgment |
-| **PROC-03** Velocity check | weigh estimates against the owner's real pace; answer "worth it?" in days/SP |
-| <br /> | LOW |
-| <br /> | Context - judgment |
-| **DATA-08** No number clashes | pick task code + version LAST as highest-in-history + 1; re-derive after rebase |
-| <br /> | LOW |
-| <br /> | Context - verifiable |
-| **DATA-15** Toggles only | every option is a pressable pill; never checkbox/radio/segmented-row |
-| <br /> | LOW |
-| <br /> | Context - judgment |
-| **DATA-12** Write fresh, don't couple | write a similar view fresh using the other as inspiration, not copy-paste |
-| <br /> | LOW |
-| <br /> | Context - judgment |
-| **DATA-18** Version code-names | display renames the version via a name table; the number string is unchanged |
-| <br /> | LOW |
-| <br /> | Context - verifiable |
-
-*(DATA-21, DATA-23, DATA-31 were tasks, not rules — deleted from the Data repo, not adopted here. See META-02.)*
+Parked rules + specs/tasks (considered, not in force) moved to [notactiverules.md](notactiverules.md).
 
 
 ---

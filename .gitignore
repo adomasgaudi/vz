@@ -1,0 +1,2 @@
+# VS Code multi-root workspace (local, references sibling ../Data repo)
+*.code-workspace
