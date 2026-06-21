@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>LT Communication Agencies — Competitor Dashboard 2019–2024</title>
+<title>LT Communication Agencies — Competitor Dashboard 2019–2024 · v0.1.52</title>
 <script>
   // Apply saved theme before first paint to avoid a flash. Default = light.
   (function(){ try{ var t=localStorage.getItem('theme'); if(t==='dark') document.documentElement.setAttribute('data-theme','dark'); }catch(e){} })();
@@ -180,14 +180,14 @@
   <button class="nav-btn" data-view="dataView">Data Explorer</button>
   <div class="nav-spacer"></div>
   <button class="theme-toggle" id="themeToggle" title="Toggle light / dark theme" aria-label="Toggle theme"></button>
-  <span class="nav-version">v0.1.51</span>
+  <span class="nav-version">v0.1.52</span>
   <div class="nav-sub">113 brands · 2019–2024</div>
 </nav>
 
 <div class="view active" id="dashView">
 <div class="wrap">
   <header>
-    <h1>🇱🇹 Lithuanian Communication & Marketing Agencies <span class="version">v0.1.51</span></h1>
+    <h1>🇱🇹 Lithuanian Communication & Marketing Agencies <span class="version">v0.1.52</span></h1>
     <p>Competitor landscape dashboard · 113 brands · Financials 2019–2024 (revenue, profit, headcount, salaries) · Source: rekvizitai.vz.lt data export</p>
   </header>
 
@@ -788,6 +788,7 @@ renderTable();
 
 // ---------- SP & version history ----------
 const VERSIONS = [
+  {v:'v0.1.52', date:'2026-06-21', sp:0.5, desc:'Version now also lives in the <title> tag; sharpen BULD-02 — bump the patch digit on every commit/deploy and sync all four spots (title, nav badge, h1 badge, top VERSIONS entry) + git vN.'},
   {v:'v0.1.51', date:'2026-06-21', sp:3,   desc:'White theme + light/dark toggle. Light is now the default; ☀️/🌙 pill in the top nav flips it and persists to localStorage (no-flash early-apply). Surfaces are token-driven; charts re-tint live (grid/ticks/legend) while brand series colours stay constant.'},
   {v:'v0.1.51', date:'2026-06-21', sp:1,   desc:'Add Rekvizitai scrape tab to Data Explorer: 6 vijos, MB full company profile scraped from rekvizitai.vz.lt (contacts, address, LinkedIn, Sodra debt, export share, credit risk).'},
   {v:'v0.1.50', date:'2026-06-21', sp:1,   desc:'Fix persistent Data Explorer crash: SHEET_META is not defined — buildDataTabs() used wrong variable name; correct name is SHEET_DESC. Root cause of every "Data Explorer blank" since v42.'},

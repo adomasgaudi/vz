@@ -53,7 +53,7 @@ Each rule = two rows: **description**, then *kind · type*. Sorted by theme, the
 | <br /> | Context · verifiable · TOP |
 | **REPO-04** Merge conflicts | never take one `template.html` side wholesale — merge feature-by-feature (badge, SP modal, My-company, turnover/revenue, Data Explorer), keep all |
 | <br /> | Context · judgment · TOP |
-| **BULD-02** Version badge | one continuous counter everywhere — `<h1>` badge = top `VERSIONS` entry = git commit; bump the patch digit (C in vA.B.C) every change; A/B owner-only |
+| **BULD-02** Version badge | one continuous counter everywhere — bump the patch digit (C in vA.B.C) on **every commit/deploy**, and sync all four spots: `<title>` tag, `.nav-version` badge, `<h1> .version` badge, top `VERSIONS` entry = git commit `vN`; A/B owner-only |
 | <br /> | Hook [`version_reminder.py`](.claude/hooks/version_reminder.py) · verifiable · MED |
 | **BULD-03** Story points | 0.5–10 per update, effort/time not LOC; logged in `VERSIONS` array, shown via "📋 SP history" modal |
 | <br /> | Hook [`version_reminder.py`](.claude/hooks/version_reminder.py) · mixed · MED |
