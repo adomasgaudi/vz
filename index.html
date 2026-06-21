@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>LT Communication Agencies — Competitor Dashboard 2019–2024 · v0.1.71</title>
+<title>LT Communication Agencies — Competitor Dashboard 2019–2024 · v0.1.72</title>
 <script>
   // Apply saved theme before first paint to avoid a flash. Default = dark.
   (function(){ try{ var t=localStorage.getItem('theme'); if(t!=='light') document.documentElement.setAttribute('data-theme','dark'); }catch(e){} })();
@@ -83,6 +83,9 @@
   .card .desc{color:var(--muted);font-size:12px;margin-bottom:12px}
   .chartbox{position:relative;height:340px}
   .chartbox.tall{height:520px}
+  /* overlay shown when the chosen source has no data for a chart */
+  .chart-empty{position:absolute;inset:0;display:none;align-items:center;justify-content:center;text-align:center;padding:0 24px;color:var(--muted);font-size:13px;line-height:1.5}
+  .chart-empty.show{display:flex}
   .controls{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
   select,input[type=text]{background:var(--panel2);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:6px 10px;font-size:13px}
   .insights{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px;margin-bottom:24px}
@@ -241,7 +244,7 @@
     <button class="nav-btn" data-view="dataView">Initial Data</button>
     <button class="nav-btn" data-view="rekView">Sourced Data</button>
   </div>
-  <span class="nav-version">v0.1.71</span>
+  <span class="nav-version">v0.1.72</span>
   <div class="settings-wrap">
     <button class="settings-cog" id="settingsCog" title="Settings" aria-label="Settings">⚙️</button>
     <div class="settings-menu" id="settingsMenu">
@@ -254,7 +257,7 @@
 <div class="view active" id="dashView">
 <div class="wrap">
   <header>
-    <h1>🇱🇹 Lithuanian Communication & Marketing Agencies <span class="version">v0.1.71</span></h1>
+    <h1>🇱🇹 Lithuanian Communication & Marketing Agencies <span class="version">v0.1.72</span></h1>
     <p>Competitor landscape dashboard · 113 brands · Financials 2019–2024 (revenue, profit, headcount, salaries) · Source: rekvizitai.vz.lt data export</p>
   </header>
 
@@ -342,6 +345,26 @@
       <div class="desc">Median revenue (spėjamos pajamos) per employee across companies in each segment — a productivity proxy. Pass-through ad spend is already excluded.</div>
       <div class="chartbox"><canvas id="chRevPerEmp"></canvas></div>
     </div>
+  </div>
+
+  <h2 class="section">Company deep-dive · scraped sources</h2>
+  <div class="card full">
+    <div class="desc">Per-company trends drawn from the sources we scraped. Pick a company and a data source; charts that a source can't supply show a note. <b>Initial</b> = dashboard dataset (yearly), <b>Rekvizitai</b> = rekvizitai.vz.lt financials, <b>Sodra</b> = monthly headcount &amp; wage.</div>
+    <div class="controls" style="align-items:center">
+      <div class="co-pills" id="ddCompanies"></div>
+      <span class="nav-spacer" style="flex:1"></span>
+      <div class="seg" id="ddSource">
+        <button data-src="initial" class="active">Initial</button>
+        <button data-src="rekvizitai">Rekvizitai</button>
+        <button data-src="sodra">Sodra</button>
+      </div>
+    </div>
+  </div>
+  <div class="grid">
+    <div class="card"><h2>Revenue / sales over time</h2><div class="desc" id="ddRevDesc"></div><div class="chartbox"><canvas id="ddRev"></canvas><div class="chart-empty" id="ddRevEmpty"></div></div></div>
+    <div class="card"><h2>Profit &amp; margin over time</h2><div class="desc" id="ddProfitDesc"></div><div class="chartbox"><canvas id="ddProfit"></canvas><div class="chart-empty" id="ddProfitEmpty"></div></div></div>
+    <div class="card"><h2>Headcount over time</h2><div class="desc" id="ddEmpDesc"></div><div class="chartbox"><canvas id="ddEmp"></canvas><div class="chart-empty" id="ddEmpEmpty"></div></div></div>
+    <div class="card"><h2>Average wage over time</h2><div class="desc" id="ddWageDesc"></div><div class="chartbox"><canvas id="ddWage"></canvas><div class="chart-empty" id="ddWageEmpty"></div></div></div>
   </div>
 
   <h2 class="section">Company explorer</h2>
@@ -881,6 +904,9 @@ renderTable();
 // ---------- SP & version history ----------
 // Each entry: title (2-5 words) · desc (5-15 words) · detail (15-50 words).
 const VERSIONS = [
+  {v:'v0.1.72', date:'2026-06-21 19:10', sp:4,   title:'Deep-dive charts by source',
+    desc:'New dashboard section: per-company charts with an Initial/Rekvizitai/Sodra source toggle.',
+    detail:'Added a "Company deep-dive" section for the scraped companies — a company picker + source toggle drives four charts (revenue/sales, profit & margin, headcount, average wage). Each re-plots from the chosen source (Initial=yearly dataset, Rekvizitai=scraped financials, Sodra=monthly headcount+wage); a source that cannot supply a metric shows a clear note instead of a blank chart. The existing dashboard is unchanged.'},
   {v:'v0.1.71', date:'2026-06-21 18:30', sp:4,   title:'Sourced Data: 3 sources + cubes',
     desc:'Renamed tabs; added Sodra as a third source with per-source colour cubes.',
     detail:'Data Explorer → "Initial Data", Rekvizitai → "Sourced Data". Modes are now Merged / Initial / Rekvizitai / Sodra (was Merge/Scrape/Original). Sodra monthly headcount+wage joins per company by code. Each row carries small 10px rounded source cubes (initial=green, rekvizitai=blue, sodra=amber); Merged shows all three, dimming sources with no value, and stacks differing values colour-keyed.'},
@@ -1203,6 +1229,126 @@ function renderDataRows(){
   }).join('');
 }
 
+// ---------- Company deep-dive (per-company charts across scraped sources) ----------
+const DD_COMPANIES = (REK_DATA && REK_DATA.companies) || [];
+let ddCo = DD_COMPANIES[0] || null;
+let ddSrc = 'initial';
+const DD_CHARTS = {};   // id -> Chart instance (destroyed before redraw)
+
+// Pull a per-year metric from a company's rekvizitai Finansai rows.
+// metricBase e.g. 'Pardavimo pajamos' ; returns [{x:year, y:number}] sorted.
+function rekYearSeries(co, metricBase){
+  const fin = (co && co.tabs && co.tabs['Finansai'] && co.tabs['Finansai'].rows) || [];
+  const out=[];
+  fin.forEach(([f,v])=>{
+    const m=f.match(/^(.*?)\s+(\d{4})$/);
+    if(m && m[1]===metricBase){
+      const num=parseFloat(String(v).replace(/[^0-9,.\-]/g,'').replace(/\s/g,'').replace(',', '.'));
+      if(!isNaN(num)) out.push({x:m[2], y:num});
+    }
+  });
+  return out.sort((a,b)=>a.x.localeCompare(b.x));
+}
+// Initial-source yearly series for the company's brand from DATA.
+function initSeries(co, field){
+  if(!co || !co.brand) return [];
+  return DATA.filter(d=>d.brand===co.brand && d[field]!=null)
+             .sort((a,b)=>a.year-b.year)
+             .map(d=>({x:String(d.year), y:+d[field]}));
+}
+// Sodra monthly series.
+function sodraSeries(co, key){
+  const s = co && co.sodra; if(!s) return [];
+  return (s.months||[]).filter(m=>m[key]!=null && !(key==='avgWage'&&m[key]===0))
+    .map(m=>{const ym=String(m.month);return {x: ym.length===6?ym.slice(0,4)+'-'+ym.slice(4):ym, y:+m[key]};});
+}
+
+// Each chart: a spec returning {series:[{label,data,color,type?,yAxisID?}], yTitle, note}
+// per source, or {empty:'message'} when the source can't supply it.
+const DD_SPECS = {
+  ddRev: {
+    title:'Revenue / sales',
+    initial: co => ({series:[
+        {label:'Turnover (apyvarta) €', data:initSeries(co,'revenue'), color:cssVar('--muted')},
+        {label:'Revenue (sp. pajamos) €', data:initSeries(co,'estimatedIncome'), color:cssVar('--accent')}
+      ], yTitle:'€'}),
+    rekvizitai: co => ({series:[{label:'Pardavimo pajamos €', data:rekYearSeries(co,'Pardavimo pajamos'), color:cssVar('--accent')}], yTitle:'€'}),
+    sodra: () => ({empty:'Sodra does not report revenue — it covers headcount, wages and tax only.'}),
+  },
+  ddProfit: {
+    title:'Profit & margin',
+    initial: co => ({series:[{label:'Net profit €', data:initSeries(co,'profit'), color:cssVar('--green')}], yTitle:'€'}),
+    rekvizitai: co => ({series:[
+        {label:'Net profit €', data:rekYearSeries(co,'Grynasis pelnas (nuostoliai)'), color:cssVar('--green')},
+        {label:'Pre-tax profit €', data:rekYearSeries(co,'Pelnas (nuostoliai) prieš mokesčius'), color:cssVar('--amber')},
+        {label:'Net margin %', data:rekYearSeries(co,'Grynasis pelningumas'), color:cssVar('--purple'), yAxisID:'y2'}
+      ], yTitle:'€', y2Title:'%'}),
+    sodra: () => ({empty:'Sodra does not report profit.'}),
+  },
+  ddEmp: {
+    title:'Headcount',
+    initial: co => ({series:[{label:'Employees (yearly)', data:initSeries(co,'employees'), color:cssVar('--accent')}], yTitle:'people'}),
+    rekvizitai: co => ({series:[{label:'Employees', data:rekYearSeries(co,'Darbuotojų skaičius'), color:cssVar('--accent')}], yTitle:'people'}),
+    sodra: co => ({series:[{label:'Insured (monthly)', data:sodraSeries(co,'numInsured'), color:cssVar('--amber')}], yTitle:'people'}),
+  },
+  ddWage: {
+    title:'Average wage',
+    initial: co => ({series:[{label:'Avg salary €/mo (yearly)', data:initSeries(co,'avgSalary'), color:cssVar('--accent')}], yTitle:'€/mo'}),
+    rekvizitai: () => ({empty:'Rekvizitai page does not expose a wage series.'}),
+    sodra: co => ({series:[{label:'Avg wage €/mo (monthly)', data:sodraSeries(co,'avgWage'), color:cssVar('--amber')}], yTitle:'€/mo'}),
+  },
+};
+
+function drawDD(){
+  if(!ddCo){ return; }
+  Object.keys(DD_SPECS).forEach(id=>{
+    const spec=DD_SPECS[id][ddSrc] ? DD_SPECS[id][ddSrc](ddCo) : {empty:'No data.'};
+    const emptyEl=document.getElementById(id+'Empty');
+    const descEl=document.getElementById(id+'Desc');
+    if(DD_CHARTS[id]){ DD_CHARTS[id].destroy(); DD_CHARTS[id]=null; }
+    const hasData = spec.series && spec.series.some(s=>s.data && s.data.length);
+    if(!hasData){
+      emptyEl.textContent = spec.empty || `No ${DD_SPECS[id].title.toLowerCase()} data from ${ddSrc} for ${ddCo.name||ddCo.slug}.`;
+      emptyEl.classList.add('show');
+      if(descEl) descEl.textContent='';
+      return;
+    }
+    emptyEl.classList.remove('show');
+    if(descEl) descEl.textContent = `Source: ${ddSrc}`;
+    const labels=[...new Set(spec.series.flatMap(s=>s.data.map(p=>p.x)))].sort();
+    const scales={ y:{title:{display:true,text:spec.yTitle||''}, grid:{color:GRID}} };
+    if(spec.y2Title) scales.y2={position:'right', grid:{drawOnChartArea:false}, title:{display:true,text:spec.y2Title}};
+    DD_CHARTS[id]=new Chart(document.getElementById(id), {
+      data:{ labels, datasets: spec.series.map(s=>({
+        type: s.type || (s.yAxisID==='y2'?'line':'line'),
+        label:s.label,
+        data: labels.map(x=>{const p=s.data.find(d=>d.x===x); return p?p.y:null;}),
+        borderColor:s.color, backgroundColor:s.color, tension:.25, spanGaps:true,
+        yAxisID:s.yAxisID||'y', pointRadius: labels.length>40?0:2,
+      }))},
+      options:{maintainAspectRatio:false, interaction:{mode:'index',intersect:false}, scales}
+    });
+  });
+}
+
+function buildDDCompanies(){
+  const el=document.getElementById('ddCompanies'); if(!el) return;
+  el.innerHTML=DD_COMPANIES.map(c=>`<button class="co-pill${c===ddCo?' active':''}" data-slug="${c.slug}">${c.name||c.slug}</button>`).join('');
+  el.querySelectorAll('.co-pill').forEach(btn=>btn.addEventListener('click',()=>{
+    ddCo=DD_COMPANIES.find(c=>c.slug===btn.dataset.slug)||ddCo; buildDDCompanies(); drawDD();
+  }));
+}
+function initDD(){
+  if(!DD_COMPANIES.length) return;
+  buildDDCompanies();
+  document.querySelectorAll('#ddSource button').forEach(b=>b.addEventListener('click',()=>{
+    ddSrc=b.dataset.src;
+    document.querySelectorAll('#ddSource button').forEach(x=>x.classList.toggle('active',x.dataset.src===ddSrc));
+    drawDD();
+  }));
+  drawDD();
+}
+
 // ---------- Rekvizitai page (company picker → sub-tabs → source toggle) ----------
 const REK_COMPANIES = (REK_DATA && REK_DATA.companies) || [];
 let rekCo = REK_COMPANIES[0] || null;                 // current company block
@@ -1486,6 +1632,8 @@ try { initDataExplorer(); }
 catch (err) { window.dispatchEvent(new ErrorEvent('error', {message:'initDataExplorer: '+err.message, error:err})); }
 try { initRek(); }
 catch (err) { window.dispatchEvent(new ErrorEvent('error', {message:'initRek: '+err.message, error:err})); }
+try { initDD(); }
+catch (err) { window.dispatchEvent(new ErrorEvent('error', {message:'initDD: '+err.message, error:err})); }
 </script>
 </body>
 </html>
