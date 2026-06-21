@@ -172,6 +172,8 @@ Each rule = two rows: **description**, then *kind · type*. Sorted by theme, the
 
 Parked rules + specs/tasks (considered, not in force) moved to [notactiverules.md](docs/notactiverules.md).
 
+Planned-but-unbuilt features (state-registry sourcing, LT i18n, Supabase) → [future-features.md](docs/future-features.md).
+
 
 ---
 
