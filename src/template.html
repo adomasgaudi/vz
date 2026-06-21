@@ -103,11 +103,12 @@
   tr.mine td:first-child{box-shadow:inset 3px 0 0 var(--gold)}
   @media(max-width:900px){.grid{grid-template-columns:1fr}}
   @media(max-width:600px){
-    .topnav{padding:0 12px}
-    .topnav .logo{font-size:13px;margin-right:8px}
-    .nav-btn{padding:12px 12px;font-size:12px}
+    .topnav{padding:0 4px;overflow-x:auto;-webkit-overflow-scrolling:touch;flex-wrap:nowrap}
+    .topnav .logo{display:none}
+    .nav-btn{padding:10px 10px;font-size:12px;white-space:nowrap;flex-shrink:0}
     .nav-sub{display:none}
     .nav-spacer{display:none}
+    .nav-version{display:none}
     #dashView .wrap,#dataView .wrap{padding:16px 12px}
     .kpi-strip{gap:10px}
     .kpi-card{padding:14px}
@@ -847,6 +848,9 @@ const VERSIONS = [
   {v:'v0.1.57', date:'2026-06-21', sp:3,   title:'Changelog + Rek table tidy',
     desc:'Restructured changelog; Rekvizitai table reorganised into year columns.',
     detail:'Changelog: every entry now has a 2-5w title, 5-15w desc and 15-50w detail, paged 10 at a time; HTML-escaped so literal tags like the title element no longer corrupt the list. Rekvizitai: removed source text tags (rows are coloured by source instead), long text wraps, and year metrics pivot into a year-by-year grid.'},
+  {v:'v0.1.57', date:'2026-06-21', sp:1,   title:'Fix mobile nav overflow',
+    desc:'Top nav scrolls and sheds the logo on small phones.',
+    detail:'Parallel session fix merged in: the top nav now scrolls horizontally at ≤600px and hides the logo and version badge on mobile to make room for the Dashboard / Data Explorer / Rekvizitai tabs.'},
   {v:'v0.1.56', date:'2026-06-21', sp:3,   title:'Rekvizitai merge toggle',
     desc:'Original / Scrape / Merge switch on each Rekvizitai sub-tab.',
     detail:'Per-sub-tab segmented toggle. Original = the dashboard\'s own "6 Loops" record reshaped to match scrape field names. Merge unions both sources by field and colour-codes each row by origin (original green, scrape blue, both purple); values that differ are shown side by side.'},
