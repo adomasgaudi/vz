@@ -8,6 +8,10 @@ Per tab we run whichever extractors fit that page:
   - label/value rows  : 2/3-column <table> rows (overview contacts/codes, etc.)
   - year table        : the Finansai <table class="finances-table"> — a metric ×
                         year grid, flattened to "<metric> <year>" -> value rows
+  - chart series      : the Highcharts time-series behind the diagrams, embedded
+                        as `JSON.parse('...')` blobs (financials back to 2017,
+                        monthly VMI/Sodra debt history, headcount over time) —
+                        these are the numbers the static tables/prose DON'T show
   - prose facts       : targeted regexes for headcount / debt sentences that
                         aren't in tables (Darbuotojai, Skolos)
 The Ataskaitos tab is a paywall sales page with no free data — skipped.
@@ -17,6 +21,7 @@ import json
 import os
 import re
 import sys
+from datetime import datetime, timezone
 
 sys.stdout.reconfigure(encoding="utf-8")
 from bs4 import BeautifulSoup
@@ -113,6 +118,56 @@ def finances_grid(soup, add):
                 add(f"{metric} {year}", vals[i])
 
 
+# Highcharts series key -> LT label for the CSV.
+SERIES_LABEL = {
+    "salesRevenue": "Pardavimo pajamos (grafikas)",
+    "profitBeforeTaxes": "Pelnas prieš mokesčius (grafikas)",
+    "netProfit": "Grynasis pelnas (grafikas)",
+    "vmiDebt": "Skola VMI",
+    "sodraDebt": "Skola Sodrai",
+    "__employees__": "Darbuotojų skaičius (grafikas)",
+}
+
+
+def _ts_to_label(ms, daily):
+    """Epoch-ms -> 'YYYY-MM-DD' for dated snapshots, 'YYYY' for annual series."""
+    try:
+        d = datetime.fromtimestamp(ms / 1000, tz=timezone.utc)
+        return d.strftime("%Y-%m-%d") if daily else d.strftime("%Y")
+    except Exception:
+        return str(ms)
+
+
+def chart_series(html, add):
+    """Extract the Highcharts time-series embedded as JSON.parse('...') blobs —
+    the data behind the diagrams that the tables/prose don't expose."""
+    for m in re.finditer(r"JSON\.parse\('((?:[^'\\]|\\.)*)'\)", html):
+        try:
+            obj = json.loads(m.group(1).encode("utf-8").decode("unicode_escape"))
+        except Exception:
+            continue
+
+        # A bare array is the employees headcount series on the Darbuotojai tab.
+        named = obj if isinstance(obj, dict) else {"__employees__": obj}
+        for key, pts in named.items():
+            if not isinstance(pts, list) or not pts:
+                continue
+            if not all(isinstance(p, list) and len(p) == 2 for p in pts):
+                continue
+            label = SERIES_LABEL.get(key, key)
+            # Debt + headcount are dated snapshots (use full date so points don't
+            # collide); financials are annual (year is enough).
+            daily = key in ("vmiDebt", "sodraDebt", "__employees__")
+            for ts, val in pts:
+                if val is None:
+                    continue  # no value recorded at this date
+                lbl = _ts_to_label(ts, daily)
+                # debt values are floats (eur); financials are ints
+                v = f"{val} €" if key in ("salesRevenue", "profitBeforeTaxes",
+                                           "netProfit", "vmiDebt", "sodraDebt") else str(val)
+                add(f"{label} {lbl}", v)
+
+
 def prose_facts(soup, add):
     """Headcount / debt sentences that live in text, not tables."""
     body = soup.get_text(" ", strip=True)
@@ -137,7 +192,8 @@ def prose_facts(soup, add):
 
 
 def parse_tab(key, path):
-    soup = BeautifulSoup(open(path, encoding="utf-8").read(), "html.parser")
+    html = open(path, encoding="utf-8").read()
+    soup = BeautifulSoup(html, "html.parser")
     rows = []
     seen = set()
 
@@ -156,9 +212,11 @@ def parse_tab(key, path):
         label_value_rows(soup, add)
     elif key == "finansai":
         finances_grid(soup, add)
+        chart_series(html, add)
         label_value_rows(soup, add)
     elif key in ("darbuotojai", "skolos"):
         prose_facts(soup, add)
+        chart_series(html, add)
         label_value_rows(soup, add)
     return rows
 

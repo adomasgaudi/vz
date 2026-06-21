@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>LT Communication Agencies — Competitor Dashboard 2019–2024 · v0.1.53</title>
+<title>LT Communication Agencies — Competitor Dashboard 2019–2024 · v0.1.54</title>
 <script>
   // Apply saved theme before first paint to avoid a flash. Default = light.
   (function(){ try{ var t=localStorage.getItem('theme'); if(t==='dark') document.documentElement.setAttribute('data-theme','dark'); }catch(e){} })();
@@ -180,14 +180,14 @@
   <button class="nav-btn" data-view="dataView">Data Explorer</button>
   <div class="nav-spacer"></div>
   <button class="theme-toggle" id="themeToggle" title="Toggle light / dark theme" aria-label="Toggle theme"></button>
-  <span class="nav-version">v0.1.53</span>
+  <span class="nav-version">v0.1.54</span>
   <div class="nav-sub">113 brands · 2019–2024</div>
 </nav>
 
 <div class="view active" id="dashView">
 <div class="wrap">
   <header>
-    <h1>🇱🇹 Lithuanian Communication & Marketing Agencies <span class="version">v0.1.53</span></h1>
+    <h1>🇱🇹 Lithuanian Communication & Marketing Agencies <span class="version">v0.1.54</span></h1>
     <p>Competitor landscape dashboard · 113 brands · Financials 2019–2024 (revenue, profit, headcount, salaries) · Source: rekvizitai.vz.lt data export</p>
   </header>
 
@@ -788,6 +788,7 @@ renderTable();
 
 // ---------- SP & version history ----------
 const VERSIONS = [
+  {v:'v0.1.54', date:'2026-06-21', sp:2,   desc:'Rekvizitai scrape now also pulls the Highcharts time-series behind the diagrams (embedded JSON.parse blobs) — financials back to 2017, full dated VMI/Sodra debt history, headcount over time. 151 fields, was 64. Debt/headcount points use full YYYY-MM-DD so snapshots don\'t collide.'},
   {v:'v0.1.53', date:'2026-06-21', sp:3,   desc:'Rekvizitai scrape now covers ALL company tabs (Įmonė, Finansai, Darbuotojai, Skolos), not just Įmonė — 64 fields incl. a 2021–2025 financial statement (sales, profit, margins, equity, assets, liabilities). Rek sheet gains a "tab" column; parser auto-syncs it into sheets_data.json.'},
   {v:'v0.1.52', date:'2026-06-21', sp:0.5, desc:'Version now also lives in the <title> tag; sharpen BULD-02 — bump the patch digit on every commit/deploy and sync all four spots (title, nav badge, h1 badge, top VERSIONS entry) + git vN.'},
   {v:'v0.1.51', date:'2026-06-21', sp:3,   desc:'White theme + light/dark toggle. Light is now the default; ☀️/🌙 pill in the top nav flips it and persists to localStorage (no-flash early-apply). Surfaces are token-driven; charts re-tint live (grid/ticks/legend) while brand series colours stay constant.'},
@@ -867,7 +868,7 @@ const SHEET_DESC={
     what:'The untouched source export — 103 rows before deduplication; 77% of its columns fed into "All companies (cleaned)". Has messy headers and duplicates; kept for traceability only.',
     best:'Checking where a data point came from; most users should use the cleaned tables above.'},
   'Rek':{title:'Rekvizitai scrape',tier:'niche',
-    what:'Live data scraped from rekvizitai.vz.lt across all company tabs (Įmonė, Finansai, Darbuotojai, Skolos) for 6 vijos, MB — contacts, codes, a five-year financial statement (sales, profit, margins, equity, assets, liabilities 2021–2025), headcount and debt status. The "tab" column shows which page each field came from.',
+    what:'Live data scraped from rekvizitai.vz.lt across all company tabs (Įmonė, Finansai, Darbuotojai, Skolos) for 6 vijos, MB — contacts, codes, the financial statement (sales, profit, margins, equity, assets, liabilities), plus the time-series behind the on-page diagrams: financials back to 2017, the dated VMI/Sodra debt history and headcount over time. The "tab" column shows which page each field came from; "(grafikas)" marks chart-series values.',
     best:'Checking fields not in the Excel export, e.g. phone, LinkedIn, export %, year-by-year financials and Sodra/registered-debt status.'},
 };
 const TIER_LABEL={start:{t:'Start here',c:'var(--green)'},detail:{t:'Focused view',c:'var(--accent)'},niche:{t:'Advanced / raw',c:'var(--muted)'}};
