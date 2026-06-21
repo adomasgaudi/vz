@@ -23,16 +23,16 @@ Grade = importance. Kind = Hook (fires) or Context (just text). 3rd row = runtim
 | Rule | Description |
 | --- | --- |
 | **BULD-01** Edit source | Edit `template.html`, never `index.html`; rebuild `python3 build_site.py` |
-| <br /> | Context · verifiable |
+| <br /> | Context · verifiable · Stable |
 | <br /> | ~12 always-on tokens; no runtime |
 | **REPO-01** Save | commit + push to `main` after every change — owner only sees the live site; then send rebuilt `index.html` |
-| <br /> | Context · verifiable |
+| <br /> | Context · verifiable · Stable |
 | <br /> | ~25 always-on tokens; no runtime |
 | **REPO-03** Sync first | before work, `git fetch origin main` + rebase/merge (parallel AIs edit at once) |
-| <br /> | Context · verifiable |
+| <br /> | Context · verifiable · Stable |
 | <br /> | ~15 always-on tokens; no runtime |
 | **REPO-04** Merge conflicts | never take one `template.html` side wholesale — merge feature-by-feature (badge, SP modal, My-company, turnover/revenue, Data Explorer), keep all |
-| <br /> | Context · judgment |
+| <br /> | Context · judgment · Conditional |
 | <br /> | ~30 always-on tokens; no runtime |
 
 ### MED
@@ -40,16 +40,16 @@ Grade = importance. Kind = Hook (fires) or Context (just text). 3rd row = runtim
 | Rule | Description |
 | --- | --- |
 | **BULD-02** Version badge | `<h1>` badge every change. `vA.B.C`: bump **C**; **B** owner-only; **A** owner-only |
-| <br /> | Hook [`version_reminder.py`](.claude/hooks/version_reminder.py) · verifiable |
+| <br /> | Hook [`version_reminder.py`](.claude/hooks/version_reminder.py) · verifiable · Stable |
 | <br /> | ~30ms Python per Edit/Write; ~40 tokens only on template edit |
 | **BULD-03** Story points | 0.5–10 per update, effort/time not LOC; logged in `VERSIONS` array, shown via "📋 SP history" modal |
-| <br /> | Hook [`version_reminder.py`](.claude/hooks/version_reminder.py) · mixed |
+| <br /> | Hook [`version_reminder.py`](.claude/hooks/version_reminder.py) · mixed · Principle |
 | <br /> | shares BULD-02's hook spawn; no extra cost |
 | **REPO-02** Branch | work from `main`; merge back immediately — never strand work on a side branch |
-| <br /> | Context · verifiable |
+| <br /> | Context · verifiable · Stable |
 | <br /> | ~15 always-on tokens; no runtime |
 | **WORD-01** Terminology | `revenue` = turnover/apyvarta · `estimatedIncome` = revenue/spėjamos pajamos |
-| <br /> | Context · judgment |
+| <br /> | Context · judgment · Stable |
 | <br /> | ~15 always-on tokens; no runtime |
 
 ### LOW
@@ -57,25 +57,25 @@ Grade = importance. Kind = Hook (fires) or Context (just text). 3rd row = runtim
 | Rule | Description |
 | --- | --- |
 | **WORD-02** Explanation length | keep explanatory blurbs 5–15 words; doesn't apply to deliberately long docstrings (e.g. the mechanistic hook headers) |
-| <br /> | Context · judgment |
+| <br /> | Context · judgment · Principle |
 | <br /> | ~20 always-on tokens; no runtime |
 | **CONV-01** Brevity | answer simple conversational questions in 5–15 words; no preamble |
-| <br /> | Context · judgment |
+| <br /> | Context · judgment · Principle |
 | <br /> | ~15 always-on tokens; no runtime |
 | **BULD-04** Version patch only | bump ONLY the patch digit (C in vA.B.C), whole numbers, every change; owner controls minor/major |
-| <br /> | Context · verifiable |
+| <br /> | Context · verifiable · Stable |
 | <br /> | ~12 always-on tokens; no runtime |
 | **REPO-05** Authoritative branch *(modified)* | `main` is source of truth for vz; all work merges to `main` immediately — never strand on a side branch |
-| <br /> | Context · verifiable · **to change: edit the branch name in this rule only** |
+| <br /> | Context · verifiable · Mutable · **to change: edit the branch name in this rule only** |
 | <br /> | ~20 always-on tokens; no runtime |
 | **REPO-06** Save | commit + push after every change — owner only sees the live GitHub Pages site |
-| <br /> | Context · verifiable |
+| <br /> | Context · verifiable · Stable |
 | <br /> | ~15 always-on tokens; no runtime |
 | **REPO-07** Done = deploy + propagate | push verified work to `main`, confirm GitHub Pages deploys; never consider a task done until live |
-| <br /> | Context · verifiable |
+| <br /> | Context · verifiable · Stable |
 | <br /> | ~20 always-on tokens; no runtime |
 | **AI-01** AI-optimised, not human | owner never reads code; favour machine-readable, testable, small files over human readability |
-| <br /> | Context · judgment |
+| <br /> | Context · judgment · Principle |
 | <br /> | ~25 always-on tokens; no runtime |
 
 ## Project idea
