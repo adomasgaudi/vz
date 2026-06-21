@@ -1,0 +1,20 @@
+#!/bin/sh
+# vz commit-msg hook — warn (don't block) when the subject misses GIT-01 format.
+# Shared via core.hooksPath=.githooks so EVERY client/editor/AI enforces it the
+# same: Claude Code, VS Code, Cursor, a plain terminal all run git hooks alike.
+#
+# Portable interpreter pick — the committed Claude hooks once hard-coded `python3`,
+# which doesn't exist on Windows, so they silently never ran. Here we try the
+# launchers in order and use whichever exists.
+DIR="$(dirname "$0")"
+CHECK="$DIR/check_commit_msg.py"
+
+for PY in py python python3; do
+  if command -v "$PY" >/dev/null 2>&1; then
+    "$PY" "$CHECK" "$1"
+    exit 0          # warn-allow: never block the commit
+  fi
+done
+# no Python found — say so, but still allow the commit
+echo "vz commit-msg hook: no python interpreter found; skipping format check" >&2
+exit 0

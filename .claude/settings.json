@@ -3,20 +3,15 @@
     "UserPromptSubmit": [
       {
         "hooks": [
-          {
-            "type": "command",
-            "command": "python3 .claude/hooks/ui_design_reminder.py"
-          }
+          { "type": "command", "command": "py .claude/hooks/ui_design_reminder.py" },
+          { "type": "command", "command": "py .claude/hooks/rule_schema_reminder.py" }
         ]
       }
     ],
     "SessionStart": [
       {
         "hooks": [
-          {
-            "type": "command",
-            "command": "git config user.name 'Adomas' && git config user.email 'g@cool.lt'"
-          }
+          { "type": "command", "command": "git config user.name 'Adomas' && git config user.email 'g@cool.lt' && git config core.hooksPath .githooks" }
         ]
       }
     ],
@@ -24,24 +19,24 @@
       {
         "matcher": "Bash",
         "hooks": [
-          {
-            "type": "command",
-            "command": "python3 .claude/hooks/guard_main_push.py"
-          },
-          {
-            "type": "command",
-            "command": "python3 .claude/hooks/require_main_push.py"
-          }
+          { "type": "command", "command": "py .claude/hooks/guard_main_push.py" },
+          { "type": "command", "command": "py .claude/hooks/require_main_push.py" },
+          { "type": "command", "command": "py .claude/hooks/commit_message_check.py", "timeout": 10, "statusMessage": "commit-message format check" }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          { "type": "command", "command": "py .claude/hooks/version_reminder.py", "timeout": 10, "statusMessage": "version-badge reminder" }
         ]
       }
     ],
     "Stop": [
       {
         "hooks": [
-          {
-            "type": "command",
-            "command": "python3 .claude/hooks/save_reminder.py"
-          }
+          { "type": "command", "command": "py .claude/hooks/save_reminder.py" }
         ]
       }
     ]

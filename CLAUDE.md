@@ -57,8 +57,10 @@ Each rule = two rows: **description**, then *kind · type*. Sorted by theme, the
 | <br /> | Hook [`version_reminder.py`](.claude/hooks/version_reminder.py) · verifiable · MED |
 | **BULD-03** Story points | 0.5–10 per update, effort/time not LOC; logged in `VERSIONS` array, shown via "📋 SP history" modal |
 | <br /> | Hook [`version_reminder.py`](.claude/hooks/version_reminder.py) · mixed · MED |
-| **GIT-01** Commit format | `vN RULE-ID \| short description \| N sp` — `vN` is the patch digit only (e.g. `v41`), not the full `vA.B.C`; RULE-ID is the primary rule driving the change; sp = story points |
-| <br /> | Context · verifiable · MED |
+| **GIT-01** Commit format | `vN RULE-ID \| short description \| N sp` — `vN` is the patch digit only (e.g. `v41`), not the full `vA.B.C`; RULE-ID is the primary rule driving the change; sp = story points. Off-format subjects trigger a loud ⛔ reminder from two layers (see HOOK-01) — fix the subject and re-commit. |
+| <br /> | Hooks [`commit_message_check.py`](.claude/hooks/commit_message_check.py) (Claude) + [`.githooks/commit-msg`](.githooks/commit-msg) (git) · verifiable · TOP |
+| **HOOK-01** Scripted checks, never gates | Back every strong warning with a **scripted, deterministic check** (a program decides pass/fail), but it only ever **emits data — it must not block or force** (always `exit 0`); an AI may need to bypass. Enforce **identically across Claude Code CLI, VS Code, Cursor and a plain terminal**: clients obey differently when a check lives only in an editor's `.claude/settings.json` (a client may not load it) or calls a missing interpreter (`python3` is absent on Windows → it silently never runs). So put git-detectable checks in a **git hook under `.githooks/`** (shared via `core.hooksPath`, fires for all clients), pick the interpreter portably (`py`→`python`→`python3`), and keep the Claude `settings.json` hook as the early in-chat nudge. |
+| <br /> | Hook [`.githooks/`](.githooks/) + SessionStart sets `core.hooksPath` · verifiable · TOP |
 | **REPO-02** Branch | work from `main`; merge back immediately — never strand work on a side branch |
 | <br /> | Hook [`guard_main_push.py`](.claude/hooks/guard_main_push.py) · verifiable · MED |
 | **DATA-10** Removing code — git is net | default DELETE (history has it); park only big refactors in attic/warehouse |

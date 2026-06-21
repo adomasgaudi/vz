@@ -12,9 +12,12 @@ WHY a hook here, and why this event:
 - PreToolUse fires *before* the commit runs, so the warning lands while the AI
   can still re-issue a corrected `git commit`. PostToolUse would warn only after
   the bad message is already in history.
-- Non-blocking by design (no exit 2, no decision:block), matching every other vz
-  hook and Schema.md's "nothing here force-blocks" principle. It informs; the AI
-  fixes it. A real one-off off-format commit can still proceed.
+- Non-blocking by design (no exit 2), but the injected message is deliberately
+  LOUD ("⛔ STOP … do not proceed") because CLI sessions kept ignoring the old
+  soft wording and committing off-format. Wired into the committed
+  .claude/settings.json (PreToolUse · Bash) with the `py` launcher so it actually
+  runs on the owner's Windows box — the earlier `python3` invocation silently
+  failed there, which is why the rule "kept being forgotten".
 
 Mechanistically, step by step:
 
@@ -137,14 +140,17 @@ if not problems:
     sys.exit(0)
 
 advice = (
-    "Commit-message check (non-blocking) — the subject line looks off:\n  \""
-    + subject
-    + "\"\n\nProblems:\n- "
-    + "\n- ".join(problems)
-    + "\n\nExpected: `vN CODE-NN | short description | n sp`  "
-    "(see DATA-05 / recent git log). The commit was NOT blocked; if this was "
-    "intentional you can proceed, otherwise re-run git commit with a fixed "
-    "subject."
+    "⛔ STOP — COMMIT MESSAGE IS OFF-FORMAT. Do NOT proceed with this commit.\n"
+    "Your subject:\n  \"" + subject + "\"\n\n"
+    "Problems:\n- " + "\n- ".join(problems) + "\n\n"
+    "REQUIRED format (GIT-01, house style): vN CODE-NN | short description | n sp\n"
+    "  • vN        = patch digit only, e.g. v70 (NOT v0.1.70)\n"
+    "  • CODE-NN   = the driving rule id, e.g. REPO-01, BULD-02, DATA-16\n"
+    "  • n sp      = story points, e.g. 2 sp or 0.5 sp\n"
+    "Good example: v70 REPO-01 | scrape Adface + Adverum into rek_tabs.json | 2 sp\n\n"
+    "ACTION: re-run the git commit now with a corrected subject in exactly this "
+    "format. This check is advisory (the commit is not hard-blocked), but the "
+    "owner requires the format every time — fix it before moving on."
 )
 
 print(json.dumps({
