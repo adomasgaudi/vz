@@ -163,14 +163,14 @@
   <button class="nav-btn active" data-view="dashView">Dashboard</button>
   <button class="nav-btn" data-view="dataView">Data Explorer</button>
   <div class="nav-spacer"></div>
-  <span class="nav-version">v0.1.49</span>
+  <span class="nav-version">v0.1.50</span>
   <div class="nav-sub">113 brands · 2019–2024</div>
 </nav>
 
 <div class="view active" id="dashView">
 <div class="wrap">
   <header>
-    <h1>🇱🇹 Lithuanian Communication & Marketing Agencies <span class="version">v0.1.49</span></h1>
+    <h1>🇱🇹 Lithuanian Communication & Marketing Agencies <span class="version">v0.1.50</span></h1>
     <p>Competitor landscape dashboard · 113 brands · Financials 2019–2024 (revenue, profit, headcount, salaries) · Source: rekvizitai.vz.lt data export</p>
   </header>
 
@@ -728,7 +728,8 @@ renderTable();
 
 // ---------- SP & version history ----------
 const VERSIONS = [
-  {v:'v0.1.49', date:'2026-06-21', sp:2,   desc:'Version badge moved to top nav so it stays visible on every tab. Data Explorer tab names fixed to show human titles (was showing raw sheet keys). VERSIONS array backfilled for v41–v48 (rule/hook changes, git author fix, commit format, tab rename, tab display fix).'},
+  {v:'v0.1.50', date:'2026-06-21', sp:1,   desc:'Fix persistent Data Explorer crash: SHEET_META is not defined — buildDataTabs() used wrong variable name; correct name is SHEET_DESC. Root cause of every "Data Explorer blank" since v42.'},
+  {v:'v0.1.49', date:'2026-06-21', sp:2,   desc:'Version badge moved to top nav so it stays visible on every tab. VERSIONS array backfilled for v41–v48. Hook downgraded from block to warn so REPO-01 pushes to main are no longer silently blocked.'},
   {v:'v0.1.48', date:'2026-06-21', sp:1,   desc:'Fix data explorer tabs rendering raw sheet keys (Įmonės etc.) instead of human titles — buildDataTabs() now reads SHEET_META[s].title.'},
   {v:'v0.1.47', date:'2026-06-21', sp:2,   desc:'Reorganise CLAUDE.md rules by theme then priority (Build&Git, Conversation, Debug, UI, Meta).'},
   {v:'v0.1.46', date:'2026-06-21', sp:1,   desc:'Add GIT-01 commit format rule: vN patch-only, RULE-ID, sp.'},
@@ -834,7 +835,7 @@ function initDataExplorer(){
 
 function buildDataTabs(){
   const el=document.getElementById('dataTabs');
-  el.innerHTML=SHEET_ORDER.map(s=>`<button class="data-tab${s===dtSheet?' active':''}" data-sheet="${s}">${(SHEET_META[s]&&SHEET_META[s].title)||s}</button>`).join('');
+  el.innerHTML=SHEET_ORDER.map(s=>`<button class="data-tab${s===dtSheet?' active':''}" data-sheet="${s}">${(SHEET_DESC[s]&&SHEET_DESC[s].title)||s}</button>`).join('');
   el.querySelectorAll('.data-tab').forEach(btn=>btn.addEventListener('click',()=>{
     dtSheet=btn.dataset.sheet;dtSortCol=-1;dtPage=0;document.getElementById('dataSearch').value='';
     buildDataTabs();renderDataSheet();
