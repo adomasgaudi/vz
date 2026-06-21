@@ -57,24 +57,42 @@ async def _fetch_tab(context, slug, key, path):
             await asyncio.sleep(1.2)  # let inline chart JSON / late nodes settle
         except Exception as e:
             print(f"   ! [{slug}/{key}] {str(e)[:45]}; saving partial")
-        html = await page.content()
-        with open(os.path.join(OUT_DIR, f"{slug}_{key}.html"), "w", encoding="utf-8") as f:
-            f.write(html)
-        size = len(html)
+        # page.content() can throw "page is navigating" when ad scripts trigger a
+        # late navigation — retry a couple of times, settling between attempts.
+        html = ""
+        for attempt in range(3):
+            try:
+                html = await page.content()
+                break
+            except Exception:
+                try: await page.wait_for_load_state("domcontentloaded", timeout=8000)
+                except Exception: pass
+                await asyncio.sleep(0.8)
+        if html:
+            with open(os.path.join(OUT_DIR, f"{slug}_{key}.html"), "w", encoding="utf-8") as f:
+                f.write(html)
+            size = len(html)
+        else:
+            print(f"   ! [{slug}/{key}] could not capture HTML")
+    except Exception as e:
+        print(f"   ! [{slug}/{key}] {str(e)[:60]}")
     finally:
-        await page.close()
+        try: await page.close()
+        except Exception: pass
     return key, size
 
 
 async def scrape_slug(context, slug):
-    """Fetch all of a company's tabs concurrently. Returns overview byte size."""
+    """Fetch all of a company's tabs concurrently. Returns overview byte size.
+    One failing tab won't sink the others (return_exceptions)."""
     results = await asyncio.gather(*[
         _fetch_tab(context, slug, key, path) for key, path in TABS.items()
-    ])
-    return dict(results).get("imone", 0)
+    ], return_exceptions=True)
+    sizes = {r[0]: r[1] for r in results if isinstance(r, tuple)}
+    return sizes.get("imone", 0)
 
 
-async def scrape_many(slugs, company_workers=3):
+async def scrape_many(slugs, company_workers=2):
     """Scrape every slug reusing one browser. Tabs of a company load in parallel;
     up to `company_workers` companies are processed concurrently."""
     os.makedirs(OUT_DIR, exist_ok=True)
