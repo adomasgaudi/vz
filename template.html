@@ -775,21 +775,21 @@ const SHEET_ORDER=['Įmonės','Įmonės-analizei','Kūryba','PR','Raw'];
 // hint, and an importance tag so a newcomer knows where to start vs. what to skip.
 // tier: 'start' (begin here) · 'detail' (rich but wide) · 'niche' (specialist/raw).
 const SHEET_DESC={
-  'Įmonės':{title:'Company directory',tier:'start',
-    what:'The master list — one row per agency (169 in all) with everything we know: contacts, website & socials, headcount, salaries, turnover and profit for every year 2019–2024, plus a credit-risk rating.',
+  'Įmonės':{title:'All companies (cleaned)',tier:'start',
+    what:'The master list — one row per agency (169 in all) with everything we know: contacts, website & socials, headcount, salaries, turnover and profit for every year 2019–2024, plus a credit-risk rating. Built from the raw import with duplicates removed and gaps filled.',
     best:'Looking up a single company and seeing its whole profile at a glance.'},
-  'Įmonės-analizei':{title:'Year-by-year table',tier:'start',
-    what:'The same companies, but one row per company per year (660 rows). Easier to compare or sort a single metric across time — this is the data behind the dashboard charts.',
+  'Įmonės-analizei':{title:'Year-by-year financials',tier:'start',
+    what:'The same 113 companies, one row per company per year (660 rows). Easier to compare or sort a single metric across time — this is the data behind the dashboard charts.',
     best:'Sorting or filtering by one number (e.g. biggest turnover in 2024) and spotting trends.'},
-  'Kūryba':{title:'Creative agencies only',tier:'detail',
+  'Kūryba':{title:'Creative agencies — yearly',tier:'detail',
     what:'A filtered slice — only firms doing creative / advertising work (kūryba), with their yearly figures and segment totals.',
     best:'Sizing up just the creative corner of the market.'},
-  'PR':{title:'PR agencies only',tier:'detail',
+  'PR':{title:'PR agencies — yearly',tier:'detail',
     what:'A filtered slice — only public-relations firms, with their yearly figures and segment totals.',
     best:'Sizing up just the PR corner of the market.'},
-  'Raw':{title:'Original import (raw)',tier:'niche',
-    what:'The untouched source export of 103 companies before cleaning. Has duplicates and messy headers — kept only for traceability.',
-    best:'Checking provenance; most people can ignore this and use the two tables above.'},
+  'Raw':{title:'Pre-cleaning import (source)',tier:'niche',
+    what:'The untouched source export — 103 rows before deduplication; 77% of its columns fed into "All companies (cleaned)". Has messy headers and duplicates; kept for traceability only.',
+    best:'Checking where a data point came from; most users should use the cleaned tables above.'},
 };
 const TIER_LABEL={start:{t:'Start here',c:'var(--green)'},detail:{t:'Focused view',c:'var(--accent)'},niche:{t:'Advanced / raw',c:'var(--muted)'}};
 const MONEY_COLS=new Set(['Apyvarta','Apyvarta 2019','Apyvarta 2020','Apyvarta 2021','Apyvarta 2022','Apyvarta 2023','Apyvarta 2024','Grynasis pelnas 2019','Grynasis pelnas 2020','Grynasis pelnas 2021','Grynasis pelnas 2022','Grynasis pelnas 2023','Grynasis pelnas 2024','Pelnas','DU sąnaudos','Ne-atlyginimų sąnaudos','Spėjamos pajamos','Atlyginimų sąnaudos 2019','Atlyginimų sąnaudos 2020','Atlyginimų sąnaudos 2021','Atlyginimų sąnaudos 2022','Atlyginimų sąnaudos 2023','Atlyginimų sąnaudos 2024','Atlyginimų sąnaudos 2025 05','Skola Sodrai','Apyvarta (1)','Spėjamos pajamos (1)','DU sąnaudos (1)','Ne-atlyginimų sąnaudos (1)','Pelnas (1)']);
