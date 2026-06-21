@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>LT Communication Agencies — Competitor Dashboard 2019–2024 · v0.1.68</title>
+<title>LT Communication Agencies — Competitor Dashboard 2019–2024 · v0.1.69</title>
 <script>
   // Apply saved theme before first paint to avoid a flash. Default = dark.
   (function(){ try{ var t=localStorage.getItem('theme'); if(t!=='light') document.documentElement.setAttribute('data-theme','dark'); }catch(e){} })();
@@ -245,7 +245,7 @@
     <button class="nav-btn" data-view="dataView">Data Explorer</button>
     <button class="nav-btn" data-view="rekView">Rekvizitai</button>
   </div>
-  <span class="nav-version">v0.1.68</span>
+  <span class="nav-version">v0.1.69</span>
   <div class="settings-wrap">
     <button class="settings-cog" id="settingsCog" title="Settings" aria-label="Settings">⚙️</button>
     <div class="settings-menu" id="settingsMenu">
@@ -258,7 +258,7 @@
 <div class="view active" id="dashView">
 <div class="wrap">
   <header>
-    <h1>🇱🇹 Lithuanian Communication & Marketing Agencies <span class="version">v0.1.68</span></h1>
+    <h1>🇱🇹 Lithuanian Communication & Marketing Agencies <span class="version">v0.1.69</span></h1>
     <p>Competitor landscape dashboard · 113 brands · Financials 2019–2024 (revenue, profit, headcount, salaries) · Source: rekvizitai.vz.lt data export</p>
   </header>
 
@@ -884,6 +884,9 @@ renderTable();
 // ---------- SP & version history ----------
 // Each entry: title (2-5 words) · desc (5-15 words) · detail (15-50 words).
 const VERSIONS = [
+  {v:'v0.1.69', date:'2026-06-21', sp:3,   title:'Scale scrape: batch + 3 companies',
+    desc:'Batch pipeline; added Adface, Adverum and All Caps to Rekvizitai.',
+    detail:'Built for 100+ companies: scrape_batch.py resolves names to slugs via the rekvizitai search API then scrapes+parses+upserts in one run; the scraper reuses one browser, loads tabs concurrently and drops the networkidle wait (same 3 companies went 95s → 5.6s, ~3 min for 100). Added Adface, Adverum and All Caps — 5 companies now in the picker.'},
   {v:'v0.1.68', date:'2026-06-21', sp:1.5, title:'Collapse changelog entries',
     desc:'Each version now shows just its title; click to reveal desc + detail.',
     detail:'Turned every changelog entry into a closed <details> disclosure — the summary keeps the version · SP · date meta line and the 2–5-word title, and the desc (5–15w) and detail (15–50w) only appear on click. Lets you scan all versions by title and drill in on demand instead of one long wall of text.'},
