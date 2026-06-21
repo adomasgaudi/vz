@@ -100,8 +100,9 @@
   tr.mine td:first-child{box-shadow:inset 3px 0 0 var(--gold)}
   @media(max-width:900px){.grid{grid-template-columns:1fr}}
   @media(max-width:600px){
-    .topnav{padding:0 4px;overflow-x:auto;-webkit-overflow-scrolling:touch;flex-wrap:nowrap}
+    .topnav{padding:0 4px;overflow:visible;flex-wrap:nowrap}
     .topnav .logo{display:none}
+    .nav-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;display:flex;flex:1;min-width:0}
     .nav-btn{padding:10px 10px;font-size:12px;white-space:nowrap;flex-shrink:0}
     .nav-sub{display:none}
     .nav-spacer{display:none}
@@ -119,6 +120,7 @@
   .nav-btn{padding:12px 20px;font-size:13px;font-weight:600;color:var(--muted);cursor:pointer;border:none;background:none;border-bottom:2px solid transparent;transition:.15s;white-space:nowrap;font-family:inherit}
   .nav-btn:hover{color:var(--text)}
   .nav-btn.active{color:var(--accent);border-bottom-color:var(--accent)}
+  .nav-scroll{display:flex}
   .nav-spacer{flex:1}
   .nav-sub{font-size:12px;color:var(--muted);padding:12px 0}
   .nav-version{font-size:11px;font-weight:600;color:var(--muted);background:var(--panel2);border:1px solid var(--border);border-radius:20px;padding:2px 8px;margin-right:8px;white-space:nowrap}
@@ -198,11 +200,12 @@
 
 <nav class="topnav">
   <div class="logo"><span>LT</span> Agencies</div>
-  <button class="nav-btn active" data-view="dashView">Dashboard</button>
-  <button class="nav-btn" data-view="dataView">Data Explorer</button>
-  <button class="nav-btn" data-view="rekView">Rekvizitai</button>
-  <div class="nav-spacer"></div>
-  <span class="nav-version">v0.1.58</span>
+  <div class="nav-scroll">
+    <button class="nav-btn active" data-view="dashView">Dashboard</button>
+    <button class="nav-btn" data-view="dataView">Data Explorer</button>
+    <button class="nav-btn" data-view="rekView">Rekvizitai</button>
+  </div>
+  <span class="nav-version">v0.1.59</span>
   <div class="settings-wrap">
     <button class="settings-cog" id="settingsCog" title="Settings" aria-label="Settings">⚙️</button>
     <div class="settings-menu" id="settingsMenu">
@@ -215,7 +218,7 @@
 <div class="view active" id="dashView">
 <div class="wrap">
   <header>
-    <h1>🇱🇹 Lithuanian Communication & Marketing Agencies <span class="version">v0.1.58</span></h1>
+    <h1>🇱🇹 Lithuanian Communication & Marketing Agencies <span class="version">v0.1.59</span></h1>
     <p>Competitor landscape dashboard · 113 brands · Financials 2019–2024 (revenue, profit, headcount, salaries) · Source: rekvizitai.vz.lt data export</p>
   </header>
 
