@@ -29,6 +29,30 @@ if 'companies' not in rek:  # tolerate the old single-company shape
     rek = {'companies': [dict(slug='company', name='Company', brand=None,
                               order=rek.get('order', []), tabs=rek.get('tabs', {}))]}
 
+# Attach Sodra data (data/sodra/<jarCode>.json) to each company, matched by the
+# "Įmonės kodas" field captured in its Įmonė tab. Sodra is a third data source.
+SODRA_DIR = os.path.join(ROOT, 'data', 'sodra')
+sodra_by_code = {}
+if os.path.isdir(SODRA_DIR):
+    for fn in os.listdir(SODRA_DIR):
+        if fn.endswith('.json'):
+            rec = load('data', 'sodra', fn)
+            sodra_by_code[str(rec.get('jarCode'))] = rec
+
+
+def company_code(block):
+    for tab in block.get('tabs', {}).values():
+        for field, value in tab.get('rows', []):
+            if field == 'Įmonės kodas':
+                return str(value).strip()
+    return None
+
+
+for block in rek['companies']:
+    code = company_code(block)
+    block['code'] = code
+    block['sodra'] = sodra_by_code.get(code)  # None if no Sodra file for it
+
 html = open(os.path.join(HERE, 'template.html'), encoding='utf-8').read()
 html = html.replace('__DATA__', json.dumps(data, ensure_ascii=False))
 html = html.replace('__SHEETS_DATA__', json.dumps(sheets, ensure_ascii=False))

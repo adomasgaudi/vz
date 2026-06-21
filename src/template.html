@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>LT Communication Agencies — Competitor Dashboard 2019–2024 · v0.1.70</title>
+<title>LT Communication Agencies — Competitor Dashboard 2019–2024 · v0.1.71</title>
 <script>
   // Apply saved theme before first paint to avoid a flash. Default = dark.
   (function(){ try{ var t=localStorage.getItem('theme'); if(t!=='light') document.documentElement.setAttribute('data-theme','dark'); }catch(e){} })();
@@ -174,31 +174,27 @@
   .seg button:last-child{border-right:none}
   .seg button:hover{color:var(--text)}
   .seg button.active{background:var(--accent);color:#fff}
+  /* Source colours: one per data source. initial=green, rekvizitai=blue, sodra=amber */
   .src-legend{display:flex;gap:14px;align-items:center;font-size:12px;color:var(--muted);flex-wrap:wrap}
-  .src-legend .dot{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:middle}
-  .dot-orig{background:var(--green)} .dot-scrape{background:var(--accent)} .dot-both{background:var(--purple)}
-  /* Rekvizitai tables: wrap long text, fixed layout, source-tinted rows */
+  .src-cube{display:inline-block;width:10px;height:10px;border-radius:3px;vertical-align:middle;flex:0 0 auto}
+  .src-cube.initial{background:var(--green)} .src-cube.rekvizitai{background:var(--accent)} .src-cube.sodra{background:var(--amber)}
+  .src-cube.empty{background:transparent;border:1px solid var(--border);opacity:.5}
+  .src-legend .src-cube{margin-right:5px}
+  /* a row's source-tag cell: small cubes showing which source(s) the row came from */
+  .cube-cell{display:flex;gap:3px;align-items:center;flex-wrap:nowrap}
+  /* Sourced-data tables: wrap long text, fixed layout */
   #rekView table{width:100%;border-collapse:separate;border-spacing:0;font-size:13px}
   #rekView thead{position:sticky;top:0;z-index:2}
   #rekView th{background:var(--panel2);color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.05em;padding:9px 12px;text-align:left;border-bottom:2px solid var(--border);cursor:pointer;white-space:nowrap}
   #rekView td{padding:8px 12px;border-bottom:1px solid var(--border);text-align:left;white-space:normal;overflow-wrap:anywhere;word-break:break-word;vertical-align:top}
   #rekView td.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
-  #rekView th.colField,#rekView td.fieldcell{min-width:150px;max-width:230px}
-  #rekView th.colYear{min-width:88px}
+  #rekView th.colField,#rekView td.fieldcell{min-width:140px;max-width:230px}
+  #rekView th.colYear{min-width:84px}
+  #rekView th.colSrc,#rekView td.srccell{width:54px;white-space:nowrap}
   #rekView tbody tr:nth-child(even) td{background:var(--zebra)}
   #rekView tr:hover td{background:var(--hover)}
-  /* colour the row by source (left edge + faint tint) — no text tags */
-  #rekView tr.src-orig   td:first-child{box-shadow:inset 3px 0 0 var(--green)}
-  #rekView tr.src-scrape td:first-child{box-shadow:inset 3px 0 0 var(--accent)}
-  #rekView tr.src-both   td:first-child{box-shadow:inset 3px 0 0 var(--purple)}
-  #rekView tr.src-orig   td{background:rgba(31,170,114,.07)}
-  #rekView tr.src-scrape td{background:rgba(47,111,224,.06)}
-  #rekView tr.src-both   td{background:rgba(124,92,240,.08)}
-  [data-theme="dark"] #rekView tr.src-orig td{background:rgba(52,201,142,.08)}
-  [data-theme="dark"] #rekView tr.src-scrape td{background:rgba(79,142,247,.08)}
-  [data-theme="dark"] #rekView tr.src-both td{background:rgba(167,139,250,.10)}
-  /* matrix cell holding two source values stacked (merge, differing) */
-  #rekView .mv{display:block} #rekView .mv.o{color:var(--green)} #rekView .mv.s{color:var(--accent)}
+  /* merge cell stacking per-source values (differing) — colour-keyed text */
+  #rekView .mv{display:block} #rekView .mv.initial{color:var(--green)} #rekView .mv.rekvizitai{color:var(--accent)} #rekView .mv.sodra{color:var(--amber)}
   .badge{background:var(--panel2);border:1px solid var(--border);border-radius:20px;padding:3px 12px;font-size:12px;color:var(--muted)}
   .btn{background:var(--panel2);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:6px 14px;font-size:13px;cursor:pointer;transition:.15s;font-family:inherit}
   .btn:hover{border-color:var(--accent);color:var(--accent)}
@@ -242,10 +238,10 @@
   <div class="logo"><span>LT</span> Agencies</div>
   <div class="nav-scroll">
     <button class="nav-btn active" data-view="dashView">Dashboard</button>
-    <button class="nav-btn" data-view="dataView">Data Explorer</button>
-    <button class="nav-btn" data-view="rekView">Rekvizitai</button>
+    <button class="nav-btn" data-view="dataView">Initial Data</button>
+    <button class="nav-btn" data-view="rekView">Sourced Data</button>
   </div>
-  <span class="nav-version">v0.1.70</span>
+  <span class="nav-version">v0.1.71</span>
   <div class="settings-wrap">
     <button class="settings-cog" id="settingsCog" title="Settings" aria-label="Settings">⚙️</button>
     <div class="settings-menu" id="settingsMenu">
@@ -258,7 +254,7 @@
 <div class="view active" id="dashView">
 <div class="wrap">
   <header>
-    <h1>🇱🇹 Lithuanian Communication & Marketing Agencies <span class="version">v0.1.70</span></h1>
+    <h1>🇱🇹 Lithuanian Communication & Marketing Agencies <span class="version">v0.1.71</span></h1>
     <p>Competitor landscape dashboard · 113 brands · Financials 2019–2024 (revenue, profit, headcount, salaries) · Source: rekvizitai.vz.lt data export</p>
   </header>
 
@@ -411,9 +407,10 @@
   <div class="data-tabs" id="rekTabs"></div>
   <div class="data-controls">
     <div class="seg" id="rekMode">
-      <button data-mode="merge" class="active">Merge</button>
-      <button data-mode="scrape">Scrape</button>
-      <button data-mode="original">Original</button>
+      <button data-mode="merged" class="active">Merged</button>
+      <button data-mode="initial">Initial</button>
+      <button data-mode="rekvizitai">Rekvizitai</button>
+      <button data-mode="sodra">Sodra</button>
     </div>
     <input type="text" id="rekSearch" placeholder="Search field & value…" style="min-width:200px">
     <span class="badge" id="rekRowCount"></span>
@@ -884,6 +881,9 @@ renderTable();
 // ---------- SP & version history ----------
 // Each entry: title (2-5 words) · desc (5-15 words) · detail (15-50 words).
 const VERSIONS = [
+  {v:'v0.1.71', date:'2026-06-21 18:30', sp:4,   title:'Sourced Data: 3 sources + cubes',
+    desc:'Renamed tabs; added Sodra as a third source with per-source colour cubes.',
+    detail:'Data Explorer → "Initial Data", Rekvizitai → "Sourced Data". Modes are now Merged / Initial / Rekvizitai / Sodra (was Merge/Scrape/Original). Sodra monthly headcount+wage joins per company by code. Each row carries small 10px rounded source cubes (initial=green, rekvizitai=blue, sodra=amber); Merged shows all three, dimming sources with no value, and stacks differing values colour-keyed.'},
   {v:'v0.1.70', date:'2026-06-21 17:05', sp:3,   title:'Scale scrape: batch + 3 companies',
     desc:'Batch pipeline; added Adface, Adverum and All Caps to Rekvizitai.',
     detail:'Built for 100+ companies: scrape_batch.py resolves names to slugs via the rekvizitai search API then scrapes+parses+upserts in one run; the scraper reuses one browser, loads tabs concurrently and drops the networkidle wait (same 3 companies went 95s → 5.6s, ~3 min for 100). Added Adface, Adverum and All Caps — 5 companies now in the picker.'},
@@ -1207,9 +1207,12 @@ function renderDataRows(){
 const REK_COMPANIES = (REK_DATA && REK_DATA.companies) || [];
 let rekCo = REK_COMPANIES[0] || null;                 // current company block
 let rekTab = (rekCo && rekCo.order && rekCo.order[0]) || null;
-let rekMode = 'merge';            // merge | scrape | original
+let rekMode = 'merged';           // merged | initial | rekvizitai | sodra
 let rekSort = -1, rekDir = 1;
-let ORIG_TABS = {};               // rebuilt per company (see selectCompany)
+let ORIG_TABS = {};               // initial-source rows per tab (rebuilt per company)
+let SODRA_TABS = {};              // sodra-source rows per tab (rebuilt per company)
+const SOURCES = ['initial','rekvizitai','sodra'];
+const SRC_LABEL = {initial:'Initial', rekvizitai:'Rekvizitai', sodra:'Sodra'};
 
 // Build the "original" rows per sub-tab from the dashboard record for `brand`,
 // using field names that line up with the scrape so merge can detect overlaps.
@@ -1236,65 +1239,96 @@ function buildOrigTabs(brand){
   return T;
 }
 
+// Build the "sodra" rows per sub-tab from the company's attached Sodra record.
+// Sodra gives monthly headcount + avg wage (wage withheld for 1-employee firms),
+// so its data lands in the Darbuotojai tab as "<metric> YYYY-MM".
+function buildSodraTabs(sodra){
+  const T = {'Įmonė':[], 'Finansai':[], 'Darbuotojai':[], 'Skolos':[]};
+  if(!sodra) return T;
+  if(sodra.ecoActName)   T['Įmonė'].push(['Veiklos sritys (Sodra)', sodra.ecoActName]);
+  if(sodra.municipality) T['Įmonė'].push(['Miestas', sodra.municipality]);
+  (sodra.months||[]).forEach(m=>{
+    const ym = String(m.month);                       // 202604 -> 2026-04
+    const lbl = ym.length===6 ? ym.slice(0,4)+'-'+ym.slice(4) : ym;
+    if(m.numInsured!=null) T['Darbuotojai'].push([`Darbuotojų skaičius ${lbl}`, String(m.numInsured)]);
+    if(m.avgWage!=null && m.avgWage>0)
+      T['Darbuotojai'].push([`Atlyginimų vidurkis ${lbl}`, Math.round(m.avgWage).toLocaleString('lt-LT').replace(/,/g,' ')+' €']);
+  });
+  return T;
+}
+
 function rekTabs(){ return (rekCo && rekCo.tabs) || {}; }
-function scrapeRows(tab){ const t=rekTabs()[tab]; return (t && t.rows) || []; }
-function origRows(tab){ return ORIG_TABS[tab] || []; }
+const SRC_ROWS = {
+  initial:    tab => ORIG_TABS[tab] || [],
+  rekvizitai: tab => { const t=rekTabs()[tab]; return (t && t.rows) || []; },
+  sodra:      tab => SODRA_TABS[tab] || [],
+};
 
 // Normalise a value for "same fact?" comparison: strip €/%, spaces, unify decimals.
 function normVal(v){
   return String(v).replace(/[€%\s ]/g,'').replace(',', '.').toLowerCase();
 }
 
-// Rows for the current mode, each {field,value,src,ovalue,svalue} (src: orig|scrape|both).
+// Rows for the current mode.
+// Single-source mode -> [{field,value,sources:[src],vals:{src:value}}].
+// Merged -> union by field across all sources; each row carries vals per source
+// + a `sources` list (which sources HAVE the field) for the cube tags + `diff`.
 function rowsForMode(tab){
-  if(rekMode==='scrape')   return scrapeRows(tab).map(r=>({field:r[0], value:r[1], src:'scrape', svalue:r[1]}));
-  if(rekMode==='original') return origRows(tab).map(r=>({field:r[0], value:r[1], src:'orig', ovalue:r[1]}));
-  // merge: union by field name; equal value -> both, differing -> keep both values
-  const out=[], byField=new Map();
-  origRows(tab).forEach(([f,v])=>{ byField.set(f,{field:f, value:v, src:'orig', ovalue:v}); });
-  scrapeRows(tab).forEach(([f,v])=>{
-    if(byField.has(f)){
-      const o=byField.get(f); o.svalue=v;
-      if(normVal(o.value)===normVal(v)){ o.src='both'; }
-      else { o.src='both'; o.diff=true; o.value=`${o.value}  ·  ${v}`; }
-    } else {
-      byField.set(f,{field:f, value:v, src:'scrape', svalue:v});
-    }
+  if(rekMode!=='merged'){
+    return SRC_ROWS[rekMode](tab).map(r=>({field:r[0], value:r[1],
+      sources:[rekMode], vals:{[rekMode]:r[1]}}));
+  }
+  const byField=new Map();
+  SOURCES.forEach(src=>{
+    SRC_ROWS[src](tab).forEach(([f,v])=>{
+      let o=byField.get(f);
+      if(!o){ o={field:f, vals:{}, sources:[]}; byField.set(f,o); }
+      o.vals[src]=v; o.sources.push(src);
+    });
   });
-  byField.forEach(v=>out.push(v));
+  const out=[];
+  byField.forEach(o=>{
+    const uniq=[...new Set(Object.values(o.vals).map(normVal))];
+    o.diff = uniq.length>1;                 // sources disagree on the value
+    o.value = Object.values(o.vals)[0];     // representative for single-value rows
+    out.push(o);
+  });
   return out;
 }
 
-// Split a field "Metric 2023" or "Metric 2024-05-14" into {base, year, isDate}.
+// Split a field suffix into {base,key,kind}: kind "year" (YYYY), "date"
+// (YYYY-MM or YYYY-MM-DD -> dated snapshot series), else null (plain field).
 function splitYear(field){
-  let m=field.match(/^(.*?)[  ](\d{4})-(\d{2})-(\d{2})$/);   // full date
-  if(m) return {base:m[1].trim(), year:m[2], date:`${m[2]}-${m[3]}-${m[4]}`, isDate:true};
-  m=field.match(/^(.*?)[  ](\d{4})$/);                        // plain year
-  if(m) return {base:m[1].trim(), year:m[2], isDate:false};
+  let m=field.match(/^(.*?)[\s ](\d{4})-(\d{2})-(\d{2})$/);
+  if(m) return {base:m[1].trim(), key:`${m[2]}-${m[3]}-${m[4]}`, kind:"date"};
+  m=field.match(/^(.*?)[\s ](\d{4})-(\d{2})$/);
+  if(m) return {base:m[1].trim(), key:`${m[2]}-${m[3]}`, kind:"date"};
+  m=field.match(/^(.*?)[\s ](\d{4})$/);
+  if(m) return {base:m[1].trim(), key:m[2], year:m[2], kind:"year"};
   return null;
 }
 
-// Build a metric × year matrix from year-suffixed rows; the rest stay flat.
-// Returns {years:[...], matrix:[{base,src,cells:{year:{value,ovalue,svalue,src}}}], flat:[rows]}.
+// Pivot year-suffixed rows into a metric × year matrix; YYYY-MM(-DD) series are
+// grouped as dated lists; everything else stays flat. Each output carries the
+// per-source vals + a `sources` list so the renderer can draw source cubes.
 function pivotRows(rows){
   const years=new Set(), bases=new Map(), flat=[], dated=new Map();
   rows.forEach(r=>{
     const sp=splitYear(r.field);
-    if(sp && !sp.isDate){
+    if(sp && sp.kind==='year'){
       years.add(sp.year);
-      if(!bases.has(sp.base)) bases.set(sp.base,{base:sp.base, cells:{}, srcs:new Set()});
-      bases.get(sp.base).cells[sp.year]=r; bases.get(sp.base).srcs.add(r.src);
-    } else if(sp && sp.isDate){
-      // group dated series (e.g. debt) by base metric; show as its own mini-row list
+      if(!bases.has(sp.base)) bases.set(sp.base,{base:sp.base, cells:{}, sources:new Set()});
+      const b=bases.get(sp.base); b.cells[sp.year]=r; (r.sources||[]).forEach(s=>b.sources.add(s));
+    } else if(sp && sp.kind==='date'){
       if(!dated.has(sp.base)) dated.set(sp.base,[]);
-      dated.get(sp.base).push(r);
+      dated.get(sp.base).push({...r, _date:sp.key});
     } else {
       flat.push(r);
     }
   });
   const yrs=[...years].sort();
-  const matrix=[...bases.values()].map(b=>({base:b.base, cells:b.cells,
-    src: b.srcs.size>1?'both':[...b.srcs][0]}));
+  const matrix=[...bases.values()].map(b=>({base:b.base, cells:b.cells, sources:[...b.sources]}));
+  dated.forEach(list=>list.sort((a,b)=>String(a._date).localeCompare(String(b._date))));
   return {years:yrs, matrix, flat, dated};
 }
 
@@ -1323,6 +1357,7 @@ function buildRekCompanies(){
 function selectCompany(slug){
   rekCo = REK_COMPANIES.find(c=>c.slug===slug) || REK_COMPANIES[0] || null;
   ORIG_TABS = buildOrigTabs(rekCo && rekCo.brand);
+  SODRA_TABS = buildSodraTabs(rekCo && rekCo.sodra);
   rekTab = (rekCo && rekCo.order && rekCo.order[0]) || null;
   rekSort=-1; const s=document.getElementById('rekSearch'); if(s) s.value='';
   buildRekCompanies(); buildRekTabs(); renderRek();
@@ -1345,9 +1380,18 @@ function buildRekTabs(){
 function syncModeButtons(){
   document.querySelectorAll('#rekMode button').forEach(b=>b.classList.toggle('active', b.dataset.mode===rekMode));
   const lg=document.getElementById('rekLegend');
-  lg.innerHTML = rekMode==='merge'
-    ? `<span><span class="dot dot-orig"></span>original</span><span><span class="dot dot-scrape"></span>scrape</span><span><span class="dot dot-both"></span>both</span>`
+  // legend shows the source cubes only in Merged (where the cube column appears)
+  lg.innerHTML = rekMode==='merged'
+    ? SOURCES.map(s=>`<span><span class="src-cube ${s}"></span>${SRC_LABEL[s].toLowerCase()}</span>`).join('')
     : '';
+}
+
+// HTML for a row's source-cube cell. In Merged we always render all 3 cubes,
+// dimming the sources that have no value for this row (owner's choice).
+function cubeCell(sources){
+  const have=new Set(sources);
+  const cubes=SOURCES.map(s=>`<span class="src-cube ${s}${have.has(s)?'':' empty'}" title="${SRC_LABEL[s]}${have.has(s)?'':' — no value'}"></span>`).join('');
+  return `<td class="srccell"><span class="cube-cell">${cubes}</span></td>`;
 }
 
 function renderRek(){
@@ -1357,47 +1401,53 @@ function renderRek(){
     document.getElementById('rekTableWrap').innerHTML='';
     document.getElementById('rekRowCount').textContent=''; return;
   }
-  const modeWord={merge:'Original + scrape merged', scrape:'Scrape only', original:'Dashboard data only'}[rekMode];
-  const brandNote = rekCo.brand ? `the dashboard's own record for brand "${rekCo.brand}"` : 'not tracked in the dashboard dataset (no original to merge)';
-  intro.innerHTML=`<div class="sd-head"><span class="sd-title">${rekCo.name||rekCo.slug} — Rekvizitai</span><span class="sd-tier" style="color:var(--muted);border-color:var(--muted)">${modeWord}</span></div>`
-    +`<div class="sd-what">Sub-tab per source page. <b>Original</b> = ${brandNote}. <b>Scrape</b> = live rekvizitai.vz.lt data. <b>Merge</b> unions both; each row is <b>coloured</b> by source. Year metrics are laid out as a year-by-year grid; in Merge a differing cell stacks <span style="color:var(--green)">original</span> over <span style="color:var(--accent)">scrape</span>.</div>`;
+  const modeWord={merged:'All sources merged', initial:'Initial data only', rekvizitai:'Rekvizitai only', sodra:'Sodra only'}[rekMode];
+  const brandNote = rekCo.brand ? `the dashboard's own record for brand "${rekCo.brand}"` : 'not tracked in the dashboard dataset';
+  const hasSodra = !!(rekCo.sodra);
+  intro.innerHTML=`<div class="sd-head"><span class="sd-title">${rekCo.name||rekCo.slug} — Sourced Data</span><span class="sd-tier" style="color:var(--muted);border-color:var(--muted)">${modeWord}</span></div>`
+    +`<div class="sd-what"><b>Initial</b> = ${brandNote}. <b>Rekvizitai</b> = live rekvizitai.vz.lt scrape. <b>Sodra</b> = ${hasSodra?'monthly headcount &amp; wage from atvira.sodra.lt':'not fetched for this company yet'}. <b>Merged</b> unions all three; the cubes show which source(s) each field came from.</div>`;
 
   const rows=rekFiltered();
   document.getElementById('rekRowCount').textContent=`${rows.length} field${rows.length!==1?'s':''}`;
   const {years, matrix, flat, dated}=pivotRows(rows);
   const eh=s=>String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-  const numLike=v=>/^[-+]?[\d  .,]+\s*(€|%)?$/.test(String(v).trim()) && /\d/.test(v);
-  // a matrix cell: in merge with differing values, stack orig (green) + scrape (blue)
+  const numLike=v=>/^[-+]?[\d.,\s ]+\s*(€|%)?$/.test(String(v).trim()) && /\d/.test(v);
+  const merged = rekMode==='merged';
+  // a matrix cell: merged + sources disagree -> stack each source's value, colour-keyed
   const cellHtml=r=>{
     if(!r) return '<td class="num"></td>';
-    if(rekMode==='merge' && r.diff)
-      return `<td class="num"><span class="mv o">${eh(r.ovalue)}</span><span class="mv s">${eh(r.svalue)}</span></td>`;
+    if(merged && r.diff)
+      return `<td class="num">`+SOURCES.filter(s=>r.vals[s]!=null).map(s=>`<span class="mv ${s}">${eh(r.vals[s])}</span>`).join('')+`</td>`;
     return `<td class="num">${eh(r.value)}</td>`;
   };
+  // header cube column only in merged
+  const srcTh = merged ? '<th class="colSrc">Src</th>' : '';
+  const srcTd = r => merged ? cubeCell(r.sources) : '';
   let html='';
-  // 1) year matrix (metric × year)
+  // 1) year matrix (metric x year)
   if(matrix.length && years.length){
     html+=`<table><thead><tr><th class="colField">Metric</th>`
-      + years.map(y=>`<th class="colYear num" style="text-align:right">${y}</th>`).join('') + `</tr></thead><tbody>`;
+      + years.map(y=>`<th class="colYear num" style="text-align:right">${y}</th>`).join('') + srcTh + `</tr></thead><tbody>`;
     matrix.forEach(m=>{
-      html+=`<tr class="src-${m.src}"><td class="fieldcell">${eh(m.base)}</td>`
-        + years.map(y=>cellHtml(m.cells[y])).join('') + `</tr>`;
+      html+=`<tr><td class="fieldcell">${eh(m.base)}</td>`
+        + years.map(y=>cellHtml(m.cells[y])).join('')
+        + (merged?cubeCell(m.sources):'') + `</tr>`;
     });
     html+=`</tbody></table>`;
   }
-  // 2) dated series (e.g. debt) — compact field/value, grouped, wrapping
+  // 2) dated series (debt / monthly Sodra) — date | value, grouped, wrapping
   dated.forEach((list, base)=>{
-    html+=`<table style="margin-top:14px"><thead><tr><th class="colField">${eh(base)} — date</th><th class="num" style="text-align:right">Value</th></tr></thead><tbody>`;
-    list.forEach(r=>{ const sp=splitYear(r.field);
-      html+=`<tr class="src-${r.src}"><td class="fieldcell">${eh(sp?sp.date:r.field)}</td><td class="num">${eh(r.value)}</td></tr>`;
+    html+=`<table style="margin-top:14px"><thead><tr><th class="colField">${eh(base)} — date</th><th class="num" style="text-align:right">Value</th>${srcTh}</tr></thead><tbody>`;
+    list.forEach(r=>{
+      html+=`<tr><td class="fieldcell">${eh(r._date||r.field)}</td><td class="num">${eh(r.value)}</td>${srcTd(r)}</tr>`;
     });
     html+=`</tbody></table>`;
   });
   // 3) flat field/value (non-year fields) — long text wraps
   if(flat.length){
-    html+=`<table style="margin-top:${matrix.length||dated.size?'14px':'0'}"><thead><tr><th class="colField">Field</th><th>Value</th></tr></thead><tbody>`;
+    html+=`<table style="margin-top:${matrix.length||dated.size?'14px':'0'}"><thead><tr><th class="colField">Field</th><th>Value</th>${srcTh}</tr></thead><tbody>`;
     flat.forEach(r=>{
-      html+=`<tr class="src-${r.src}"><td class="fieldcell">${eh(r.field)}</td><td class="${numLike(r.value)?'num':''}">${eh(r.value)}</td></tr>`;
+      html+=`<tr><td class="fieldcell">${eh(r.field)}</td><td class="${numLike(r.value)?'num':''}">${eh(r.value)}</td>${srcTd(r)}</tr>`;
     });
     html+=`</tbody></table>`;
   }
@@ -1406,6 +1456,7 @@ function renderRek(){
 
 function initRek(){
   ORIG_TABS = buildOrigTabs(rekCo && rekCo.brand);
+  SODRA_TABS = buildSodraTabs(rekCo && rekCo.sodra);
   syncModeButtons();
   buildRekCompanies();
   buildRekTabs();
@@ -1417,11 +1468,16 @@ function initRek(){
   document.getElementById('rekSearch').addEventListener('input', renderRek);
   document.getElementById('rekCsvBtn').addEventListener('click',()=>{
     const BOM='﻿', esc=v=>{const s=v==null?'':String(v);return /[",\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s;};
-    const merge=rekMode==='merge';
-    let csv=BOM+['field','value'].concat(merge?['source']:[]).map(esc).join(',')+'\n';
-    rekFiltered().forEach(r=>{csv+=[r.field, r.value].concat(merge?[r.src]:[]).map(esc).join(',')+'\n';});
+    const merged=rekMode==='merged';
+    let csv=BOM+['field','value'].concat(merged?['sources']:[]).map(esc).join(',')+'\n';
+    rekFiltered().forEach(r=>{
+      const val = merged && r.diff
+        ? SOURCES.filter(s=>r.vals[s]!=null).map(s=>`${s}:${r.vals[s]}`).join(' | ')
+        : r.value;
+      csv+=[r.field, val].concat(merged?[(r.sources||[]).join('+')]:[]).map(esc).join(',')+'\n';
+    });
     const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});
-    const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`rekvizitai_${rekTab}_${rekMode}.csv`;a.click();
+    const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`sourced_${rekCo.slug}_${rekTab}_${rekMode}.csv`;a.click();
   });
 }
 
