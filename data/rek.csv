@@ -1,20 +1,65 @@
-﻿field,value
-Pavadinimas,"6 vijos, MB"
-Kreditavimo rizika,Žema
-Šūkis,Skaitmeninio augimo strateginis partneris.
-Veiklos sritys,Reklamos paslaugos
-Įmonės aprašymas,Holistiniai rinkodaros ir pardavimų sprendimai pritaikyti JUMS. Mes pasiruošę panaudoti per daugelį metų sukauptas žinias Jūsų įmonės augimui ir strateginių tikslų pasiekimui.
-Įmonės kodas,304405052
-PVM mokėtojo kodas,LT100018834410
-Įmonės amžius,9 metai 8 mėnesiai 23 dienos
-Vadovas,Henrikas Senkus
-Adresas,"Polocko g. 51-11, LT-01205 Vilnius"
-Mobilus telefonas,+370 650 97123
-Tinklalapis,http://6loops.lt
-Įvertinimas,7 / 10 (įvertino 1)
-LinkedIn paskyra,https://www.linkedin.com/company/6-loops/
-Darbuotojai,1 darbuotojas - apdraustasis
-Eksportas,"20% nuo apyvartos Jungtinės Amerikos Valstijos, Latvija, Estija"
-SODRA (VSDFV),"skola 94,55 € (2026-06-20 dienos pradžioje)"
-Kredito rizika,Žema
-Ataskaita,Išsami ataskaita Tik 45 Eur Ataskaitoje yra specifinių duomenų
+﻿tab,field,value
+Įmonė,Pavadinimas,"6 vijos, MB"
+Įmonė,Kreditavimo rizika,Žema
+Įmonė,Šūkis,Skaitmeninio augimo strateginis partneris.
+Įmonė,Veiklos sritys,Reklamos paslaugos
+Įmonė,Įmonės aprašymas,Holistiniai rinkodaros ir pardavimų sprendimai pritaikyti JUMS. Mes pasiruošę panaudoti per daugelį metų sukauptas žinias Jūsų įmonės augimui ir strateginių tikslų pasiekimui.
+Įmonė,Įmonės kodas,304405052
+Įmonė,PVM mokėtojo kodas,LT100018834410
+Įmonė,Įmonės amžius,9 metai 8 mėnesiai 23 dienos
+Įmonė,Vadovas,Henrikas Senkus
+Įmonė,Adresas,"Polocko g. 51-11, LT-01205 Vilnius"
+Įmonė,Mobilus telefonas,+370 650 97123
+Įmonė,Tinklalapis,http://6loops.lt
+Įmonė,Įvertinimas,7 / 10 (įvertino 1)
+Įmonė,LinkedIn paskyra,https://www.linkedin.com/company/6-loops/
+Įmonė,Darbuotojai,1 darbuotojas - apdraustasis
+Įmonė,Eksportas,"20% nuo apyvartos Jungtinės Amerikos Valstijos, Latvija, Estija"
+Įmonė,SODRA (VSDFV),"skola 94,55 € (2026-06-20 dienos pradžioje)"
+Įmonė,Kredito rizika,Žema
+Įmonė,Ataskaita,Išsami ataskaita Tik 45 Eur Ataskaitoje yra specifinių duomenų
+Finansai,Pardavimo pajamos 2022,0 €
+Finansai,Pardavimo pajamos 2023,23 740 €
+Finansai,Pardavimo pajamos 2024,60 840 €
+Finansai,Pardavimo pajamos 2025,123 706 €
+Finansai,Pelnas (nuostoliai) prieš mokesčius 2021,0 €
+Finansai,Pelnas (nuostoliai) prieš mokesčius 2022,0 €
+Finansai,Pelnas (nuostoliai) prieš mokesčius 2023,19 584 €
+Finansai,Pelnas (nuostoliai) prieš mokesčius 2024,32 936 €
+Finansai,Pelnas (nuostoliai) prieš mokesčius 2025,65 157 €
+Finansai,Pelningumas prieš mokesčius 2023,"82,49 %"
+Finansai,Pelningumas prieš mokesčius 2024,"54,14 %"
+Finansai,Pelningumas prieš mokesčius 2025,"52,67 %"
+Finansai,Grynasis pelnas (nuostoliai) 2021,0 €
+Finansai,Grynasis pelnas (nuostoliai) 2022,0 €
+Finansai,Grynasis pelnas (nuostoliai) 2023,18 605 €
+Finansai,Grynasis pelnas (nuostoliai) 2024,31 289 €
+Finansai,Grynasis pelnas (nuostoliai) 2025,60 309 €
+Finansai,Grynasis pelningumas 2023,"78,37 %"
+Finansai,Grynasis pelningumas 2024,"51,43 %"
+Finansai,Grynasis pelningumas 2025,"48,75 %"
+Finansai,Nuosavas kapitalas 2021,199 €
+Finansai,Nuosavas kapitalas 2022,0 €
+Finansai,Nuosavas kapitalas 2023,5 007 €
+Finansai,Nuosavas kapitalas 2024,8 087 €
+Finansai,Nuosavas kapitalas 2025,33 141 €
+Finansai,Mokėtinos sumos ir įsipareigojimai 2021,0 €
+Finansai,Mokėtinos sumos ir įsipareigojimai 2022,0 €
+Finansai,Mokėtinos sumos ir įsipareigojimai 2023,1 240 €
+Finansai,Mokėtinos sumos ir įsipareigojimai 2024,2 951 €
+Finansai,Mokėtinos sumos ir įsipareigojimai 2025,8 081 €
+Finansai,Ilgalaikis turtas 2021,0 €
+Finansai,Ilgalaikis turtas 2022,0 €
+Finansai,Ilgalaikis turtas 2023,0 €
+Finansai,Ilgalaikis turtas 2024,0 €
+Finansai,Ilgalaikis turtas 2025,0 €
+Finansai,Trumpalaikis turtas 2021,199 €
+Finansai,Trumpalaikis turtas 2022,0 €
+Finansai,Trumpalaikis turtas 2023,6 247 €
+Finansai,Trumpalaikis turtas 2024,11 038 €
+Finansai,Trumpalaikis turtas 2025,41 222 €
+Darbuotojai,Darbuotojų (apdraustųjų) skaičius,1
+Darbuotojai,Metinis darbuotojų vidurkis,1 (+0%)
+Skolos,Registruotos skolos,Turi
+Skolos,Skolų pokyčių įrašai,38 įrašai nuo 2026-06-16
+Skolos,Kreditingumas (Juris LT),"neskolinga — Juris LT, UAB"

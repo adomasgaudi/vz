@@ -1,11 +1,20 @@
 # Scraping rekvizitai.vz.lt
 
-> **Status: done (v51).** Scraper + parser live in `scripts/`, output in `data/rek.csv`.
-> Kept as a reference for re-running or scraping another company.
+> **Status: done (v53).** Scraper + parser live in `scripts/`, output in `data/rek.csv`
+> + the `Rek` sheet of `data/sheets_data.json`. Kept as a reference for re-running
+> or scraping another company.
 
-## Task for local Claude (VS Code)
+## What it covers
 
-Run the scraper for `6 vijos, MB`, parse the output, build a structured CSV, and commit it.
+A company on rekvizitai.vz.lt is split across separate tab URLs, not in-page
+panels. The pipeline scrapes the four data tabs (Ataskaitos is a paywall, skipped):
+
+| Tab | URL suffix | Yields |
+| --- | --- | --- |
+| Įmonė | `/` | codes, contacts, manager, address, LinkedIn, risk, export, Sodra debt |
+| Finansai | `/apyvarta/` | 2021–2025 statement: sales, profit, margins, equity, assets, liabilities |
+| Darbuotojai | `/darbuotoju-skaicius/` | headcount + annual average |
+| Skolos | `/skolos/` | registered-debt status, debt-change records, credit check |
 
 ## Steps
 
@@ -15,31 +24,33 @@ pip install playwright beautifulsoup4
 playwright install chromium
 ```
 
-### 2. Run the scraper
+### 2. Scrape all tabs
 ```bash
 python3 scripts/scrape_6_vijos.py
 ```
-This saves `6_vijos_raw.html` in the repo root (gitignored — a 4.8MB intermediate).
+Saves one HTML file per tab to `data/raw/6_vijos_<tab>.html` (gitignored — multi-MB intermediates).
 
-### 3. Parse the HTML and build a CSV
-
-`scripts/parse_6_vijos.py`:
-- Reads `6_vijos_raw.html`
-- Extracts every label/value field on the page (financials, contacts, employees, addresses, risk, activities, etc.)
-- Saves the result as `data/rek.csv`
-- Prints a summary of what was extracted
-
-The HTML structure of rekvizitai.vz.lt company pages puts every fact in 2/3-column `<table>` rows (no `<dt>`/`<dd>`). The parser pulls all of them — don't cherry-pick.
+### 3. Parse → CSV + Data Explorer sheet
 ```bash
 python3 scripts/parse_6_vijos.py
 ```
+`scripts/parse_6_vijos.py`:
+- Reads every `data/raw/6_vijos_<tab>.html`
+- Runs the right extractor per tab — label/value `<table>` rows, the Finansai
+  metric×year grid, and targeted prose facts (headcount / debt)
+- Writes `data/rek.csv` with columns **`tab, field, value`** (SSOT)
+- Mirrors the same rows into the `Rek` sheet of `data/sheets_data.json` so the
+  Data Explorer renders them
 
-### 4. Commit and push
+### 4. Rebuild, commit, push
 ```bash
-git add data/rek.csv scripts/parse_6_vijos.py
-git commit -m "vN REPO-01 | scrape 6_vijos from rekvizitai.vz.lt into rek.csv | N sp"
+python3 src/build_site.py
+git add data/rek.csv data/sheets_data.json scripts/ index.html src/template.html
+git commit -m "vN REPO-01 | scrape all 6_vijos tabs into rek.csv | N sp"
 git push origin main
 ```
 
 ## Goal
-Once `data/rek.csv` exists and looks good, the web Claude session will add a "Rek" tab to the Data Explorer in `src/template.html` that renders it.
+The "Rek" tab in the Data Explorer (`src/template.html`) renders the `Rek` sheet —
+re-run the pipeline to refresh it. To scrape another company, change `BASE`/`TABS`
+in `scrape_6_vijos.py` and the file keys in `parse_6_vijos.py`.
