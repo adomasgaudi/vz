@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>LT Communication Agencies — Competitor Dashboard 2019–2024 · v0.1.89</title>
+<title>LT Communication Agencies — Competitor Dashboard 2019–2024 · v0.1.90</title>
 <script>
   // Apply saved theme + view mode before first paint to avoid a flash.
   // Theme default = dark; view default = advanced (full data sources/tabs).
@@ -279,7 +279,7 @@
     <button class="nav-btn" data-view="dataView">Initial Data</button>
     <button class="nav-btn" data-view="rekView">Sourced Data</button>
   </div>
-  <span class="nav-version">v0.1.89</span>
+  <span class="nav-version">v0.1.90</span>
   <div class="settings-wrap">
     <button class="settings-cog" id="settingsCog" title="Settings" aria-label="Settings">⚙️</button>
     <div class="settings-menu" id="settingsMenu">
@@ -293,7 +293,7 @@
 <div class="view active" id="dashView">
 <div class="wrap">
   <header>
-    <h1>🇱🇹 Lithuanian Communication & Marketing Agencies <span class="version">v0.1.89</span></h1>
+    <h1>🇱🇹 Lithuanian Communication & Marketing Agencies <span class="version">v0.1.90</span></h1>
     <p>Competitor landscape dashboard · 113 brands · Financials 2019–2024 (revenue, profit, headcount, salaries) · Source: rekvizitai.vz.lt data export</p>
   </header>
 
@@ -626,6 +626,7 @@ const BRANDS = Object.keys(byBrand);
 
 const SEGMENTS = [...new Set(DATA.flatMap(d=>d.activities))].sort();
 const SEGCOLORS = {'Media':'#4f8ef7','Digital media':'#34c98e','Kūryba':'#f0b04f','PR':'#a78bfa','Production house':'#f06a6a','BTL':'#5dd0d6','PA':'#e58fc5','Konsultantai':'#9aa56b','Renginiai':'#c9a26b'};
+const SVG_SHAPES = ['circle','diamond','square','triangle']; // SVG chart-engine marker shapes — declared here (early) because dashboard charts render above the engine block (TDZ fix)
 
 // Read a CSS custom property off <html> so charts track the active theme.
 const cssVar = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
@@ -960,6 +961,9 @@ renderTable();
 // ---------- SP & version history ----------
 // Each entry: title (2-5 words) · desc (5-15 words) · detail (15-50 words).
 const VERSIONS = [
+  {v:'v0.1.90', date:'2026-06-22 10:05', sp:0.5, title:'Fix chart init crash (TDZ)',
+    desc:'Dashboard crashed: SVG_SHAPES used before its declaration.',
+    detail:'The converted dashboard charts call the SVG engine during initial render (renderCompany at load), but const SVG_SHAPES was declared later in the file — a temporal-dead-zone ReferenceError that broke the page. Moved the declaration up beside SEGCOLORS so it exists before first use.'},
   {v:'v0.1.89', date:'2026-06-22 09:40', sp:5, title:'Dashboard charts → SVG engine',
     desc:'Converted 8 dashboard charts from Chart.js to the SVG engine; only doughnut + bubble stay.',
     detail:'Extended the SVG engine with grouped bar series (kind:\'bar\') and an {interactive:false} static mode, plus a new static horizontal-bar renderer (drawBarsSvg) for rank lists. Converted chMine, chMarket (mixed bar+line), chSegTrend, chSalary (line), and chMineRank, chTop, chGrowth, chRevPerEmp (horizontal bars) to SVG — static so they never trap page-scroll on mobile. A ResizeObserver repaints each on size/collapse/tab/theme change. The segment doughnut and the size-vs-profit bubble stay on Chart.js (don\'t fit a bar/line engine).'},
@@ -1433,7 +1437,7 @@ function ddSpecFor(id, src, co){
 }
 
 // ---------- Custom SVG chart engine (ported from the Colosseum analytics view; no Chart.js) ----------
-const SVG_SHAPES = ['circle','diamond','square','triangle'];
+// NOTE: SVG_SHAPES is declared earlier (by SEGCOLORS) — dashboard charts draw BEFORE this block runs.
 function svgMarker(shape, X, Y, r, color){
   X=+X.toFixed(1); Y=+Y.toFixed(1);
   if(shape==='diamond')  return `<polygon points="${X},${Y-r} ${X+r},${Y} ${X},${Y+r} ${X-r},${Y}" fill="${color}"/>`;
