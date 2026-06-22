@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>LT Communication Agencies — Competitor Dashboard 2019–2024 · v0.1.98</title>
+<title>Market Analytics — LT agencies · v0.1.99</title>
 <script>
   // Apply saved theme + view mode before first paint to avoid a flash.
   // Theme default = dark; view default = advanced (full data sources/tabs).
@@ -143,7 +143,7 @@
     .nav-btn{padding:10px 10px;font-size:12px;white-space:nowrap;flex-shrink:0}
     .nav-sub{display:none}
     .nav-spacer{display:none}
-    .nav-version{display:none}
+    .nav-version{font-size:9px;margin-right:4px}
     #dashView .wrap,#rekView .wrap{padding:16px 10px}
     .card{padding:12px}
     .chartbox{height:300px}
@@ -165,7 +165,7 @@
   .nav-scroll{display:flex}
   .nav-spacer{flex:1}
   .nav-sub{font-size:12px;color:var(--muted);padding:12px 0}
-  .nav-version{font-size:11px;font-weight:600;color:var(--muted);background:var(--panel2);border:1px solid var(--border);border-radius:20px;padding:2px 8px;margin-right:8px;white-space:nowrap}
+  .nav-version{font-size:10px;font-weight:600;color:var(--muted);margin-right:6px;white-space:nowrap;align-self:center}
   .settings-wrap{position:relative;margin-right:8px}
   .settings-cog{font-size:16px;line-height:1;color:var(--muted);background:none;border:none;padding:8px 10px;cursor:pointer;font-family:inherit;transition:.15s}
   .settings-cog:hover{color:var(--text)}
@@ -287,7 +287,7 @@
     <button class="nav-btn active" data-view="dashView">Dashboard</button>
     <button class="nav-btn" data-view="rekView">Company Data</button>
   </div>
-  <span class="nav-version">v0.1.98</span>
+  <span class="nav-version">v0.1.99</span>
   <div class="settings-wrap">
     <button class="settings-cog" id="settingsCog" title="Settings" aria-label="Settings">⚙️</button>
     <div class="settings-menu" id="settingsMenu">
@@ -301,8 +301,7 @@
 <div class="view active" id="dashView">
 <div class="wrap">
   <header>
-    <h1>🇱🇹 Lithuanian Communication & Marketing Agencies <span class="version">v0.1.98</span></h1>
-    <p>Competitor landscape dashboard · 113 brands · Financials 2019–2024 (revenue, profit, headcount, salaries) · Source: rekvizitai.vz.lt data export</p>
+    <h1>🇱🇹 Market Analytics</h1>
   </header>
 
   <h2 class="section mine">⭐ My companies</h2>
@@ -951,6 +950,9 @@ renderTable();
 // ---------- SP & version history ----------
 // Each entry: title (2-5 words) · desc (5-15 words) · detail (15-50 words).
 const VERSIONS = [
+  {v:'v0.1.99', date:'2026-06-22 12:55', sp:0.5, title:'Rename to Market Analytics',
+    desc:'Header renamed, subtitle removed, version moved into the top nav.',
+    detail:'Renamed the dashboard header to “🇱🇹 Market Analytics”, removed the descriptive subtitle line under it, and moved the version badge out of the title into the top navigation as small plain text next to the settings cog (now also visible on mobile).'},
   {v:'v0.1.98', date:'2026-06-22 12:35', sp:0.5, title:'Inline conflicts, drop intro',
     desc:'Disagreeing values sit side by side; removed the per-company description panel.',
     detail:'Conflict spans go from stacked (block) to inline so disagreeing source values sit next to each other (colour-keyed), keeping the row height even. Also removed the “— Company Data / Initial = … Rekvizitai = …” intro panel above the tabs to cut clutter.'},
