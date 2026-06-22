@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>LT Communication Agencies — Competitor Dashboard 2019–2024 · v0.1.88</title>
+<title>LT Communication Agencies — Competitor Dashboard 2019–2024 · v0.1.89</title>
 <script>
   // Apply saved theme + view mode before first paint to avoid a flash.
   // Theme default = dark; view default = advanced (full data sources/tabs).
@@ -279,7 +279,7 @@
     <button class="nav-btn" data-view="dataView">Initial Data</button>
     <button class="nav-btn" data-view="rekView">Sourced Data</button>
   </div>
-  <span class="nav-version">v0.1.88</span>
+  <span class="nav-version">v0.1.89</span>
   <div class="settings-wrap">
     <button class="settings-cog" id="settingsCog" title="Settings" aria-label="Settings">⚙️</button>
     <div class="settings-menu" id="settingsMenu">
@@ -293,7 +293,7 @@
 <div class="view active" id="dashView">
 <div class="wrap">
   <header>
-    <h1>🇱🇹 Lithuanian Communication & Marketing Agencies <span class="version">v0.1.88</span></h1>
+    <h1>🇱🇹 Lithuanian Communication & Marketing Agencies <span class="version">v0.1.89</span></h1>
     <p>Competitor landscape dashboard · 113 brands · Financials 2019–2024 (revenue, profit, headcount, salaries) · Source: rekvizitai.vz.lt data export</p>
   </header>
 
@@ -305,12 +305,12 @@
     <div class="card">
       <h2 id="chMineTitle">Revenue, profit &amp; headcount (2019–2024)</h2>
       <div class="desc">Your company's six-year trajectory. Bars = revenue, lines = net profit and employees.</div>
-      <div class="chartbox"><canvas id="chMine"></canvas></div>
+      <div class="chartbox"><div class="svgwrap" id="chMine" style="position:absolute;inset:0"></div></div>
     </div>
     <div class="card">
       <h2 id="chMineRankTitle">vs the market (2024)</h2>
       <div class="desc">Where your company sits against all 113 tracked agencies — percentile rank per metric (100 = top of market, 50 = median).</div>
-      <div class="chartbox"><canvas id="chMineRank"></canvas></div>
+      <div class="chartbox"><div class="svgwrap" id="chMineRank" style="position:absolute;inset:0"></div></div>
     </div>
   </div>
 
@@ -325,7 +325,7 @@
     <div class="card full">
       <h2>Total market: revenue (spėjamos pajamos), turnover, profit & headcount (2019–2024)</h2>
       <div class="desc">Sum across all 113 tracked companies. Blue bars = revenue (spėjamos pajamos), grey bars = turnover (apyvarta), lines = total net profit and total employees.</div>
-      <div class="chartbox"><canvas id="chMarket"></canvas></div>
+      <div class="chartbox"><div class="svgwrap" id="chMarket" style="position:absolute;inset:0"></div></div>
     </div>
     <div class="card">
       <h2>2024 revenue (spėjamos pajamos) by service segment</h2>
@@ -335,7 +335,7 @@
     <div class="card">
       <h2>Segment revenue trend (spėjamos pajamos)</h2>
       <div class="desc">Total segment revenue (spėjamos pajamos) per year — who is gaining share of the market.</div>
-      <div class="chartbox"><canvas id="chSegTrend"></canvas></div>
+      <div class="chartbox"><div class="svgwrap" id="chSegTrend" style="position:absolute;inset:0"></div></div>
     </div>
   </div>
 
@@ -355,12 +355,12 @@
         <select id="rankYear"></select>
         <select id="rankSegment"><option value="">All segments</option></select>
       </div>
-      <div class="chartbox tall"><canvas id="chTop"></canvas></div>
+      <div class="chartbox tall"><div class="svgwrap" id="chTop" style="position:absolute;inset:0"></div></div>
     </div>
     <div class="card">
       <h2>Growth leaders & laggards (revenue – spėjamos pajamos, 2021 → 2024)</h2>
       <div class="desc">Companies with ≥ €150k revenue (spėjamos pajamos) in 2024 and ≥ €30k in 2021. Top 8 growers vs bottom 8 decliners.</div>
-      <div class="chartbox tall"><canvas id="chGrowth"></canvas></div>
+      <div class="chartbox tall"><div class="svgwrap" id="chGrowth" style="position:absolute;inset:0"></div></div>
     </div>
     <div class="card">
       <h2>Size vs profitability (2024)</h2>
@@ -374,12 +374,12 @@
     <div class="card">
       <h2>Median monthly salary by year</h2>
       <div class="desc">Median of company average salaries (companies reporting > €500/mo only).</div>
-      <div class="chartbox"><canvas id="chSalary"></canvas></div>
+      <div class="chartbox"><div class="svgwrap" id="chSalary" style="position:absolute;inset:0"></div></div>
     </div>
     <div class="card">
       <h2>Revenue (spėjamos pajamos) per employee by segment (2024)</h2>
       <div class="desc">Median revenue (spėjamos pajamos) per employee across companies in each segment — a productivity proxy. Pass-through ad spend is already excluded.</div>
-      <div class="chartbox"><canvas id="chRevPerEmp"></canvas></div>
+      <div class="chartbox"><div class="svgwrap" id="chRevPerEmp" style="position:absolute;inset:0"></div></div>
     </div>
   </div>
 
@@ -571,6 +571,8 @@ function applyTheme(theme){
   applyChartDefaults();
   syncThemeButton();
   retintCharts();
+  try{ redrawDashSvg(); }catch(e){}     // SVG dashboard charts repaint grid/labels (series colours kept)
+  try{ drawSDD(); }catch(e){}           // deep-dive SVG charts rebuild fresh
 }
 syncThemeButton();
 document.getElementById('themeToggle').addEventListener('click', ()=>{
@@ -650,7 +652,6 @@ const MY_COMPANIES = [
 // MY_COMPANIES refactor (#persistent: Data Explorer blank).
 const MY_BRAND = MY_COMPANIES[0].brand;
 
-let chMineInst = null, chMineRankInst = null;
 
 const E = v => v!=null ? '€'+Math.round(v).toLocaleString() : '–';
 
@@ -714,34 +715,22 @@ function renderCompany(brand){
   document.getElementById('mineKpis').innerHTML = cards.map(k=>
     `<div class="kpi mine"><div class="label">${k.label}</div><div class="value">${k.value}</div><div class="sub ${k.cls}">${k.sub}</div>${k.formula?`<details class="formula"><summary>formula</summary><div class="formula-body">${k.formula.replace(/\n/g,'<br>')}</div></details>`:''}</div>`).join('');
 
-  // Charts — destroy old instances before redrawing
-  if(chMineInst){ chMineInst.destroy(); chMineInst=null; }
-  if(chMineRankInst){ chMineRankInst.destroy(); chMineRankInst=null; }
-
-  chMineInst = new Chart(chMine, {data:{
-    labels: mineYears,
-    datasets:[
-      {type:'bar', label:'Revenue – spėj. pajamos (€M)', data:mineYears.map(y=>(mine[y]?.estimatedIncome||0)/1e6), backgroundColor:'rgba(244,197,66,.75)', borderColor:'#f4c542', borderWidth:1, borderRadius:6, yAxisID:'y'},
-      {type:'bar', label:'Turnover – apyvarta (€M)', data:mineYears.map(y=>(mine[y]?.revenue||0)/1e6), backgroundColor:'rgba(139,147,167,.35)', borderRadius:6, yAxisID:'y'},
-      {type:'line', label:'Net profit (€k)', data:mineYears.map(y=>(mine[y]?.profit||0)/1e3), borderColor:'#34c98e', backgroundColor:'#34c98e', tension:.3, yAxisID:'y2'},
-      {type:'line', label:'Employees', data:mineYears.map(y=>mine[y]?.employees||0), borderColor:'#4f8ef7', backgroundColor:'#4f8ef7', borderDash:[6,4], tension:.3, yAxisID:'y2'},
-    ]},
-    options:{maintainAspectRatio:false, scales:{
-      y:{title:{display:true,text:'Revenue €M'}, grid:{color:GRID}},
-      y2:{position:'right', grid:{drawOnChartArea:false}, title:{display:true,text:'Profit €k / Employees'}}
-    }}
-  });
+  // Charts — SVG engine, static (no pan/zoom on the dashboard overview)
+  drawFinSvg(chMine, { yTitle:'€M', y2Title:'profit €k / emp', series:[
+    {label:'Revenue €M', kind:'bar', color:cssVar('--gold'), data:mineYears.map(y=>({x:y, y:(mine[y]?.estimatedIncome||0)/1e6}))},
+    {label:'Turnover €M', kind:'bar', color:cssVar('--muted'), data:mineYears.map(y=>({x:y, y:(mine[y]?.revenue||0)/1e6}))},
+    {label:'Net profit €k', color:cssVar('--green'), yAxisID:'y2', data:mineYears.map(y=>({x:y, y:(mine[y]?.profit||0)/1e3}))},
+    {label:'Employees', color:cssVar('--accent'), yAxisID:'y2', dash:[6,4], data:mineYears.map(y=>({x:y, y:mine[y]?.employees||0}))},
+  ]}, {interactive:false});
 
   const rankData = [
     {label:'Revenue (spėj. pajamos)', r:mEI}, {label:'Turnover', r:mRev}, {label:'Net profit', r:mProfit},
     {label:'Profit margin', r:mMargin}, {label:'Employees', r:mEmp}, {label:'Avg salary', r:mSal},
   ].filter(x=>x.r);
-  chMineRankInst = new Chart(chMineRank, {type:'bar', data:{
-    labels:rankData.map(x=>x.label),
-    datasets:[{data:rankData.map(x=>x.r.pct), backgroundColor:'rgba(244,197,66,.7)', borderColor:'#f4c542', borderWidth:1, borderRadius:5}]},
-    options:{indexAxis:'y', maintainAspectRatio:false, plugins:{legend:{display:false},
-      tooltip:{callbacks:{label:c=>{const x=rankData[c.dataIndex]; return ` ${x.r.pct}th percentile · #${x.r.pos} of ${x.r.total}`}}}},
-      scales:{x:{min:0,max:100,title:{display:true,text:'Percentile vs '+BRANDS.length+' agencies (100 = top)'}, grid:{color:GRID}}}}
+  drawBarsSvg(chMineRank, {
+    rows: rankData.map(x=>({label:x.label, value:x.r.pct, color: x.r.pct>=50?cssVar('--gold'):cssVar('--muted'), pos:x.r.pos, total:x.r.total})),
+    xTitle:'Percentile vs '+BRANDS.length+' agencies (100 = top)', fmt:v=>Math.round(v),
+    tip:r=>`<b>${esc(String(r.label))}</b>: ${Math.round(r.value)}th percentile · #${r.pos} of ${r.total}`
   });
 }
 
@@ -801,19 +790,12 @@ document.getElementById('insights').innerHTML = insights.map(i=>
   `<div class="insight ${i.cls}"><h3>${i.t}</h3><p>${i.p}</p></div>`).join('');
 
 // ---------- Market chart ----------
-new Chart(chMarket, {data:{
-  labels: YEARS,
-  datasets:[
-    {type:'bar', label:'Revenue – spėjamos pajamos (€M)', data:YEARS.map(y=>yearTotals(y).ei/1e6), backgroundColor:'rgba(79,142,247,.75)', borderRadius:6, yAxisID:'y'},
-    {type:'bar', label:'Turnover – apyvarta (€M)', data:YEARS.map(y=>yearTotals(y).rev/1e6), backgroundColor:'rgba(139,147,167,.35)', borderRadius:6, yAxisID:'y'},
-    {type:'line', label:'Net profit (€M)', data:YEARS.map(y=>yearTotals(y).profit/1e6), borderColor:'#34c98e', backgroundColor:'#34c98e', tension:.3, yAxisID:'y2'},
-    {type:'line', label:'Employees (×100)', data:YEARS.map(y=>yearTotals(y).emp/100), borderColor:'#f0b04f', backgroundColor:'#f0b04f', borderDash:[6,4], tension:.3, yAxisID:'y2'},
-  ]},
-  options:{maintainAspectRatio:false, scales:{
-    y:{title:{display:true,text:'Revenue / Turnover €M'}, grid:{color:GRID}},
-    y2:{position:'right', grid:{drawOnChartArea:false}, title:{display:true,text:'Profit €M / Employees ×100'}}
-  }}
-});
+drawFinSvg(chMarket, { yTitle:'€M', y2Title:'profit €M / emp ×100', series:[
+  {label:'Revenue €M', kind:'bar', color:cssVar('--accent'), data:YEARS.map(y=>({x:y, y:yearTotals(y).ei/1e6}))},
+  {label:'Turnover €M', kind:'bar', color:cssVar('--muted'), data:YEARS.map(y=>({x:y, y:yearTotals(y).rev/1e6}))},
+  {label:'Net profit €M', color:cssVar('--green'), yAxisID:'y2', data:YEARS.map(y=>({x:y, y:yearTotals(y).profit/1e6}))},
+  {label:'Employees ×100', color:cssVar('--amber'), yAxisID:'y2', dash:[6,4], data:YEARS.map(y=>({x:y, y:yearTotals(y).emp/100}))},
+]}, {interactive:false});
 
 // ---------- Segments doughnut ----------
 function segTotals(y){
@@ -832,11 +814,9 @@ new Chart(chSegments, {type:'doughnut', data:{
 
 // ---------- Segment trend ----------
 const topSegs = segSorted.slice(0,5).map(s=>s[0]);
-new Chart(chSegTrend, {type:'line', data:{
-  labels:YEARS,
-  datasets: topSegs.map(s=>({label:s, data:YEARS.map(y=>(segTotals(y)[s]||0)/1e6), borderColor:SEGCOLORS[s], backgroundColor:SEGCOLORS[s], tension:.3}))},
-  options:{maintainAspectRatio:false, scales:{y:{title:{display:true,text:'€M'}, grid:{color:GRID}}}}
-});
+drawFinSvg(chSegTrend, { yTitle:'€M', series: topSegs.map(s=>(
+  {label:s, color:SEGCOLORS[s], data:YEARS.map(y=>({x:y, y:(segTotals(y)[s]||0)/1e6}))}
+)) }, {interactive:false});
 
 // ---------- Top-N ranking ----------
 const rankYearSel = document.getElementById('rankYear');
@@ -845,7 +825,6 @@ const rankSegSel = document.getElementById('rankSegment');
 SEGMENTS.forEach(s=>rankSegSel.add(new Option(s,s)));
 ['tblSegment'].forEach(id=>{ const el=document.getElementById(id); SEGMENTS.forEach(s=>el.add(new Option(s,s))); });
 
-let chTopObj;
 function drawTop(){
   const metric = rankMetric.value, year = +rankYear.value, seg = rankSegment.value;
   let rows = DATA.filter(d=>d.year===year && (!seg || d.activities.includes(seg)));
@@ -853,13 +832,11 @@ function drawTop(){
              .filter(r=>r.val!=null && r.val!==0)
              .sort((a,b)=>b.val-a.val).slice(0,20);
   const isEur = ['revenue','profit','estimatedIncome'].includes(metric);
-  if(chTopObj) chTopObj.destroy();
-  chTopObj = new Chart(chTop, {type:'bar', data:{
-    labels:rows.map(r=>r.brand),
-    datasets:[{data:rows.map(r=>isEur? r.val/1e6 : r.val), backgroundColor:rows.map(r=>r.val<0?'rgba(240,106,106,.7)':'rgba(79,142,247,.7)'), borderRadius:5}]},
-    options:{indexAxis:'y', maintainAspectRatio:false, plugins:{legend:{display:false},
-      tooltip:{callbacks:{label:c=> isEur? ' €'+c.parsed.x.toFixed(2)+'M' : metric==='margin'? ' '+c.parsed.x.toFixed(1)+'%' : ' '+c.parsed.x.toLocaleString()}}},
-      scales:{x:{title:{display:true,text:isEur?'€M':metric==='margin'?'%':''}, grid:{color:GRID}}}}
+  const tfmt = v=> isEur? '€'+v.toFixed(2)+'M' : metric==='margin'? v.toFixed(1)+'%' : Math.round(v).toLocaleString();
+  drawBarsSvg(chTop, {
+    rows: rows.map(r=>({label:r.brand, value: isEur? r.val/1e6 : r.val, color: r.val<0?cssVar('--red'):cssVar('--accent')})),
+    xTitle: isEur?'€M':metric==='margin'?'%':'', fmt:tfmt,
+    tip:r=>`<b>${esc(String(r.label))}</b>: ${tfmt(r.value)}`
   });
 }
 [rankMetric, rankYear, rankSegment].forEach(el=>el.addEventListener('change', drawTop));
@@ -872,12 +849,10 @@ const growthRows = BRANDS.map(b=>{
   return {brand:b, g:(d24.estimatedIncome/d21.estimatedIncome-1)*100, rev:d24.estimatedIncome};
 }).filter(Boolean).sort((a,b)=>b.g-a.g);
 const gShow = [...growthRows.slice(0,8), ...growthRows.slice(-8)];
-new Chart(chGrowth, {type:'bar', data:{
-  labels:gShow.map(r=>r.brand),
-  datasets:[{data:gShow.map(r=>r.g), backgroundColor:gShow.map(r=>r.g>=0?'rgba(52,201,142,.75)':'rgba(240,106,106,.75)'), borderRadius:5}]},
-  options:{indexAxis:'y', maintainAspectRatio:false, plugins:{legend:{display:false},
-    tooltip:{callbacks:{label:c=>{const r=gShow[c.dataIndex]; return ` ${c.parsed.x.toFixed(0)}% · 2024 rev €${fmtM(r.rev)}`}}}},
-    scales:{x:{title:{display:true,text:'Revenue (spėjamos pajamos) change 2021→2024, %'}, grid:{color:GRID}}}}
+drawBarsSvg(chGrowth, {
+  rows: gShow.map(r=>({label:r.brand, value:r.g, color: r.g>=0?cssVar('--green'):cssVar('--red'), rev:r.rev})),
+  xTitle:'Revenue (spėjamos pajamos) change 2021→2024, %', fmt:v=>Math.round(v)+'%',
+  tip:r=>`<b>${esc(String(r.label))}</b>: ${Math.round(r.value)}% · 2024 rev €${fmtM(r.rev)}`
 });
 
 // ---------- Scatter ----------
@@ -910,15 +885,11 @@ function salaryQuartiles(y){
   return {q1:q(.25), med:q(.5), q3:q(.75)};
 }
 const sq = YEARS.map(salaryQuartiles);
-new Chart(chSalary, {type:'line', data:{
-  labels:YEARS,
-  datasets:[
-    {label:'75th percentile', data:sq.map(s=>s.q3), borderColor:'#4f8ef7', backgroundColor:'rgba(79,142,247,.15)', fill:'+2', tension:.3},
-    {label:'Median', data:sq.map(s=>s.med), borderColor:'#f0b04f', backgroundColor:'#f0b04f', borderWidth:3, tension:.3},
-    {label:'25th percentile', data:sq.map(s=>s.q1), borderColor:'#4f8ef7', borderDash:[5,4], tension:.3},
-  ]},
-  options:{maintainAspectRatio:false, scales:{y:{title:{display:true,text:'€/month'}, grid:{color:GRID}}}}
-});
+drawFinSvg(chSalary, { yTitle:'€/mo', series:[
+  {label:'75th pct', color:cssVar('--accent'), data:YEARS.map((y,k)=>({x:y, y:sq[k].q3}))},
+  {label:'Median', color:cssVar('--amber'), data:YEARS.map((y,k)=>({x:y, y:sq[k].med}))},
+  {label:'25th pct', color:cssVar('--accent'), dash:[5,4], data:YEARS.map((y,k)=>({x:y, y:sq[k].q1}))},
+]}, {interactive:false});
 
 // ---------- Revenue per employee ----------
 const rpe = SEGMENTS.map(s=>{
@@ -926,13 +897,17 @@ const rpe = SEGMENTS.map(s=>{
                    .map(d=>d.estimatedIncome/d.employees).sort((a,b)=>a-b);
   return {seg:s, med: vals.length? vals[Math.floor(vals.length/2)] : 0, n:vals.length};
 }).filter(r=>r.n>=3).sort((a,b)=>b.med-a.med);
-new Chart(chRevPerEmp, {type:'bar', data:{
-  labels:rpe.map(r=>r.seg),
-  datasets:[{data:rpe.map(r=>r.med/1000), backgroundColor:rpe.map(r=>SEGCOLORS[r.seg]||'#888'), borderRadius:5}]},
-  options:{indexAxis:'y', maintainAspectRatio:false, plugins:{legend:{display:false},
-    tooltip:{callbacks:{label:c=>` €${c.parsed.x.toFixed(0)}k / employee (median of ${rpe[c.dataIndex].n} companies)`}}},
-    scales:{x:{title:{display:true,text:'€k revenue per employee (median)'}, grid:{color:GRID}}}}
+drawBarsSvg(chRevPerEmp, {
+  rows: rpe.map(r=>({label:r.seg, value:r.med/1000, color:SEGCOLORS[r.seg]||cssVar('--muted'), n:r.n})),
+  xTitle:'€k revenue per employee (median)', fmt:v=>'€'+Math.round(v)+'k',
+  tip:r=>`<b>${esc(String(r.label))}</b>: €${Math.round(r.value)}k / employee (median of ${r.n} companies)`
 });
+
+// Re-render the static SVG dashboard charts at the new size on window resize.
+const SVG_DASH_IDS=['chMine','chMineRank','chMarket','chSegTrend','chTop','chGrowth','chSalary','chRevPerEmp'];
+function redrawDashSvg(){ SVG_DASH_IDS.forEach(id=>{ const el=document.getElementById(id); if(!el) return;
+  if(el.__fin) el.__fin.render(); else if(el.__barcfg) drawBarsSvg(el, el.__barcfg); }); }
+let _dashRT; window.addEventListener('resize',()=>{ clearTimeout(_dashRT); _dashRT=setTimeout(redrawDashSvg,160); });
 
 // ---------- Table ----------
 const cities = [...new Set(Object.values(byBrand).map(d=>(d[LAST]||Object.values(d)[0]).city).filter(Boolean))].sort();
@@ -985,6 +960,9 @@ renderTable();
 // ---------- SP & version history ----------
 // Each entry: title (2-5 words) · desc (5-15 words) · detail (15-50 words).
 const VERSIONS = [
+  {v:'v0.1.89', date:'2026-06-22 09:40', sp:5, title:'Dashboard charts → SVG engine',
+    desc:'Converted 8 dashboard charts from Chart.js to the SVG engine; only doughnut + bubble stay.',
+    detail:'Extended the SVG engine with grouped bar series (kind:\'bar\') and an {interactive:false} static mode, plus a new static horizontal-bar renderer (drawBarsSvg) for rank lists. Converted chMine, chMarket (mixed bar+line), chSegTrend, chSalary (line), and chMineRank, chTop, chGrowth, chRevPerEmp (horizontal bars) to SVG — static so they never trap page-scroll on mobile. A ResizeObserver repaints each on size/collapse/tab/theme change. The segment doughnut and the size-vs-profit bubble stay on Chart.js (don\'t fit a bar/line engine).'},
   {v:'v0.1.88', date:'2026-06-22 09:00', sp:1.5, title:'Drop Chart.js deep-dive copy',
     desc:'Removed the duplicate Chart.js deep-dive; the SVG one is now the only deep-dive.',
     detail:'Deleted the older canvas/Chart.js "Company deep-dive · scraped sources" section (its 4 charts, single-company picker, source toggle and drawDD/initDD code) now that the SVG deep-dive supersedes it with pan/zoom + multi-company compare. Shared spec helpers (DD_SPECS, ddSpecFor, initSeries/rekYearSeries/sodraSeries) stay — the SVG view uses them. Merged the two headings into one "Company deep-dive".'},
@@ -1466,7 +1444,8 @@ function svgMarker(shape, X, Y, r, color){
 // Draw spec {series:[{label,data:[{x,y}],color,yAxisID,dash}], yTitle, y2Title} into an SVG inside `container`.
 // Persistent per-container state holds a {xMin,xMax} VIEW window over the category-index
 // domain, so pan/zoom (added in later parts) survives redraws. Initial view = full data.
-function drawFinSvg(container, spec){
+function drawFinSvg(container, spec, opts){
+  const interactive = !(opts && opts.interactive===false); // dashboard overview charts pass {interactive:false} → static, page still scrolls
   const cats = [...new Set(spec.series.flatMap(s=>s.data.map(p=>String(p.x))))].sort();
   const n = cats.length;
   const st = container.__fin || (container.__fin = { cid:'fcl'+Math.random().toString(36).slice(2,8) });
@@ -1499,10 +1478,23 @@ function drawFinSvg(container, spec){
     // x labels: only categories whose pixel falls inside the plot, thinned to ~8
     const step=Math.max(1, Math.ceil(Math.min(n, span+1)/8));
     cats.forEach((c,i)=>{ const X=xAt(i); if(X<m.l-1||X>W-m.r+1) return; if(i%step===0) s+=`<text x="${X.toFixed(1)}" y="${H-8}" fill="${muted}" font-size="10" text-anchor="middle">${c}</text>`; });
-    // series + markers, clipped to the plot rect so a panned/zoomed view never spills
+    // series, clipped to the plot rect. Bar series (kind:'bar') render as grouped bars per category.
+    const barIdx={}; let nbar=0; spec.series.forEach((s,i)=>{ if(s.kind==='bar') barIdx[i]=nbar++; });
+    const slotPx=pw/span, groupW=nbar?Math.min(slotPx*0.7, 64):0, barW=nbar?groupW/nbar:0;
     let body='';
     spec.series.forEach((ser,si)=>{
-      const shape=SVG_SHAPES[si%SVG_SHAPES.length], yf= ser.yAxisID==='y2'?yR:yL;
+      const yf= ser.yAxisID==='y2'?yR:yL;
+      if(ser.kind==='bar'){
+        const bi=barIdx[si], base=yf(Math.max(view.yMin, Math.min(view.yMax, 0)));
+        cats.forEach((c,i)=>{ const p=ser.data.find(d=>String(d.x)===c); if(!p) return;
+          const cx=xAt(i)-groupW/2+(bi+0.5)*barW, w=Math.max(1,barW*0.82), x0=cx-w/2;
+          const yv=yf(p.y), y0=Math.min(yv,base), hh=Math.max(0,Math.abs(yv-base));
+          if(x0+w<m.l-2 || x0>W-m.r+2) return;
+          body+=`<rect x="${x0.toFixed(1)}" y="${y0.toFixed(1)}" width="${w.toFixed(1)}" height="${hh.toFixed(1)}" fill="${ser.color}" rx="2"/>`;
+        });
+        return;
+      }
+      const shape=SVG_SHAPES[si%SVG_SHAPES.length];
       const pts=cats.map((c,i)=>{ const p=ser.data.find(d=>String(d.x)===c); return p?{X:xAt(i),Y:yf(p.y)}:null; });
       const line=pts.filter(Boolean).map(p=>`${p.X.toFixed(1)},${p.Y.toFixed(1)}`).join(' ');
       if(line) body+=`<polyline points="${line}" fill="none" stroke="${ser.color}" stroke-width="2" stroke-opacity="0.9"${ser.dash&&ser.dash.length?` stroke-dasharray="${ser.dash.join(',')}"`:''}/>`;
@@ -1511,17 +1503,20 @@ function drawFinSvg(container, spec){
       if(last) body+=`<text x="${Math.min(W-2,last.X+5).toFixed(1)}" y="${(last.Y-5).toFixed(1)}" fill="${ser.color}" font-size="10" text-anchor="${last.X>W-60?'end':'start'}">${ser.label}</text>`;
     });
     s+=`<clipPath id="${st.cid}"><rect x="${m.l}" y="${m.t}" width="${pw}" height="${ph}"/></clipPath><g clip-path="url(#${st.cid})">${body}</g>`;
-    container.innerHTML=`<svg viewBox="0 0 ${W} ${H}" width="100%" height="100%" style="overflow:visible;touch-action:none">${s}</svg>`;
+    container.innerHTML=`<svg viewBox="0 0 ${W} ${H}" width="100%" height="100%" style="overflow:visible;touch-action:${interactive?'none':'auto'}">${s}</svg>`;
     // hover guide + tooltip (rebuilt each draw, after innerHTML)
     const tip=document.createElement('div');
     tip.style.cssText='position:absolute;pointer-events:none;background:'+(cssVar('--card')||'#1b1f27')+';border:1px solid '+(cssVar('--border')||'#333')+';border-radius:4px;padding:4px 6px;font-size:11px;color:'+text+';display:none;z-index:6;white-space:nowrap';
     const guide=document.createElement('div');
     guide.style.cssText='position:absolute;top:0;bottom:0;width:1px;background:'+muted+';opacity:.45;display:none;pointer-events:none';
     st.geo={W,H,ml:m.l,mt:m.t,pw,ph};
-    const fitBtn=document.createElement('button'); fitBtn.textContent='⤢'; fitBtn.title='Fit — reset zoom & pan';
-    fitBtn.style.cssText='position:absolute;top:4px;right:4px;z-index:7;font:600 12px/1 system-ui;padding:2px 5px;border:1px solid '+(cssVar('--border')||'#333')+';border-radius:4px;background:'+(cssVar('--card')||'#1b1f27')+';color:'+muted+';cursor:pointer;opacity:.6';
-    fitBtn.onclick=ev=>{ ev.stopPropagation(); st.fit(); };
-    container.appendChild(guide); container.appendChild(tip); container.appendChild(fitBtn);
+    container.appendChild(guide); container.appendChild(tip);
+    if(interactive){
+      const fitBtn=document.createElement('button'); fitBtn.textContent='⤢'; fitBtn.title='Fit — reset zoom & pan';
+      fitBtn.style.cssText='position:absolute;top:4px;right:4px;z-index:7;font:600 12px/1 system-ui;padding:2px 5px;border:1px solid '+(cssVar('--border')||'#333')+';border-radius:4px;background:'+(cssVar('--card')||'#1b1f27')+';color:'+muted+';cursor:pointer;opacity:.6';
+      fitBtn.onclick=ev=>{ ev.stopPropagation(); st.fit(); };
+      container.appendChild(fitBtn);
+    }
     container.onmousemove=e=>{ if(st.dragging) return; const rect=container.getBoundingClientRect(); if(!rect.width||n<1) return;
       const px=(e.clientX-rect.left)*W/rect.width; let i=Math.round(view.xMin + (px-m.l)/pw*span);
       i=Math.max(0,Math.min(n-1,i)); const X=xAt(i);
@@ -1537,7 +1532,7 @@ function drawFinSvg(container, spec){
   };
   // Wire pan/zoom ONCE per container — handlers live on the container so they survive
   // the innerHTML rebuilds inside render(). Pan is unbounded (translate infinitely wide).
-  if(!st.wired){
+  if(interactive && !st.wired){
     st.wired=true; container.style.touchAction='none';
     const SPREAD=26; const pts=new Map(); let pan=null, pinch=null, lastTap=0;
     const geoCss=()=>{ const r=container.getBoundingClientRect(); return { r, pcw:r.width*(st.geo.pw/st.geo.W)||1, pch:r.height*(st.geo.ph/st.geo.H)||1, mlCss:r.width*(st.geo.ml/st.geo.W), mtCss:r.height*(st.geo.mt/st.geo.H) }; };
@@ -1595,7 +1590,52 @@ function drawFinSvg(container, spec){
     container.addEventListener('wheel', e=>{ e.preventDefault(); const k=e.deltaY>0?1.15:1/1.15; zoomAbout(e.clientX, e.clientY, e.shiftKey?1:k, e.altKey?1:k); st.render(); }, {passive:false});
     container.addEventListener('dblclick', ()=> st.fit());
   }
+  // Repaint when the container gains/changes size (collapse/expand, tab switch, view-mode, resize).
+  if(!st.ro && window.ResizeObserver){ st.ro=new ResizeObserver(()=>{ if(container.clientWidth>0) st.render(); }); st.ro.observe(container); }
   st.render();
+}
+
+// Static horizontal-bar SVG (rank lists). cfg = {rows:[{label,value,color}], xTitle, fmt(v), tip(row)}.
+function drawBarsSvg(container, cfg){
+  if(!container) return;
+  container.__barcfg=cfg;   // remembered so a resize can re-render at the new size
+  const rows=cfg.rows||[];
+  const W=container.clientWidth||360, H=container.clientHeight||240;
+  const grid=cssVar('--grid')||'#2a2f3a', muted=cssVar('--muted')||'#8a93a6', text=cssVar('--text')||'#e6e9ef';
+  const fmt=cfg.fmt||(v=>String(Math.round(v*10)/10));
+  const m={t:6,r:30,b:24,l:Math.min(150,Math.max(64,Math.round(W*0.34)))}, pw=W-m.l-m.r, ph=H-m.t-m.b;
+  let lo=0,hi=0; rows.forEach(r=>{ if(r.value<lo)lo=r.value; if(r.value>hi)hi=r.value; });
+  if(lo===hi) hi=lo+1; const span=hi-lo||1;
+  const xAt=v=> m.l+(v-lo)/span*pw, base=xAt(0);
+  const bandH= rows.length? ph/rows.length : ph, barH=Math.max(3,Math.min(22,bandH*0.66));
+  const maxChars=Math.max(4,Math.floor(m.l/6.2));
+  const trunc=v=>{ v=String(v); return v.length>maxChars? v.slice(0,maxChars-1)+'…':v; };
+  let s=''; const TICKS=3;
+  for(let k=0;k<=TICKS;k++){ const v=lo+span*k/TICKS, x=xAt(v);
+    s+=`<line x1="${x.toFixed(1)}" y1="${m.t}" x2="${x.toFixed(1)}" y2="${(m.t+ph).toFixed(1)}" stroke="${grid}" stroke-width="1"/>`;
+    s+=`<text x="${x.toFixed(1)}" y="${(H-12).toFixed(1)}" fill="${muted}" font-size="10" text-anchor="middle">${fmt(v)}</text>`;
+  }
+  if(cfg.xTitle) s+=`<text x="${(m.l+pw/2).toFixed(1)}" y="${(H-1).toFixed(1)}" fill="${muted}" font-size="10" text-anchor="middle">${esc(cfg.xTitle)}</text>`;
+  rows.forEach((r,i)=>{ const cy=m.t+i*bandH+bandH/2, x1=xAt(r.value), bx=Math.min(base,x1), bw=Math.max(0,Math.abs(x1-base));
+    s+=`<rect x="${bx.toFixed(1)}" y="${(cy-barH/2).toFixed(1)}" width="${bw.toFixed(1)}" height="${barH.toFixed(1)}" fill="${r.color||cssVar('--accent')}" rx="2"/>`;
+    s+=`<text x="${(m.l-6).toFixed(1)}" y="${(cy+3).toFixed(1)}" fill="${text}" font-size="10" text-anchor="end">${esc(trunc(r.label))}</text>`;
+    const lx=x1>=base?x1+3:x1-3, anchor=x1>=base?'start':'end';
+    s+=`<text x="${lx.toFixed(1)}" y="${(cy+3).toFixed(1)}" fill="${muted}" font-size="9" text-anchor="${anchor}">${esc(fmt(r.value))}</text>`;
+  });
+  container.innerHTML=`<svg viewBox="0 0 ${W} ${H}" width="100%" height="100%" style="overflow:visible">${s}</svg>`;
+  const tip=document.createElement('div');
+  tip.style.cssText='position:absolute;pointer-events:none;background:'+(cssVar('--card')||'#1b1f27')+';border:1px solid '+(cssVar('--border')||'#333')+';border-radius:4px;padding:4px 6px;font-size:11px;color:'+text+';display:none;z-index:6;white-space:nowrap';
+  container.appendChild(tip);
+  container.onmousemove=e=>{ const rect=container.getBoundingClientRect(); if(!rect.height||!rows.length) return;
+    const yv=(e.clientY-rect.top)*H/rect.height; const i=Math.floor((yv-m.t)/bandH);
+    if(i<0||i>=rows.length){ tip.style.display='none'; return; }
+    const r=rows[i]; tip.innerHTML=cfg.tip? cfg.tip(r) : `<b>${esc(String(r.label))}</b>: ${esc(fmt(r.value))}`;
+    tip.style.display='block';
+    tip.style.left=Math.min(rect.width-tip.offsetWidth-4,Math.max(2,(e.clientX-rect.left)+8))+'px';
+    tip.style.top=Math.min(rect.height-tip.offsetHeight-2,(e.clientY-rect.top)+8)+'px';
+  };
+  container.onmouseleave=()=>{ tip.style.display='none'; };
+  if(!container.__ro && window.ResizeObserver){ container.__ro=new ResizeObserver(()=>{ if(container.clientWidth>0 && container.__barcfg) drawBarsSvg(container, container.__barcfg); }); container.__ro.observe(container); }
 }
 
 // ---------- Company deep-dive (SVG copy) — reuses DD_SPECS, renders with drawFinSvg ----------
