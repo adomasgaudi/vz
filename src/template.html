@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>LT Communication Agencies — Competitor Dashboard 2019–2024 · v0.1.93</title>
+<title>LT Communication Agencies — Competitor Dashboard 2019–2024 · v0.1.94</title>
 <script>
   // Apply saved theme + view mode before first paint to avoid a flash.
   // Theme default = dark; view default = advanced (full data sources/tabs).
@@ -128,7 +128,6 @@
   .sec:not([open])>summary.section::after{transform:rotate(-90deg)}
   /* Simplified view: hide advanced (deep-dive) sections + the raw-data tabs. */
   html[data-mode="simplified"] details.sec.adv{display:none}
-  html[data-mode="simplified"] .topnav .nav-btn[data-view="dataView"],
   html[data-mode="simplified"] .topnav .nav-btn[data-view="rekView"]{display:none}
   .mine-note{background:var(--panel);border:1px solid var(--border);border-left:4px solid var(--gold);border-radius:10px;padding:12px 16px;margin-bottom:16px;font-size:13px;color:var(--muted)}
   .mine-note b{color:var(--text)}
@@ -145,7 +144,7 @@
     .nav-sub{display:none}
     .nav-spacer{display:none}
     .nav-version{display:none}
-    #dashView .wrap,#dataView .wrap,#rekView .wrap{padding:16px 10px}
+    #dashView .wrap,#rekView .wrap{padding:16px 10px}
     .card{padding:12px}
     .chartbox{height:300px}
     .kpi-strip{gap:10px}
@@ -180,7 +179,7 @@
   .view.active{display:block}
 
   /* ── Data explorer view ── */
-  #dataView .wrap{max-width:100%;margin:0 auto;padding:20px 24px;overflow-x:hidden}
+  .sheet-explorer{max-width:100%;margin:0 auto;padding:20px 24px;overflow-x:hidden}
   .data-tabs{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:16px;border-bottom:2px solid var(--border);padding-bottom:0;overflow-x:auto;-webkit-overflow-scrolling:touch}
   .data-tab{padding:10px 18px;font-size:13px;font-weight:600;color:var(--muted);cursor:pointer;border:none;background:none;border-bottom:2px solid transparent;margin-bottom:-2px;transition:.15s;white-space:nowrap;font-family:inherit}
   .data-tab:hover{color:var(--text);background:var(--panel)}
@@ -222,16 +221,16 @@
   /* a row's source-tag cell: small cubes showing which source(s) the row came from */
   .cube-cell{display:flex;gap:3px;align-items:center;flex-wrap:nowrap}
   /* Sourced-data tables: wrap long text, fixed layout */
-  #rekView table{width:100%;border-collapse:separate;border-spacing:0;font-size:13px}
-  #rekView thead{position:sticky;top:0;z-index:2}
-  #rekView th{background:var(--panel2);color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.05em;padding:9px 12px;text-align:left;border-bottom:2px solid var(--border);cursor:pointer;white-space:nowrap}
-  #rekView td{padding:8px 12px;border-bottom:1px solid var(--border);text-align:left;white-space:normal;overflow-wrap:anywhere;word-break:break-word;vertical-align:top}
-  #rekView td.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
-  #rekView th.colField,#rekView td.fieldcell{min-width:140px;max-width:230px}
-  #rekView th.colYear{min-width:84px}
-  #rekView th.colSrc,#rekView td.srccell{width:54px;white-space:nowrap}
-  #rekView tbody tr:nth-child(even) td{background:var(--zebra)}
-  #rekView tr:hover td{background:var(--hover)}
+  #rekTableWrap table{width:100%;border-collapse:separate;border-spacing:0;font-size:13px}
+  #rekTableWrap thead{position:sticky;top:0;z-index:2}
+  #rekTableWrap th{background:var(--panel2);color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.05em;padding:9px 12px;text-align:left;border-bottom:2px solid var(--border);cursor:pointer;white-space:nowrap}
+  #rekTableWrap td{padding:8px 12px;border-bottom:1px solid var(--border);text-align:left;white-space:normal;overflow-wrap:anywhere;word-break:break-word;vertical-align:top}
+  #rekTableWrap td.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+  #rekTableWrap th.colField,#rekTableWrap td.fieldcell{min-width:140px;max-width:230px}
+  #rekTableWrap th.colYear{min-width:84px}
+  #rekTableWrap th.colSrc,#rekTableWrap td.srccell{width:54px;white-space:nowrap}
+  #rekTableWrap tbody tr:nth-child(even) td{background:var(--zebra)}
+  #rekTableWrap tr:hover td{background:var(--hover)}
   /* merge cell stacking per-source values (differing) — colour-keyed text */
   #rekView .mv{display:block} #rekView .mv.initial{color:var(--green)} #rekView .mv.rekvizitai{color:var(--accent)} #rekView .mv.sodra{color:var(--amber)}
   .badge{background:var(--panel2);border:1px solid var(--border);border-radius:20px;padding:3px 12px;font-size:12px;color:var(--muted)}
@@ -245,26 +244,32 @@
   .sheet-desc .sd-best{color:var(--muted);font-size:12px;margin-top:5px}
   .sheet-desc .sd-best b{color:var(--text);font-weight:600}
   .table-wrap{overflow:auto;border:1px solid var(--border);border-radius:10px;background:var(--panel);min-height:200px;max-height:65vh}
-  #dataView table{width:100%;border-collapse:separate;border-spacing:0;font-size:13px}
-  #dataView thead{position:sticky;top:0;z-index:2}
-  #dataView th{background:var(--panel2);color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.06em;padding:10px 12px;text-align:left;border-bottom:2px solid var(--border);cursor:pointer;user-select:none;white-space:nowrap;transition:.12s}
-  #dataView th:hover{color:var(--text);background:var(--hover)}
-  #dataView th.sorted-asc::after{content:' ▲';color:var(--accent);font-size:10px}
-  #dataView th.sorted-desc::after{content:' ▼';color:var(--accent);font-size:10px}
-  #dataView td{padding:8px 12px;border-bottom:1px solid var(--border);white-space:nowrap;max-width:320px;overflow:hidden;text-overflow:ellipsis;text-align:left}
-  #dataView tr:hover td{background:var(--hover)}
-  #dataView tbody tr:nth-child(even) td{background:var(--zebra)}
-  #dataView tbody tr:nth-child(even):hover td{background:var(--hover)}
+  .sheet-explorer table{width:100%;border-collapse:separate;border-spacing:0;font-size:13px}
+  .sheet-explorer thead{position:sticky;top:0;z-index:2}
+  .sheet-explorer th{background:var(--panel2);color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.06em;padding:10px 12px;text-align:left;border-bottom:2px solid var(--border);cursor:pointer;user-select:none;white-space:nowrap;transition:.12s}
+  .sheet-explorer th:hover{color:var(--text);background:var(--hover)}
+  .sheet-explorer th.sorted-asc::after{content:' ▲';color:var(--accent);font-size:10px}
+  .sheet-explorer th.sorted-desc::after{content:' ▼';color:var(--accent);font-size:10px}
+  .sheet-explorer td{padding:8px 12px;border-bottom:1px solid var(--border);white-space:nowrap;max-width:320px;overflow:hidden;text-overflow:ellipsis;text-align:left}
+  .sheet-explorer tr:hover td{background:var(--hover)}
+  .sheet-explorer tbody tr:nth-child(even) td{background:var(--zebra)}
+  .sheet-explorer tbody tr:nth-child(even):hover td{background:var(--hover)}
   td.num{text-align:right!important;font-variant-numeric:tabular-nums}
   td.url a{color:var(--accent);text-decoration:none}
   td.url a:hover{text-decoration:underline}
   td.null{color:var(--border);font-style:italic}
-  #dataView th:first-child,#dataView td:first-child{position:sticky;left:0;z-index:1;background:inherit}
-  #dataView th:first-child{z-index:3;background:var(--panel2)}
-  #dataView td:first-child{background:var(--panel);font-weight:600}
-  #dataView tbody tr:nth-child(even) td:first-child{background:var(--panel)}
-  #dataView tr:hover td:first-child{background:var(--hover)!important}
+  .sheet-explorer th:first-child,.sheet-explorer td:first-child{position:sticky;left:0;z-index:1;background:inherit}
+  .sheet-explorer th:first-child{z-index:3;background:var(--panel2)}
+  .sheet-explorer td:first-child{background:var(--panel);font-weight:600}
+  .sheet-explorer tbody tr:nth-child(even) td:first-child{background:var(--panel)}
+  .sheet-explorer tr:hover td:first-child{background:var(--hover)!important}
   .row-num{color:var(--border);font-size:11px;font-weight:400;width:36px;text-align:right;padding-right:10px}
+  .raw-sheets{border:1px solid var(--border);border-radius:10px;padding:0 14px;background:var(--panel)}
+  .raw-sheets[open]{padding-bottom:14px}
+  .raw-sheets>summary{cursor:pointer;padding:13px 0;font-weight:600;font-size:14px;color:var(--text);list-style:none}
+  .raw-sheets>summary::-webkit-details-marker{display:none}
+  .raw-sheets>summary::before{content:'▸ ';color:var(--muted)}
+  .raw-sheets[open]>summary::before{content:'▾ '}
   .pager{display:flex;align-items:center;gap:10px;margin-top:12px;font-size:13px;color:var(--muted)}
   .pager button{background:var(--panel2);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:4px 12px;cursor:pointer;font-size:13px;font-family:inherit}
   .pager button:hover{border-color:var(--accent)}
@@ -277,10 +282,9 @@
   <div class="logo"><span>LT</span> Agencies</div>
   <div class="nav-scroll">
     <button class="nav-btn active" data-view="dashView">Dashboard</button>
-    <button class="nav-btn" data-view="dataView">Initial Data</button>
-    <button class="nav-btn" data-view="rekView">Sourced Data</button>
+    <button class="nav-btn" data-view="rekView">Company Data</button>
   </div>
-  <span class="nav-version">v0.1.93</span>
+  <span class="nav-version">v0.1.94</span>
   <div class="settings-wrap">
     <button class="settings-cog" id="settingsCog" title="Settings" aria-label="Settings">⚙️</button>
     <div class="settings-menu" id="settingsMenu">
@@ -294,7 +298,7 @@
 <div class="view active" id="dashView">
 <div class="wrap">
   <header>
-    <h1>🇱🇹 Lithuanian Communication & Marketing Agencies <span class="version">v0.1.93</span></h1>
+    <h1>🇱🇹 Lithuanian Communication & Marketing Agencies <span class="version">v0.1.94</span></h1>
     <p>Competitor landscape dashboard · 113 brands · Financials 2019–2024 (revenue, profit, headcount, salaries) · Source: rekvizitai.vz.lt data export</p>
   </header>
 
@@ -448,12 +452,6 @@
 </div>
 </div>
 
-<div class="view" id="dataView">
-<div class="wrap">
-  <div id="expInitial"></div>
-</div>
-</div>
-
 <div class="view" id="rekView">
 <div class="wrap">
   <div class="co-select" id="rekCompanySelect" style="margin-bottom:14px">
@@ -479,9 +477,11 @@
   </div>
   <div class="table-wrap" id="rekTableWrap"></div>
 
-  <h2 class="section" style="margin-top:26px">Initial data — raw sheets</h2>
-  <div class="desc" style="margin-bottom:8px">The full original Excel export embedded here, so this tab is a superset of the Initial Data tab. Same explorer — pick a sheet, search, sort, export CSV.</div>
-  <div id="expSourced"></div>
+  <details class="raw-sheets" style="margin-top:26px">
+    <summary>📑 Initial data — raw Excel sheets (all companies)</summary>
+    <div class="desc" style="margin:8px 0">The full original Excel export — pick a sheet, search, sort, export CSV.</div>
+    <div id="expSourced"></div>
+  </details>
 </div>
 </div>
 
@@ -587,7 +587,7 @@ function applyMode(mode){
   // Simplified hides the raw-data tabs; if we're on one, fall back to Dashboard.
   if(mode==='simplified'){
     const active=document.querySelector('.nav-btn.active');
-    if(active && (active.dataset.view==='dataView' || active.dataset.view==='rekView'))
+    if(active && active.dataset.view==='rekView')
       document.querySelector('.nav-btn[data-view="dashView"]')?.click();
   }
   // Layout shifts (sections shown/hidden) — re-fit charts.
@@ -949,6 +949,9 @@ renderTable();
 // ---------- SP & version history ----------
 // Each entry: title (2-5 words) · desc (5-15 words) · detail (15-50 words).
 const VERSIONS = [
+  {v:'v0.1.94', date:'2026-06-22 11:30', sp:3, title:'One Company Data tab, all brands',
+    desc:'Removed the Initial Data tab; the company picker now covers all 113 brands.',
+    detail:'Dropped the separate Initial Data nav tab — its raw-sheet explorer now lives (collapsed by default) under a “Initial data — raw Excel sheets” drop-down inside the renamed “Company Data” tab. The per-company picker now lists every dashboard brand (113): scraped companies show full Initial+Rekvizitai+Sodra, every other brand shows Initial-only data pulled from the dashboard dataset on select. Re-scoped the explorer table CSS to .sheet-explorer and the per-company table to #rekTableWrap so the two don\'t collide. Defaults to Fabula.'},
   {v:'v0.1.93', date:'2026-06-22 11:05', sp:3, title:'Sourced Data embeds raw sheets',
     desc:'Sourced Data now includes the full Initial Data explorer (all 7 raw sheets) below the company view.',
     detail:'Refactored the single-instance Data Explorer into a reusable mountSheetExplorer(root, order) factory (own DOM + closure state, no global IDs). Mounted twice: the Initial Data tab unchanged (5 sheets), and a new “Initial data — raw sheets” section under the Sourced Data company view showing all 7 raw sheets — so Sourced Data is now a superset of Initial Data. Same structure (tabs, search, sort, pager, CSV). Initial Data tab kept until confirmed redundant, then it (and the duplicate mount) can be removed in one step.'},
@@ -1248,6 +1251,7 @@ function dtFmtNum(v){const n=Number(v);if(isNaN(n))return v;if(Number.isInteger(
 const ALL_SHEETS=[...SHEET_ORDER, ...Object.keys(SHEETS).filter(k=>!SHEET_ORDER.includes(k))]; // all raw sheets, SHEET_ORDER first
 function mountSheetExplorer(root, order){
   if(!root) return;
+  root.classList.add('sheet-explorer');
   order=(order||ALL_SHEETS).filter(s=>SHEETS[s]);
   root.innerHTML=`<div class="data-tabs"></div><div class="sheet-desc"></div>`
     +`<div class="data-controls"><input type="text" class="exp-search" placeholder="Search across all columns…" style="min-width:220px"><span class="badge exp-rowcount"></span><button class="btn exp-csv">Export CSV</button></div>`
@@ -1756,9 +1760,22 @@ function initSDD(){
   drawSDD();
 }
 
-// ---------- Rekvizitai page (company picker → sub-tabs → source toggle) ----------
-const REK_COMPANIES = (REK_DATA && REK_DATA.companies) || [];
-let rekCo = REK_COMPANIES[0] || null;                 // current company block
+// ---------- Company Data page (picker over ALL brands → sub-tabs → source toggle) ----------
+const REK_SCRAPED = (REK_DATA && REK_DATA.companies) || [];
+const REK_BY_BRAND = {}; REK_SCRAPED.forEach(c=>{ if(c.brand) REK_BY_BRAND[c.brand]=c; });
+// One picker entry per dashboard brand: scraped companies carry full Rekvizitai+Sodra
+// tabs; every other brand is Initial-only (built from the dashboard dataset on select).
+const REK_COMPANIES = (()=>{
+  const brands=[...new Set(DATA.map(d=>d.brand).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'lt'));
+  const out=brands.map((brand,i)=>{
+    const sc=REK_BY_BRAND[brand]; if(sc) return sc;
+    const rec=DATA.filter(d=>d.brand===brand).sort((a,b)=>b.year-a.year)[0]||{};
+    return { brand, name:rec.company||brand, slug:'init-'+i, order:['Įmonė','Finansai','Darbuotojai','Skolos'], tabs:{}, sodra:null, initialOnly:true };
+  });
+  REK_SCRAPED.forEach(c=>{ if(!c.brand || !brands.includes(c.brand)) out.push(c); }); // any scrape not in the dataset
+  return out;
+})();
+let rekCo = REK_COMPANIES.find(c=>c.brand===MY_BRAND) || REK_COMPANIES[0] || null;   // current company block (default: Fabula)
 let rekTab = (rekCo && rekCo.order && rekCo.order[0]) || null;
 let rekMode = 'merged';           // merged | initial | rekvizitai | sodra
 let rekSort = -1, rekDir = 1;
@@ -1963,10 +1980,12 @@ function renderRek(){
     document.getElementById('rekRowCount').textContent=''; return;
   }
   const modeWord={merged:'All sources merged', initial:'Initial data only', rekvizitai:'Rekvizitai only', sodra:'Sodra only'}[rekMode];
-  const brandNote = rekCo.brand ? `the dashboard's own record for brand "${rekCo.brand}"` : 'not tracked in the dashboard dataset';
+  const hasRek = !!(rekCo.tabs && Object.keys(rekCo.tabs).length);
   const hasSodra = !!(rekCo.sodra);
-  intro.innerHTML=`<div class="sd-head"><span class="sd-title">${rekCo.name||rekCo.slug} — Sourced Data</span><span class="sd-tier" style="color:var(--muted);border-color:var(--muted)">${modeWord}</span></div>`
-    +`<div class="sd-what"><b>Initial</b> = ${brandNote}. <b>Rekvizitai</b> = live rekvizitai.vz.lt scrape. <b>Sodra</b> = ${hasSodra?'monthly headcount &amp; wage from atvira.sodra.lt':'not fetched for this company yet'}. <b>Merged</b> unions all three; the cubes show which source(s) each field came from.</div>`;
+  intro.innerHTML=`<div class="sd-head"><span class="sd-title">${rekCo.name||rekCo.slug} — Company Data</span><span class="sd-tier" style="color:var(--muted);border-color:var(--muted)">${modeWord}</span></div>`
+    + (hasRek||hasSodra
+        ? `<div class="sd-what"><b>Initial</b> = the dashboard's own record for "${rekCo.brand}". <b>Rekvizitai</b> = ${hasRek?'live rekvizitai.vz.lt scrape':'not scraped for this company yet'}. <b>Sodra</b> = ${hasSodra?'monthly headcount &amp; wage from atvira.sodra.lt':'not fetched for this company yet'}. <b>Merged</b> unions all sources; the cubes show which source each field came from.</div>`
+        : `<div class="sd-what"><b>Initial data only</b> for "${rekCo.brand}" (from the dashboard dataset) — this company hasn't been scraped from Rekvizitai or Sodra yet, so only the Initial source has values.</div>`);
 
   const rows=rekFiltered();
   document.getElementById('rekRowCount').textContent=`${rows.length} field${rows.length!==1?'s':''}`;
@@ -2056,7 +2075,7 @@ function initRek(){
 }
 
 // Initialize Data Explorer eagerly so it works on first visit without a click
-try { mountSheetExplorer(document.getElementById('expInitial'), SHEET_ORDER); mountSheetExplorer(document.getElementById('expSourced'), ALL_SHEETS); }
+try { mountSheetExplorer(document.getElementById('expSourced'), ALL_SHEETS); }
 catch (err) { window.dispatchEvent(new ErrorEvent('error', {message:'mountSheetExplorer: '+err.message, error:err})); }
 try { initRek(); }
 catch (err) { window.dispatchEvent(new ErrorEvent('error', {message:'initRek: '+err.message, error:err})); }
