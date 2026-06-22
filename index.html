@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Market Analytics — LT agencies · v0.1.105</title>
+<title>Market Analytics — LT agencies · v0.1.106</title>
 <script>
   // Apply saved theme + view mode before first paint to avoid a flash.
   // Theme default = dark; view default = advanced (full data sources/tabs).
@@ -173,8 +173,10 @@
   .ff-note{font-size:12px;color:var(--muted);margin-top:2px;line-height:1.55}
   .co-info-row{display:flex;gap:12px;padding:3px 0}
   .co-info-k{color:var(--muted);min-width:88px;flex:0 0 auto}
-  .co-info-v{color:var(--text);font-weight:600}
+  .co-info-v{color:var(--text);font-weight:600;min-width:0;overflow-wrap:anywhere}
+  .co-info-v a{color:var(--accent);text-decoration:none} .co-info-v a:hover{text-decoration:underline}
   .co-info-v .nd,.nd{color:var(--muted);font-weight:400;font-style:italic}
+  .co-desc{margin-top:8px;padding-top:8px;border-top:1px solid var(--border);font-size:12.5px;color:var(--text);line-height:1.5}
   .mine-note b{color:var(--text)}
   .kpi.mine{border-color:var(--gold);box-shadow:0 0 0 1px rgba(244,197,66,.25)}
   .kpi .rank{color:var(--gold);font-weight:600}
@@ -336,7 +338,7 @@
   </div>
   <div class="settings-wrap">
     <button class="settings-cog" id="settingsCog" title="Settings" aria-label="Settings">⚙️</button>
-    <span class="nav-version">v0.1.105</span>
+    <span class="nav-version">v0.1.106</span>
     <div class="settings-menu" id="settingsMenu">
       <button id="themeToggle">🌙 Dark</button>
       <button id="viewToggle"></button>
@@ -701,12 +703,19 @@ const E = v => v!=null ? '€'+Math.round(v).toLocaleString() : '–';
 
 // Per-brand profile bits for the Overview info box: founded date (Įmonės raw sheet)
 // and CEO (Vadovas, only from scraped Rekvizitai tabs).
-const FOUNDED={}; (function(){ const sh=SHEETS['Įmonės']; if(!sh) return;
-  const bi=sh.columns.indexOf('Pagrindinis brandas'), fi=sh.columns.indexOf('Įregistruota'); if(bi<0||fi<0) return;
-  sh.rows.forEach(r=>{ const b=r[bi], f=String(r[fi]||''); if(b && /^\d{4}-\d{2}-\d{2}/.test(f)) FOUNDED[b]=f.slice(0,10); });
+const FOUNDED={}, WEBSITE={}; (function(){ const sh=SHEETS['Įmonės']; if(!sh) return;
+  const bi=sh.columns.indexOf('Pagrindinis brandas'), fi=sh.columns.indexOf('Įregistruota'), wi=sh.columns.indexOf('Svetainė');
+  sh.rows.forEach(r=>{ const b=r[bi]; if(!b) return;
+    const f=String(r[fi]||''); if(fi>=0 && /^\d{4}-\d{2}-\d{2}/.test(f)) FOUNDED[b]=f.slice(0,10);
+    const w=wi>=0?String(r[wi]||'').trim():''; if(w && /\./.test(w)) WEBSITE[b]=w;
+  });
 })();
-const REK_CEO={}; ((REK_DATA&&REK_DATA.companies)||[]).forEach(c=>{ if(!c.brand) return;
-  const rows=(c.tabs&&c.tabs['Įmonė']&&c.tabs['Įmonė'].rows)||[]; const v=rows.find(x=>x[0]==='Vadovas'); if(v&&v[1]) REK_CEO[c.brand]=v[1];
+const REK_CEO={}, REK_DESC={}, REK_WEB={}; ((REK_DATA&&REK_DATA.companies)||[]).forEach(c=>{ if(!c.brand) return;
+  const rows=(c.tabs&&c.tabs['Įmonė']&&c.tabs['Įmonė'].rows)||[];
+  const g=k=>{ const x=rows.find(r=>r[0]===k); return x&&x[1]?x[1]:null; };
+  const v=g('Vadovas'); if(v) REK_CEO[c.brand]=v;
+  const d=g('Įmonės aprašymas'); if(d) REK_DESC[c.brand]=d;
+  const w=g('Tinklalapis'); if(w) REK_WEB[c.brand]=w;
 });
 // Which sources we have per brand (every brand has Initial; rekvizitai/sodra only if scraped).
 const REK_HAS={}; ((REK_DATA&&REK_DATA.companies)||[]).forEach(c=>{ if(!c.brand) return;
@@ -745,13 +754,23 @@ function renderCompany(brand){
   const fullName = Object.values(mine).map(r=>r.company).find(Boolean) || '';
   const nd='<span class="nd">no data</span>';
   const head=`<div class="co-info-head"><span class="co-name">${esc(brand)}</span>${fullName&&fullName!==brand?`<span class="co-full">${esc(fullName)}</span>`:''}</div>`;
+  // company type = legal form parsed from the full name (UAB / MB / VšĮ / AB …)
+  const lf=fullName.includes(',')?fullName.split(',').pop().trim():''; const ctype=(lf && lf.length<=6)?lf:'';
+  // website: prefer the scraped one, else the raw sheet
+  const web=REK_WEB[brand]||WEBSITE[brand]||null;
+  let webV=nd;
+  if(web){ let u=String(web).trim(); if(!/^https?:\/\//.test(u)) u='https://'+u; const dom=u.replace(/^https?:\/\/(www\.)?/,'').replace(/\/+$/,''); webV=`<a href="${esc(u)}" target="_blank" rel="noopener">${esc(dom)}</a>`; }
   const infoRows=[
     ['CEO', REK_CEO[brand]?esc(REK_CEO[brand]):nd],
     ['Founded', FOUNDED[brand]?esc(FOUNDED[brand]):nd],
     ['Employees', m24.employees!=null?Math.round(m24.employees):nd],
+    ['Type', ctype?esc(ctype):nd],
+    ['Website', webV],
   ];
+  const desc=REK_DESC[brand];
   const noteEl=document.getElementById('mineNote');
-  noteEl.innerHTML=head+infoRows.map(([k,v])=>`<div class="co-info-row"><span class="co-info-k">${k}</span><span class="co-info-v">${v}</span></div>`).join('');
+  noteEl.innerHTML=head+infoRows.map(([k,v])=>`<div class="co-info-row"><span class="co-info-k">${k}</span><span class="co-info-v">${v}</span></div>`).join('')
+    +(desc?`<div class="co-desc">${esc(desc)}</div>`:`<div class="co-info-row"><span class="co-info-k">About</span><span class="co-info-v">${nd}</span></div>`);
   noteEl.style.display='';
   document.getElementById('chMineTitle').textContent = brand+': revenue, profit & headcount (2019–'+LAST+')';
   document.getElementById('chMineRankTitle').textContent = brand+' vs the market ('+LAST+')';
@@ -1080,6 +1099,9 @@ renderTable();
 // ---------- SP & version history ----------
 // Each entry: title (2-5 words) · desc (5-15 words) · detail (15-50 words).
 const VERSIONS = [
+  {v:'v0.1.106', date:'2026-06-22 15:40', sp:1, title:'Website, type, description',
+    desc:'Profile card now also shows company type, website link and the description.',
+    detail:'Added to the Overview profile card: company type (legal form parsed from the full name — UAB/MB/…), website (clickable, from the Rekvizitai scrape or the Įmonės sheet) and the company description (from Rekvizitai). Each reads “no data” when missing.'},
   {v:'v0.1.105', date:'2026-06-22 15:20', sp:1.5, title:'Single money-flow bar',
     desc:'Turnover, revenue and net profit now share one bar with a Revenue bracket.',
     detail:'Merged the two money-flow bars into ONE: a single Turnover column split into Net profit (green) + Costs + Pass-through, with a gold “Revenue” bracket spanning the profit+costs part (revenue = the non-pass-through fee income). Each segment’s explanation stays aligned to its right; net margin in the note below.'},
