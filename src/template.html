@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>LT Communication Agencies — Competitor Dashboard 2019–2024 · v0.1.92</title>
+<title>LT Communication Agencies — Competitor Dashboard 2019–2024 · v0.1.93</title>
 <script>
   // Apply saved theme + view mode before first paint to avoid a flash.
   // Theme default = dark; view default = advanced (full data sources/tabs).
@@ -280,7 +280,7 @@
     <button class="nav-btn" data-view="dataView">Initial Data</button>
     <button class="nav-btn" data-view="rekView">Sourced Data</button>
   </div>
-  <span class="nav-version">v0.1.92</span>
+  <span class="nav-version">v0.1.93</span>
   <div class="settings-wrap">
     <button class="settings-cog" id="settingsCog" title="Settings" aria-label="Settings">⚙️</button>
     <div class="settings-menu" id="settingsMenu">
@@ -294,7 +294,7 @@
 <div class="view active" id="dashView">
 <div class="wrap">
   <header>
-    <h1>🇱🇹 Lithuanian Communication & Marketing Agencies <span class="version">v0.1.92</span></h1>
+    <h1>🇱🇹 Lithuanian Communication & Marketing Agencies <span class="version">v0.1.93</span></h1>
     <p>Competitor landscape dashboard · 113 brands · Financials 2019–2024 (revenue, profit, headcount, salaries) · Source: rekvizitai.vz.lt data export</p>
   </header>
 
@@ -450,25 +450,7 @@
 
 <div class="view" id="dataView">
 <div class="wrap">
-  <div class="data-tabs" id="dataTabs"></div>
-  <div class="sheet-desc" id="sheetDesc"></div>
-  <div class="data-controls">
-    <input type="text" id="dataSearch" placeholder="Search across all columns…" style="min-width:220px">
-    <span class="badge" id="rowCount"></span>
-    <button class="btn" id="csvBtn">Export CSV</button>
-  </div>
-  <div class="table-wrap" id="tableWrap">
-    <table><thead><tr id="dtHead"></tr></thead><tbody id="dtBody"></tbody></table>
-  </div>
-  <div class="pager">
-    <button id="prevBtn">← Prev</button>
-    <span id="pageInfo"></span>
-    <button id="nextBtn">Next →</button>
-    <span style="margin-left:auto">Rows per page:</span>
-    <select id="pageSizeSel">
-      <option value="50">50</option><option value="100" selected>100</option><option value="250">250</option><option value="999999">All</option>
-    </select>
-  </div>
+  <div id="expInitial"></div>
 </div>
 </div>
 
@@ -496,6 +478,10 @@
     <button class="btn" id="rekCsvBtn" style="margin-left:auto">Export CSV</button>
   </div>
   <div class="table-wrap" id="rekTableWrap"></div>
+
+  <h2 class="section" style="margin-top:26px">Initial data — raw sheets</h2>
+  <div class="desc" style="margin-bottom:8px">The full original Excel export embedded here, so this tab is a superset of the Initial Data tab. Same explorer — pick a sheet, search, sort, export CSV.</div>
+  <div id="expSourced"></div>
 </div>
 </div>
 
@@ -963,6 +949,9 @@ renderTable();
 // ---------- SP & version history ----------
 // Each entry: title (2-5 words) · desc (5-15 words) · detail (15-50 words).
 const VERSIONS = [
+  {v:'v0.1.93', date:'2026-06-22 11:05', sp:3, title:'Sourced Data embeds raw sheets',
+    desc:'Sourced Data now includes the full Initial Data explorer (all 7 raw sheets) below the company view.',
+    detail:'Refactored the single-instance Data Explorer into a reusable mountSheetExplorer(root, order) factory (own DOM + closure state, no global IDs). Mounted twice: the Initial Data tab unchanged (5 sheets), and a new “Initial data — raw sheets” section under the Sourced Data company view showing all 7 raw sheets — so Sourced Data is now a superset of Initial Data. Same structure (tabs, search, sort, pager, CSV). Initial Data tab kept until confirmed redundant, then it (and the duplicate mount) can be removed in one step.'},
   {v:'v0.1.92', date:'2026-06-22 10:40', sp:3, title:'All SVG charts pan/zoom',
     desc:'Every SVG chart now pans/zooms/translates like the deep-dive; engine tags added.',
     detail:'Dropped the static mode on the dashboard line/bar charts so they pan/zoom/pinch/double-tap-reset exactly like the deep-dive. Rebuilt drawBarsSvg with the same 2D view-window model — drag to pan, wheel/pinch to zoom (value axis = horizontal, rows = vertical), ⤢ to fit — clipping bars to the plot and row-labels to the left margin. Added a small corner tag on every chart: “SVG” on engine charts, “Chart.js” on the two that stay (doughnut + bubble).'},
@@ -1249,102 +1238,65 @@ const MONEY_COLS=new Set(['Apyvarta','Apyvarta 2019','Apyvarta 2020','Apyvarta 2
 const PCT_PARTIAL=['Pokytis','pokytis'];
 const URL_PARTIAL=['URL','Svetainė','svetainė','Facebook','Instagram','LinkedIn','http'];
 
-let dtSheet=SHEET_ORDER[0], dtSortCol=-1, dtSortDir=1, dtPage=0, dtPageSize=100, dtFiltered=[];
 
 function isNumCol(c,s){if(MONEY_COLS.has(c))return true;return s.filter(v=>v!==null&&!isNaN(Number(v))).length>s.length*.5;}
 function dtFmtMoney(v){const n=Number(v);if(isNaN(n))return v;if(Math.abs(n)>=1e6)return'€'+(n/1e6).toFixed(2)+'M';if(Math.abs(n)>=1e3)return'€'+Math.round(n).toLocaleString('lt-LT');return'€'+n.toFixed(0);}
 function dtFmtNum(v){const n=Number(v);if(isNaN(n))return v;if(Number.isInteger(n)||Math.abs(n)>100)return Math.round(n).toLocaleString('lt-LT');return n.toFixed(2);}
 
-function initDataExplorer(){
-  window._dataInitialized=true;
-  buildDataTabs();
-  renderDataSheet();
-
-  document.getElementById('dataSearch').addEventListener('input',()=>{dtPage=0;filterDataRows();});
-  document.getElementById('prevBtn').addEventListener('click',()=>{if(dtPage>0){dtPage--;renderDataRows();document.getElementById('tableWrap').scrollTop=0;}});
-  document.getElementById('nextBtn').addEventListener('click',()=>{dtPage++;renderDataRows();document.getElementById('tableWrap').scrollTop=0;});
-  document.getElementById('pageSizeSel').addEventListener('change',e=>{dtPageSize=+e.target.value;dtPage=0;renderDataRows();});
-  document.getElementById('csvBtn').addEventListener('click',()=>{
-    const sheet=SHEETS[dtSheet],BOM='﻿';
-    const esc=v=>{if(v===null||v===undefined)return'';const s=String(v);return s.includes(',')||s.includes('"')||s.includes('\n')?'"'+s.replace(/"/g,'""')+'"':s;};
-    let csv=BOM+sheet.columns.map(esc).join(',')+'\n';
-    dtFiltered.forEach(row=>{csv+=row.map(esc).join(',')+'\n';});
-    const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});
-    const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=dtSheet.replace(/\s+/g,'_')+'.csv';a.click();
-  });
-}
-
-function buildDataTabs(){
-  const el=document.getElementById('dataTabs');
-  el.innerHTML=SHEET_ORDER.map(s=>`<button class="data-tab${s===dtSheet?' active':''}" data-sheet="${s}">${(SHEET_DESC[s]&&SHEET_DESC[s].title)||s}</button>`).join('');
-  el.querySelectorAll('.data-tab').forEach(btn=>btn.addEventListener('click',()=>{
-    dtSheet=btn.dataset.sheet;dtSortCol=-1;dtPage=0;document.getElementById('dataSearch').value='';
-    buildDataTabs();renderDataSheet();
-  }));
-}
-
-function renderDataSheet(){
-  const sheet=SHEETS[dtSheet];if(!sheet)return;
-  const cols=sheet.columns;
-  const sd=SHEET_DESC[dtSheet], tl=sd&&TIER_LABEL[sd.tier];
-  document.getElementById('sheetDesc').innerHTML = sd
-    ? `<div class="sd-head"><span class="sd-title">${sd.title}</span><span class="sd-tier" style="color:${tl.c};border-color:${tl.c}">${tl.t}</span></div>`
-      + `<div class="sd-what">${sd.what}</div>`
-      + `<div class="sd-best"><b>Best for:</b> ${sd.best}</div>`
-    : '';
-  const colTypes=cols.map((c,i)=>{
-    const sample=sheet.rows.slice(0,20).map(r=>r[i]);
-    const isMoney=MONEY_COLS.has(c);
-    const isPct=PCT_PARTIAL.some(p=>c.includes(p));
-    const isUrl=URL_PARTIAL.some(p=>c.includes(p));
-    const isNum=!isPct&&!isUrl&&isNumCol(c,sample);
-    return{name:c,isMoney,isPct,isUrl,isNum:isNum||isMoney};
-  });
-  const thead=document.getElementById('dtHead');
-  thead.innerHTML='<th class="row-num">#</th>'+cols.map((c,i)=>`<th data-col="${i}" class="${dtSortCol===i?(dtSortDir===1?'sorted-asc':'sorted-desc'):''}">${c||'—'}</th>`).join('');
-  thead.querySelectorAll('th[data-col]').forEach(th=>th.addEventListener('click',()=>{
-    const ci=+th.dataset.col;if(dtSortCol===ci)dtSortDir*=-1;else{dtSortCol=ci;dtSortDir=-1;}
-    dtPage=0;renderDataRows();
-    thead.querySelectorAll('th[data-col]').forEach(t=>t.className='');
-    th.className=dtSortDir===1?'sorted-asc':'sorted-desc';
-  }));
-  window._dtColTypes=colTypes;
-  filterDataRows();
-}
-
-function filterDataRows(){
-  const sheet=SHEETS[dtSheet];
-  const q=document.getElementById('dataSearch').value.toLowerCase().trim();
-  dtFiltered=sheet.rows;
-  if(q) dtFiltered=dtFiltered.filter(row=>row.some(v=>v!==null&&String(v).toLowerCase().includes(q)));
-  renderDataRows();
-}
-
-function renderDataRows(){
-  const colTypes=window._dtColTypes;
-  let rows=[...dtFiltered];
-  if(dtSortCol>=0){
-    rows.sort((a,b)=>{let av=a[dtSortCol],bv=b[dtSortCol];if(av===null)return 1;if(bv===null)return -1;const an=Number(av),bn=Number(bv);if(!isNaN(an)&&!isNaN(bn))return(an-bn)*dtSortDir;return String(av).localeCompare(String(bv),'lt')*dtSortDir;});
+// Reusable raw-sheet explorer: builds its own DOM + state into `root`, so it can be
+// mounted in BOTH the Initial Data tab and (as a superset) inside the Sourced Data tab.
+const ALL_SHEETS=[...SHEET_ORDER, ...Object.keys(SHEETS).filter(k=>!SHEET_ORDER.includes(k))]; // all raw sheets, SHEET_ORDER first
+function mountSheetExplorer(root, order){
+  if(!root) return;
+  order=(order||ALL_SHEETS).filter(s=>SHEETS[s]);
+  root.innerHTML=`<div class="data-tabs"></div><div class="sheet-desc"></div>`
+    +`<div class="data-controls"><input type="text" class="exp-search" placeholder="Search across all columns…" style="min-width:220px"><span class="badge exp-rowcount"></span><button class="btn exp-csv">Export CSV</button></div>`
+    +`<div class="table-wrap exp-wrap"><table><thead><tr class="exp-head"></tr></thead><tbody class="exp-body"></tbody></table></div>`
+    +`<div class="pager"><button class="exp-prev">← Prev</button><span class="exp-pginfo"></span><button class="exp-next">Next →</button><span style="margin-left:auto">Rows per page:</span><select class="exp-psize"><option value="50">50</option><option value="100" selected>100</option><option value="250">250</option><option value="999999">All</option></select></div>`;
+  const $=s=>root.querySelector(s);
+  const tabsEl=$('.data-tabs'), descEl=$('.sheet-desc'), searchEl=$('.exp-search'), rowCountEl=$('.exp-rowcount'),
+        headEl=$('.exp-head'), bodyEl=$('.exp-body'), wrapEl=$('.exp-wrap'), pgInfoEl=$('.exp-pginfo'),
+        prevEl=$('.exp-prev'), nextEl=$('.exp-next'), psizeEl=$('.exp-psize'), csvEl=$('.exp-csv');
+  let sheet=order[0], sortCol=-1, sortDir=1, page=0, pageSize=100, filtered=[], colTypes=[];
+  function buildTabs(){
+    tabsEl.innerHTML=order.map(s=>`<button class="data-tab${s===sheet?' active':''}" data-sheet="${s}">${(SHEET_DESC[s]&&SHEET_DESC[s].title)||s}</button>`).join('');
+    tabsEl.querySelectorAll('.data-tab').forEach(btn=>btn.addEventListener('click',()=>{ sheet=btn.dataset.sheet; sortCol=-1; page=0; searchEl.value=''; buildTabs(); renderSheet(); }));
   }
-  const total=rows.length,start=dtPage*dtPageSize,pageRows=rows.slice(start,start+dtPageSize);
-  document.getElementById('rowCount').textContent=`${total} row${total!==1?'s':''} × ${colTypes.length} columns`;
-  document.getElementById('pageInfo').textContent=total>dtPageSize?`Page ${dtPage+1} of ${Math.ceil(total/dtPageSize)}`:'';
-  document.getElementById('prevBtn').disabled=dtPage===0;
-  document.getElementById('nextBtn').disabled=start+dtPageSize>=total;
-
-  document.getElementById('dtBody').innerHTML=pageRows.map((row,ri)=>{
-    const idx=start+ri+1;
-    const cells=row.map((v,ci)=>{
-      const ct=colTypes[ci];
-      if(v===null||v===undefined||v==='None'||v==='\\N') return`<td class="null">—</td>`;
-      if(ct.isUrl){const s=String(v);if(s.startsWith('http')){const d=s.replace(/^https?:\/\/(www\.)?/,'').replace(/\/$/,'');return`<td class="url"><a href="${s}" target="_blank" rel="noopener">${d.length>40?d.slice(0,38)+'…':d}</a></td>`;}return`<td>${s}</td>`;}
-      if(ct.isPct){const n=Number(v);if(!isNaN(n)){const cls=n>0?'pos':n<0?'neg':'';return`<td class="num ${cls}">${(n>0?'+':'')+(n*100).toFixed(1)}%</td>`;}return`<td>${v}</td>`;}
-      if(ct.isMoney){const n=Number(v);if(!isNaN(n)){const cls=n<0?'neg':'';return`<td class="num ${cls}">${dtFmtMoney(n)}</td>`;}return`<td>${v}</td>`;}
-      if(ct.isNum){const n=Number(v);if(!isNaN(n)){const cls=ct.name.includes('elnas')?(n>0?'pos':n<0?'neg':''):'';return`<td class="num ${cls}">${dtFmtNum(n)}</td>`;}}
-      return`<td>${String(v)}</td>`;
+  function renderSheet(){
+    const sh=SHEETS[sheet]; if(!sh) return; const cols=sh.columns;
+    const sd=SHEET_DESC[sheet], tl=sd&&TIER_LABEL[sd.tier];
+    descEl.innerHTML = sd ? `<div class="sd-head"><span class="sd-title">${sd.title}</span><span class="sd-tier" style="color:${tl.c};border-color:${tl.c}">${tl.t}</span></div><div class="sd-what">${sd.what}</div><div class="sd-best"><b>Best for:</b> ${sd.best}</div>` : '';
+    colTypes=cols.map((c,i)=>{ const sample=sh.rows.slice(0,20).map(r=>r[i]); const isMoney=MONEY_COLS.has(c); const isPct=PCT_PARTIAL.some(p=>c.includes(p)); const isUrl=URL_PARTIAL.some(p=>c.includes(p)); const isNum=!isPct&&!isUrl&&isNumCol(c,sample); return{name:c,isMoney,isPct,isUrl,isNum:isNum||isMoney}; });
+    headEl.innerHTML='<th class="row-num">#</th>'+cols.map((c,i)=>`<th data-col="${i}" class="${sortCol===i?(sortDir===1?'sorted-asc':'sorted-desc'):''}">${c||'—'}</th>`).join('');
+    headEl.querySelectorAll('th[data-col]').forEach(th=>th.addEventListener('click',()=>{ const ci=+th.dataset.col; if(sortCol===ci)sortDir*=-1; else{sortCol=ci;sortDir=-1;} page=0; renderRows(); headEl.querySelectorAll('th[data-col]').forEach(t=>t.className=''); th.className=sortDir===1?'sorted-asc':'sorted-desc'; }));
+    filterRows();
+  }
+  function filterRows(){ const sh=SHEETS[sheet]; const q=searchEl.value.toLowerCase().trim(); filtered=sh.rows; if(q) filtered=filtered.filter(row=>row.some(v=>v!==null&&String(v).toLowerCase().includes(q))); renderRows(); }
+  function renderRows(){
+    let rows=[...filtered];
+    if(sortCol>=0){ rows.sort((a,b)=>{let av=a[sortCol],bv=b[sortCol];if(av===null)return 1;if(bv===null)return -1;const an=Number(av),bn=Number(bv);if(!isNaN(an)&&!isNaN(bn))return(an-bn)*sortDir;return String(av).localeCompare(String(bv),'lt')*sortDir;}); }
+    const total=rows.length,start=page*pageSize,pageRows=rows.slice(start,start+pageSize);
+    rowCountEl.textContent=`${total} row${total!==1?'s':''} × ${colTypes.length} columns`;
+    pgInfoEl.textContent=total>pageSize?`Page ${page+1} of ${Math.ceil(total/pageSize)}`:'';
+    prevEl.disabled=page===0; nextEl.disabled=start+pageSize>=total;
+    bodyEl.innerHTML=pageRows.map((row,ri)=>{ const idx=start+ri+1;
+      const cells=row.map((v,ci)=>{ const ct=colTypes[ci];
+        if(v===null||v===undefined||v==='None'||v==='\\N') return`<td class="null">—</td>`;
+        if(ct.isUrl){const s=String(v);if(s.startsWith('http')){const d=s.replace(/^https?:\/\/(www\.)?/,'').replace(/\/$/,'');return`<td class="url"><a href="${s}" target="_blank" rel="noopener">${d.length>40?d.slice(0,38)+'…':d}</a></td>`;}return`<td>${s}</td>`;}
+        if(ct.isPct){const n=Number(v);if(!isNaN(n)){const cls=n>0?'pos':n<0?'neg':'';return`<td class="num ${cls}">${(n>0?'+':'')+(n*100).toFixed(1)}%</td>`;}return`<td>${v}</td>`;}
+        if(ct.isMoney){const n=Number(v);if(!isNaN(n)){const cls=n<0?'neg':'';return`<td class="num ${cls}">${dtFmtMoney(n)}</td>`;}return`<td>${v}</td>`;}
+        if(ct.isNum){const n=Number(v);if(!isNaN(n)){const cls=ct.name.includes('elnas')?(n>0?'pos':n<0?'neg':''):'';return`<td class="num ${cls}">${dtFmtNum(n)}</td>`;}}
+        return`<td>${String(v)}</td>`;
+      }).join('');
+      return`<tr><td class="row-num">${idx}</td>${cells}</tr>`;
     }).join('');
-    return`<tr><td class="row-num">${idx}</td>${cells}</tr>`;
-  }).join('');
+  }
+  searchEl.addEventListener('input',()=>{page=0;filterRows();});
+  prevEl.addEventListener('click',()=>{if(page>0){page--;renderRows();wrapEl.scrollTop=0;}});
+  nextEl.addEventListener('click',()=>{page++;renderRows();wrapEl.scrollTop=0;});
+  psizeEl.addEventListener('change',e=>{pageSize=+e.target.value;page=0;renderRows();});
+  csvEl.addEventListener('click',()=>{ const sh=SHEETS[sheet],BOM='﻿'; const cesc=v=>{if(v===null||v===undefined)return'';const s=String(v);return s.includes(',')||s.includes('"')||s.includes('\n')?'"'+s.replace(/"/g,'""')+'"':s;}; let csv=BOM+sh.columns.map(cesc).join(',')+'\n'; filtered.forEach(row=>{csv+=row.map(cesc).join(',')+'\n';}); const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'}); const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=sheet.replace(/\s+/g,'_')+'.csv';a.click(); });
+  buildTabs(); renderSheet();
 }
 
 // ---------- Company deep-dive (per-company charts across scraped sources) ----------
@@ -2104,8 +2056,8 @@ function initRek(){
 }
 
 // Initialize Data Explorer eagerly so it works on first visit without a click
-try { initDataExplorer(); }
-catch (err) { window.dispatchEvent(new ErrorEvent('error', {message:'initDataExplorer: '+err.message, error:err})); }
+try { mountSheetExplorer(document.getElementById('expInitial'), SHEET_ORDER); mountSheetExplorer(document.getElementById('expSourced'), ALL_SHEETS); }
+catch (err) { window.dispatchEvent(new ErrorEvent('error', {message:'mountSheetExplorer: '+err.message, error:err})); }
 try { initRek(); }
 catch (err) { window.dispatchEvent(new ErrorEvent('error', {message:'initRek: '+err.message, error:err})); }
 try { initSDD(); }
