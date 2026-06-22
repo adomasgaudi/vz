@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>LT Communication Agencies — Competitor Dashboard 2019–2024 · v0.1.90</title>
+<title>LT Communication Agencies — Competitor Dashboard 2019–2024 · v0.1.91</title>
 <script>
   // Apply saved theme + view mode before first paint to avoid a flash.
   // Theme default = dark; view default = advanced (full data sources/tabs).
@@ -279,7 +279,7 @@
     <button class="nav-btn" data-view="dataView">Initial Data</button>
     <button class="nav-btn" data-view="rekView">Sourced Data</button>
   </div>
-  <span class="nav-version">v0.1.90</span>
+  <span class="nav-version">v0.1.91</span>
   <div class="settings-wrap">
     <button class="settings-cog" id="settingsCog" title="Settings" aria-label="Settings">⚙️</button>
     <div class="settings-menu" id="settingsMenu">
@@ -293,7 +293,7 @@
 <div class="view active" id="dashView">
 <div class="wrap">
   <header>
-    <h1>🇱🇹 Lithuanian Communication & Marketing Agencies <span class="version">v0.1.90</span></h1>
+    <h1>🇱🇹 Lithuanian Communication & Marketing Agencies <span class="version">v0.1.91</span></h1>
     <p>Competitor landscape dashboard · 113 brands · Financials 2019–2024 (revenue, profit, headcount, salaries) · Source: rekvizitai.vz.lt data export</p>
   </header>
 
@@ -630,6 +630,7 @@ const SVG_SHAPES = ['circle','diamond','square','triangle']; // SVG chart-engine
 
 // Read a CSS custom property off <html> so charts track the active theme.
 const cssVar = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const esc=s=>String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); // declared early — SVG dashboard charts (above) escape labels at render time (TDZ fix)
 // GRID/CHART_BG are re-read on theme switch (see applyTheme); the per-chart
 // options reference GRID so a re-render picks up the new value.
 let GRID = cssVar('--grid');
@@ -961,6 +962,9 @@ renderTable();
 // ---------- SP & version history ----------
 // Each entry: title (2-5 words) · desc (5-15 words) · detail (15-50 words).
 const VERSIONS = [
+  {v:'v0.1.91', date:'2026-06-22 10:20', sp:0.5, title:'Fix second init crash (esc TDZ)',
+    desc:'Same temporal-dead-zone class: esc() was used by charts before its declaration.',
+    detail:'After moving SVG_SHAPES, a second helper hit the same wall — const esc (HTML-escape) was declared mid-file but the SVG dashboard charts escape labels at load. Moved esc up beside cssVar. Swept the engine + chart code: drawFinSvg/drawBarsSvg only depend on cssVar, esc, SVG_SHAPES — all now declared before first render.'},
   {v:'v0.1.90', date:'2026-06-22 10:05', sp:0.5, title:'Fix chart init crash (TDZ)',
     desc:'Dashboard crashed: SVG_SHAPES used before its declaration.',
     detail:'The converted dashboard charts call the SVG engine during initial render (renderCompany at load), but const SVG_SHAPES was declared later in the file — a temporal-dead-zone ReferenceError that broke the page. Moved the declaration up beside SEGCOLORS so it exists before first use.'},
@@ -1175,8 +1179,7 @@ document.getElementById('verCount').textContent = VERSIONS.length;
 // Paginated changelog (VERSIONS is newest-first)
 const HIST_PAGE_SIZE = 10;
 let histPage = 0;
-// Escape — entries contain literal <title>/<h1>/JSON which must not be parsed as HTML.
-const esc=s=>String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+// Escape — declared earlier (by cssVar) so charts can use it at load.
 // Changelog date: versions ship by the minute, so show "21, 16:23" (day + h:min)
 // when a time is logged; fall back to "Jun 21" for older day-only entries.
 const CH_MONTHS=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
