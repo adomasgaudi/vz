@@ -464,7 +464,6 @@
       <div class="co-select-list" id="rekCoList" role="listbox"></div>
     </div>
   </div>
-  <div class="sheet-desc" id="rekIntro"></div>
   <div class="data-tabs" id="rekTabs"></div>
   <div class="data-controls">
     <div class="seg" id="rekMode">
@@ -952,9 +951,9 @@ renderTable();
 // ---------- SP & version history ----------
 // Each entry: title (2-5 words) · desc (5-15 words) · detail (15-50 words).
 const VERSIONS = [
-  {v:'v0.1.98', date:'2026-06-22 12:35', sp:0.5, title:'Conflict values side by side',
-    desc:'Disagreeing source values now sit horizontally, keeping the row height even.',
-    detail:'Changed the multi-value conflict spans from stacked (block) to inline, so a cell where sources disagree shows the values next to each other (colour-keyed) instead of stacking and growing the row.'},
+  {v:'v0.1.98', date:'2026-06-22 12:35', sp:0.5, title:'Inline conflicts, drop intro',
+    desc:'Disagreeing values sit side by side; removed the per-company description panel.',
+    detail:'Conflict spans go from stacked (block) to inline so disagreeing source values sit next to each other (colour-keyed), keeping the row height even. Also removed the “— Company Data / Initial = … Rekvizitai = …” intro panel above the tabs to cut clutter.'},
   {v:'v0.1.97', date:'2026-06-22 12:25', sp:1.5, title:'Split yearly vs monthly columns',
     desc:'Yearly averages and monthly snapshots no longer share a value column.',
     detail:'Fixed a semantic mix-up: a yearly average and a monthly snapshot measure different spans, so the unified time table now puts them in SEPARATE value columns (Yearly | Monthly) on the same time axis. A year row fills only Yearly, a month row only Monthly — so they read as different measurements, and conflicts are only flagged between same-span values.'},
@@ -2016,20 +2015,10 @@ function cubeCell(sources){
 }
 
 function renderRek(){
-  const intro=document.getElementById('rekIntro');
   if(!rekCo || !rekCo.order || !rekCo.order.length){
-    intro.innerHTML='<div class="sd-what">No scrape data yet. Run <b>scripts/scrape_company.py &lt;slug&gt;</b> then <b>scripts/parse_company.py &lt;slug&gt;</b>.</div>';
-    document.getElementById('rekTableWrap').innerHTML='';
+    document.getElementById('rekTableWrap').innerHTML='<div class="null" style="text-align:center;padding:20px">No data for this company.</div>';
     document.getElementById('rekRowCount').textContent=''; return;
   }
-  const modeWord={merged:'All sources merged', initial:'Initial data only', rekvizitai:'Rekvizitai only', sodra:'Sodra only'}[rekMode];
-  const hasRek = !!(rekCo.tabs && Object.keys(rekCo.tabs).length);
-  const hasSodra = !!(rekCo.sodra);
-  intro.innerHTML=`<div class="sd-head"><span class="sd-title">${rekCo.name||rekCo.slug} — Company Data</span><span class="sd-tier" style="color:var(--muted);border-color:var(--muted)">${modeWord}</span></div>`
-    + (hasRek||hasSodra
-        ? `<div class="sd-what"><b>Initial</b> = the dashboard's own record for "${rekCo.brand}". <b>Rekvizitai</b> = ${hasRek?'live rekvizitai.vz.lt scrape':'not scraped for this company yet'}. <b>Sodra</b> = ${hasSodra?'monthly headcount &amp; wage from atvira.sodra.lt':'not fetched for this company yet'}. <b>Merged</b> unions all sources; the cubes show which source each field came from.</div>`
-        : `<div class="sd-what"><b>Initial data only</b> for "${rekCo.brand}" (from the dashboard dataset) — this company hasn't been scraped from Rekvizitai or Sodra yet, so only the Initial source has values.</div>`);
-
   const rows=rekFiltered();
   document.getElementById('rekRowCount').textContent=`${rows.length} field${rows.length!==1?'s':''}`;
   const {years, matrix, flat, series}=pivotRows(rows);
