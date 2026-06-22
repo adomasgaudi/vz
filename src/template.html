@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>LT Communication Agencies — Competitor Dashboard 2019–2024 · v0.1.95</title>
+<title>LT Communication Agencies — Competitor Dashboard 2019–2024 · v0.1.96</title>
 <script>
   // Apply saved theme + view mode before first paint to avoid a flash.
   // Theme default = dark; view default = advanced (full data sources/tabs).
@@ -235,6 +235,7 @@
   #rekTableWrap tr:hover td{background:var(--hover)}
   /* merge cell stacking per-source values (differing) — colour-keyed text */
   #rekView .mv{display:block} #rekView .mv.initial{color:var(--green)} #rekView .mv.rekvizitai{color:var(--accent)} #rekView .mv.sodra{color:var(--amber)}
+  #rekTableWrap td.conflict{box-shadow:inset 3px 0 0 var(--amber);cursor:help}
   .badge{background:var(--panel2);border:1px solid var(--border);border-radius:20px;padding:3px 12px;font-size:12px;color:var(--muted)}
   .btn{background:var(--panel2);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:6px 14px;font-size:13px;cursor:pointer;transition:.15s;font-family:inherit}
   .btn:hover{border-color:var(--accent);color:var(--accent)}
@@ -286,7 +287,7 @@
     <button class="nav-btn active" data-view="dashView">Dashboard</button>
     <button class="nav-btn" data-view="rekView">Company Data</button>
   </div>
-  <span class="nav-version">v0.1.95</span>
+  <span class="nav-version">v0.1.96</span>
   <div class="settings-wrap">
     <button class="settings-cog" id="settingsCog" title="Settings" aria-label="Settings">⚙️</button>
     <div class="settings-menu" id="settingsMenu">
@@ -300,7 +301,7 @@
 <div class="view active" id="dashView">
 <div class="wrap">
   <header>
-    <h1>🇱🇹 Lithuanian Communication & Marketing Agencies <span class="version">v0.1.95</span></h1>
+    <h1>🇱🇹 Lithuanian Communication & Marketing Agencies <span class="version">v0.1.96</span></h1>
     <p>Competitor landscape dashboard · 113 brands · Financials 2019–2024 (revenue, profit, headcount, salaries) · Source: rekvizitai.vz.lt data export</p>
   </header>
 
@@ -951,6 +952,9 @@ renderTable();
 // ---------- SP & version history ----------
 // Each entry: title (2-5 words) · desc (5-15 words) · detail (15-50 words).
 const VERSIONS = [
+  {v:'v0.1.96', date:'2026-06-22 12:10', sp:3, title:'Unified time series + conflicts',
+    desc:'Same metric from all sources now shares one time column; disagreements are flagged.',
+    detail:'Reworked the Merged pivot: a metric with any dated points (e.g. headcount, avg wage) is now ONE time series instead of separate per-source tables — Initial yearly, Rekvizitai dated and Sodra monthly fold onto a single time column (dated points aligned by month, parenthetical qualifiers like "(grafikas)" canonicalised so they count as the same metric). When sources disagree for a period the cell is marked (amber edge) and shows every source\'s value colour-keyed (green/blue/amber), with a hover tooltip naming each. Purely-yearly metrics keep the clean metric×year matrix.'},
   {v:'v0.1.95', date:'2026-06-22 11:45', sp:1, title:'Source cubes in company picker',
     desc:'Each company in the dropdown now shows which sources we have for it.',
     detail:'Added the source cubes (green = Initial, blue = Rekvizitai, amber = Sodra) beside every company name in the Company Data picker, dimmed when that source has no data — so you can see at a glance which companies have scraped Rekvizitai/Sodra info vs Initial-only.'},
@@ -1883,28 +1887,53 @@ function splitYear(field){
   return null;
 }
 
-// Pivot year-suffixed rows into a metric × year matrix; YYYY-MM(-DD) series are
-// grouped as dated lists; everything else stays flat. Each output carries the
-// per-source vals + a `sources` list so the renderer can draw source cubes.
+// Strip parenthetical qualifiers so "Darbuotojų skaičius (grafikas)" and plain
+// "Darbuotojų skaičius" are recognised as the SAME metric across sources.
+function canonBase(base){ return base.replace(/\s*\([^)]*\)\s*/g,' ').replace(/\s+/g,' ').trim(); }
+// Collapse a time point to a period: yearly stays a year row; any dated point
+// (YYYY-MM or YYYY-MM-DD) folds to its MONTH so values from different sources line
+// up on one axis and disagreements surface.
+function periodOf(sp){
+  if(sp.kind==='year') return {period:sp.key, kind:'year', sort:sp.key+'-00', day:sp.key};
+  return {period:sp.key.slice(0,7), kind:'month', sort:sp.key.slice(0,7), day:sp.key};
+}
+
+// Group time-suffixed rows by canonical metric. A metric with ANY dated points becomes
+// ONE unified time series (Initial + Rekvizitai + Sodra on a single time column, with
+// per-period conflicts flagged); purely-yearly metrics stay a clean metric×year matrix.
 function pivotRows(rows){
-  const years=new Set(), bases=new Map(), flat=[], dated=new Map();
+  const groups=new Map(), flat=[];
   rows.forEach(r=>{
     const sp=splitYear(r.field);
-    if(sp && sp.kind==='year'){
-      years.add(sp.year);
-      if(!bases.has(sp.base)) bases.set(sp.base,{base:sp.base, cells:{}, sources:new Set()});
-      const b=bases.get(sp.base); b.cells[sp.year]=r; (r.sources||[]).forEach(s=>b.sources.add(s));
-    } else if(sp && sp.kind==='date'){
-      if(!dated.has(sp.base)) dated.set(sp.base,[]);
-      dated.get(sp.base).push({...r, _date:sp.key});
+    if(!sp){ flat.push(r); return; }
+    const canon=canonBase(sp.base), p=periodOf(sp);
+    if(!groups.has(canon)) groups.set(canon,{base:canon, hasDate:false, keys:new Map()});
+    const g=groups.get(canon); if(p.kind!=='year') g.hasDate=true;
+    if(!g.keys.has(p.period)) g.keys.set(p.period,{period:p.period, kind:p.kind, sort:p.sort, vals:{}, days:{}, sources:new Set()});
+    const cell=g.keys.get(p.period);
+    const vals=r.vals || {[(r.sources&&r.sources[0])||'initial']:r.value};
+    Object.entries(vals).forEach(([s,v])=>{ if(v==null) return;
+      if(cell.days[s]==null || String(p.day)>=String(cell.days[s])){ cell.vals[s]=v; cell.days[s]=p.day; } // latest day in a month wins
+      cell.sources.add(s);
+    });
+  });
+  const years=new Set(), matrix=[], series=[];
+  groups.forEach(g=>{
+    g.keys.forEach(cell=>{
+      const uniq=[...new Set(Object.values(cell.vals).map(normVal))];
+      cell.diff=uniq.length>1; cell.value=Object.values(cell.vals)[0]; cell.sources=[...cell.sources];
+    });
+    const keys=[...g.keys.values()];
+    if(g.hasDate){
+      keys.sort((a,b)=>String(a.sort).localeCompare(String(b.sort)));
+      series.push({base:g.base, rows:keys});
     } else {
-      flat.push(r);
+      const cells={}, srcs=new Set();
+      keys.forEach(c=>{ years.add(c.period); cells[c.period]=c; c.sources.forEach(s=>srcs.add(s)); });
+      matrix.push({base:g.base, cells, sources:[...srcs]});
     }
   });
-  const yrs=[...years].sort();
-  const matrix=[...bases.values()].map(b=>({base:b.base, cells:b.cells, sources:[...b.sources]}));
-  dated.forEach(list=>list.sort((a,b)=>String(a._date).localeCompare(String(b._date))));
-  return {years:yrs, matrix, flat, dated};
+  return {years:[...years].sort(), matrix, series, flat};
 }
 
 function rekFiltered(){
@@ -1997,7 +2026,7 @@ function renderRek(){
 
   const rows=rekFiltered();
   document.getElementById('rekRowCount').textContent=`${rows.length} field${rows.length!==1?'s':''}`;
-  const {years, matrix, flat, dated}=pivotRows(rows);
+  const {years, matrix, flat, series}=pivotRows(rows);
   const eh=s=>String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
   const numLike=v=>/^[-+]?[\d.,\s ]+\s*(€|%)?$/.test(String(v).trim()) && /\d/.test(v);
   const merged = rekMode==='merged';
@@ -2023,17 +2052,24 @@ function renderRek(){
     });
     html+=`</tbody></table>`;
   }
-  // 2) dated series (debt / monthly Sodra) — date | value, grouped, wrapping
-  dated.forEach((list, base)=>{
-    html+=`<table style="margin-top:14px"><thead><tr><th class="colField">${eh(base)} — date</th><th class="num" style="text-align:right">Value</th>${srcTh}</tr></thead><tbody>`;
-    list.forEach(r=>{
-      html+=`<tr><td class="fieldcell">${eh(r._date||r.field)}</td><td class="num">${eh(r.value)}</td>${srcTd(r)}</tr>`;
+  // 2) unified time series — Initial + Rekvizitai + Sodra on ONE time column.
+  //    Conflicts (sources disagree for a period) show every source's value, colour-keyed.
+  series.forEach(sObj=>{
+    html+=`<table style="margin-top:14px"><thead><tr><th class="colField">${eh(sObj.base)} — time</th><th class="num" style="text-align:right">Value</th>${srcTh}</tr></thead><tbody>`;
+    sObj.rows.forEach(c=>{
+      const valCell = (merged && c.diff)
+        ? `<td class="num conflict" title="Sources disagree — ${SOURCES.filter(s=>c.vals[s]!=null).map(s=>SRC_LABEL[s]+': '+c.vals[s]).join(' · ')}">`
+            + SOURCES.filter(s=>c.vals[s]!=null).map(s=>`<span class="mv ${s}">${eh(c.vals[s])}</span>`).join('') + `</td>`
+        : `<td class="num">${eh(c.value)}</td>`;
+      const days=Object.values(c.days||{}).sort();
+      const dayTip = (c.kind==='month' && days.length && days[days.length-1]!==c.period) ? ` title="${eh(days[days.length-1])}"` : '';
+      html+=`<tr><td class="fieldcell"${dayTip}>${eh(c.period)}</td>${valCell}${merged?cubeCell(c.sources):''}</tr>`;
     });
     html+=`</tbody></table>`;
   });
   // 3) flat field/value (non-year fields) — long text wraps
   if(flat.length){
-    html+=`<table style="margin-top:${matrix.length||dated.size?'14px':'0'}"><thead><tr><th class="colField">Field</th><th>Value</th>${srcTh}</tr></thead><tbody>`;
+    html+=`<table style="margin-top:${matrix.length||series.length?'14px':'0'}"><thead><tr><th class="colField">Field</th><th>Value</th>${srcTh}</tr></thead><tbody>`;
     flat.forEach(r=>{
       html+=`<tr><td class="fieldcell">${eh(r.field)}</td><td class="${numLike(r.value)?'num':''}">${eh(r.value)}</td>${srcTd(r)}</tr>`;
     });
