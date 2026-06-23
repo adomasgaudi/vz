@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Market Analytics — LT agencies · v0.1.142</title>
+<title>Market Analytics — LT agencies · v0.1.143</title>
 <script>
   // Apply saved theme + view mode before first paint to avoid a flash.
   // Theme default = dark; view default = advanced (full data sources/tabs).
@@ -413,7 +413,7 @@
     <div class="settings-menu" id="settingsMenu">
       <button id="themeToggle">🌙 Dark</button>
       <button id="viewToggle"></button>
-      <span class="nav-version">v0.1.142</span>
+      <span class="nav-version">v0.1.143</span>
     </div>
   </div>
   <div class="nav-sub">113 brands · 2019–2024</div>
@@ -832,22 +832,19 @@ function moneyFlowHtml(T0,R,P,opts){
   const costs=(R!=null && P!=null)?R-P:null, loss=P!=null && P<0;
   const pctOf=v=> T>0? v/T*100 : 0;
   const segs=[];
-  if(P!=null && !loss) segs.push({cls:'profit', pct:pctOf(P), name:'Net profit', val:fmtEur(P), desc:'kept after costs (revenue − costs)'});
+  if(P!=null && !loss) segs.push({cls:'profit', pct:pctOf(P), name:'Net profit', val:fmtEur(P), desc:''});
   if(costs!=null) segs.push({cls:loss?'cost loss':'cost', pct:pctOf(loss?R:costs), name:loss?'Costs (loss)':'Costs', val:fmtEur(costs), desc:'salaries, overheads & other expenses'});
   else if(R!=null) segs.push({cls:'rev', pct:pctOf(R), name:'Revenue', val:fmtEur(R), desc:'fee income kept'});
   if(pass>0) segs.push({cls:'pass', pct:pctOf(pass), name:'Pass-through', val:fmtEur(pass), desc:'media spend bought for clients, billed through the agency'});
   const fx=s=>Math.max(s.pct,3).toFixed(2);
   const bar=segs.map(s=>`<div class="vf-seg ${s.cls}" style="flex:${fx(s)}"></div>`).join('');
-  const leg=segs.map(s=>`<div class="vf-item" style="flex:${fx(s)}"><span class="vf-dot ${s.cls}"></span><div class="vf-txt"><b>${s.name} ${s.val}</b><span class="vf-desc">${s.desc}</span></div></div>`).join('');
+  const leg=segs.map(s=>`<div class="vf-item" style="flex:${fx(s)}"><span class="vf-dot ${s.cls}"></span><div class="vf-txt"><b>${s.name} ${s.val}</b>${s.desc?`<span class="vf-desc">${s.desc}</span>`:''}</div></div>`).join('');
   const revPct = R!=null ? Math.max(0,Math.min(100,pctOf(R))) : 100;
   const brk = (pass>0 && R!=null)? `<div class="vf-brk"><div class="vf-brk-rev" style="flex:${revPct.toFixed(2)}"><span>Revenue ${fmtEur(R)}</span></div><div style="flex:${(100-revPct).toFixed(2)}"></div></div>` : '';
   const margin=(R>0 && P!=null)?P/R*100:null;
   const mtxt=margin!=null?(loss?`<b style="color:var(--red)">−${Math.abs(margin).toFixed(1)}%</b>`:`<b>${margin.toFixed(1)}%</b>`):'–';
-  const note = R!=null ? `<b>Revenue</b> ${fmtEur(R)} ${rk(ranks.ei)} = net profit + costs (fee income, excludes pass-through) · <b>Net margin</b> = profit ÷ revenue = ${mtxt}${ranks.profit?` · #${ranks.profit.pos}`:''}` : '';
-  const tag = opts.tag? `<span class="ff-scope">${opts.tag}</span>` : '';
-  return `<div class="ff"><div class="vf-head"><b>Turnover</b> <span class="ff-v">${fmtEur(T)}</span> ${tag} ${yo(T0,prev.T)} ${rk(ranks.rev)}</div>`
-    +`<div class="vf-body"><div class="vf-bar">${bar}</div>${brk}<div class="vf-legend">${leg}</div></div>`
-    +(note?`<div class="ff-note">${note}</div>`:'')+`</div>`;
+  return `<div class="ff"><div class="vf-head"><b>Turnover</b> <span class="ff-v">${fmtEur(T)}</span> ${yo(T0,prev.T)} ${rk(ranks.rev)}</div>`
+    +`<div class="vf-body"><div class="vf-bar">${bar}</div>${brk}<div class="vf-legend">${leg}</div></div></div>`;
 }
 
 let coFlowMode='total', _coFlowRerender=null;
@@ -1298,6 +1295,10 @@ let _dashRT; window.addEventListener('resize',()=>{ clearTimeout(_dashRT); _dash
 // ---------- SP & version history ----------
 // Each entry: title (2-5 words) · desc (5-15 words) · detail (15-50 words).
 const VERSIONS = [
+  {v:'v0.1.143', date:'2026-06-23 03:35', sp:1, title:'Declutter money-flow',
+    desc:'Removed the redundant restated-formula text from the money-flow: the scope tag, the “kept after costs” line and the bottom Revenue/Net-margin note. The bar, values and the real cost/pass-through descriptions stay.',
+    detail:'moneyFlowHtml no longer renders opts.tag, the Net-profit sub-description or the ff-note summary line; empty descriptions are skipped so the legend stays tidy.',
+    cat:'CHART'},
   {v:'v0.1.142', date:'2026-06-23 03:20', sp:2, title:'English-only labels',
     desc:'Removed the Lithuanian terms from the dashboard — “apyvarta” and “spėjamos pajamos” are gone, and the segments Kūryba/Konsultantai/Renginiai now show as Creative/Consulting/Events.',
     detail:'Stripped the LT parentheticals across money-flow, KPI formulas, chart titles/axes and the metric system; added a SEGLABEL display map (data keys stay LT) applied to the doughnut, bars, all-years chart, scatter legend and company segments. The raw Data Explorer / company deep-dive still shows the registry’s own Lithuanian field names.',
