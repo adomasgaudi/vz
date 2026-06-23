@@ -1322,7 +1322,7 @@ const VERSIONS = [
     desc:'SVG charts now smoothly re-fit (≈0.34s) when the basis/metric changes, so bars no longer end up tiny or clipped. The money-flow shows each year’s total on top of the bar and the year-over-year % between bars.',
     detail:'drawFinSvg sig now includes the fit extent, so a value change triggers an eased (easeOutCubic) animateTo() of the view instead of staying on the old scale. Stacked charts get 14% headroom; spec.totalLabels draws the per-year total + the change vs the previous year.',
     cat:'CHART'},
-  {v:'v0.1.152', date:'2026-06-23 05:35', sp:1, title:'Flip bar + YoY labels',
+  {v:'v0.1.151', date:'2026-06-23 05:35', sp:1, title:'Flip bar + YoY labels',
     desc:'The single-year money-flow bar is now inverted to match the all-years one — net profit at the bottom. Employees and Median-salary cards now use the “23→24” range label like Turnover/Revenue.',
     detail:'CSS: .vf-bar/.vf-legend/.vf-brk use flex-direction:column-reverse so profit sits at the bottom and the legend + revenue bracket stay aligned. KPI labels for employees & median salary switched from the single year to py2→y2 (e.g. 23→24).',
     cat:'CHART'},
