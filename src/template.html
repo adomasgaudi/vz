@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Market Analytics — LT agencies · v0.1.175</title>
+<title>Market Analytics — LT agencies · v0.1.176</title>
 <script>
   // Apply saved theme + view mode before first paint to avoid a flash.
   // Theme default = dark; view default = advanced (full data sources/tabs).
@@ -336,6 +336,7 @@
   .ov-chip{flex:0 0 auto;display:inline-flex;align-items:center;gap:5px;font:600 12px/1 inherit;padding:5px 8px;border:1px solid var(--border);border-radius:7px;background:var(--panel2);color:var(--text);white-space:nowrap}
   .ov-chip.primary{border-color:var(--accent);color:var(--accent)}
   .ov-dot{width:8px;height:8px;border-radius:50%;flex:0 0 auto}
+  #companiesView .co-viewbar{margin:8px 0 12px}
   .ov-chip-x{cursor:pointer;color:var(--muted);font-size:14px;line-height:1}
   .ov-chip-x:hover{color:var(--red)}
   #companiesView .mkt-sticky{top:98px;z-index:79}   /* sit just below the sticky company picker */
@@ -433,7 +434,7 @@
     <div class="settings-menu" id="settingsMenu">
       <button id="themeToggle">🌙 Dark</button>
       <button id="viewToggle"></button>
-      <span class="nav-version">v0.1.175</span>
+      <span class="nav-version">v0.1.176</span>
     </div>
   </div>
   <div class="nav-sub">113 brands · 2019–2024</div>
@@ -1400,6 +1401,10 @@ let _dashRT; window.addEventListener('resize',()=>{ clearTimeout(_dashRT); _dash
 // ---------- SP & version history ----------
 // Each entry: title (2-5 words) · desc (5-15 words) · detail (15-50 words).
 const VERSIONS = [
+  {v:'v0.1.176', date:'2026-06-23 12:20', sp:0.5, title:'View toggle above the bar',
+    desc:'Moved the Per-year / All-time toggle above the company picker, outside the sticky control bar — it sits at the very top of the Companies page as the page-mode switch.',
+    detail:'liftCompanyControls now pulls #coViewToggle out of the sticky bar and inserts it (class .co-viewbar) directly into the wrap above the .co-stickybar.',
+    cat:'CHART'},
   {v:'v0.1.175', date:'2026-06-23 12:10', sp:0.5, title:'Top 10 & bottom 10 ranking',
     desc:'The company ranking chart now shows the top 10 and bottom 10 by the chosen metric (leaders & laggards) instead of a flat top 20.',
     detail:'drawTop slices [0,10) + [-10) of the sorted list (when >20 rows); title updated.',
@@ -2991,11 +2996,16 @@ try{ (function(){
   const picker=document.getElementById('ovCompanySelect');
   const ctrl=document.getElementById('coYearRow') && document.getElementById('coYearRow').closest('.mkt-sticky');
   if(!picker && !ctrl) return;
+  // Capture the view toggle NOW (before ctrl is moved into the detached bar, after which
+  // document.getElementById can't find it). It sits ABOVE the sticky bar (page mode switch).
+  const viewT=document.getElementById('coViewToggle');
   const bar=document.createElement('div'); bar.className='co-stickybar';
   if(picker) bar.appendChild(picker);
   if(ctrl) bar.appendChild(ctrl);
   const firstCard=wrap.querySelector('.group-card');
-  wrap.insertBefore(bar, firstCard || wrap.querySelector('.explore-btn') || wrap.querySelector('.mini-foot'));
+  const before=firstCard || wrap.querySelector('.explore-btn') || wrap.querySelector('.mini-foot');
+  if(viewT){ viewT.classList.add('co-viewbar'); wrap.insertBefore(viewT, before); }
+  wrap.insertBefore(bar, before);
 })(); }catch(err){ window.dispatchEvent(new ErrorEvent('error',{message:'liftCompanyControls: '+err.message, error:err})); }
 
 // Per-year / All-time is now a TOP toggle (it changes the whole Companies page) — drive the
