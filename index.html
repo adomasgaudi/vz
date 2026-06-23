@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Market Analytics — LT agencies · v0.1.131</title>
+<title>Market Analytics — LT agencies · v0.1.132</title>
 <script>
   // Apply saved theme + view mode before first paint to avoid a flash.
   // Theme default = dark; view default = advanced (full data sources/tabs).
@@ -199,9 +199,9 @@
   .vf-seg.rev{background:var(--accent)} .vf-seg.profit{background:var(--green)}
   .vf-seg.cost{background:var(--panel2)} .vf-seg.pass{background:var(--panel2);opacity:.5} .vf-seg.cost.loss{background:rgba(220,77,77,.25)}
   .vf-brk{display:flex;flex-direction:column;width:84px;flex:0 0 auto}
-  .vf-brk-rev{display:flex;align-items:center;justify-content:flex-end;text-align:right;padding-right:7px;border-right:2px solid var(--gold);position:relative}
+  .vf-brk-rev{display:flex;align-items:center;justify-content:flex-start;text-align:left;padding-left:7px;border-left:2px solid var(--gold);position:relative}
   .vf-brk-rev span{font-size:11px;font-weight:600;color:var(--text);line-height:1.25}
-  .vf-brk-rev::before,.vf-brk-rev::after{content:'';position:absolute;right:0;width:6px;height:2px;background:var(--gold)}
+  .vf-brk-rev::before,.vf-brk-rev::after{content:'';position:absolute;left:0;width:6px;height:2px;background:var(--gold)}
   .vf-brk-rev::before{top:0} .vf-brk-rev::after{bottom:0}
   .vf-legend{flex:1;display:flex;flex-direction:column;min-width:0}
   .vf-item{display:flex;gap:9px;align-items:center;min-height:32px}
@@ -392,7 +392,7 @@
     <div class="settings-menu" id="settingsMenu">
       <button id="themeToggle">🌙 Dark</button>
       <button id="viewToggle"></button>
-      <span class="nav-version">v0.1.131</span>
+      <span class="nav-version">v0.1.132</span>
     </div>
   </div>
   <div class="nav-sub">113 brands · 2019–2024</div>
@@ -470,13 +470,8 @@
       <div class="chartbox"><div class="svgwrap" id="chMarket" style="position:absolute;inset:0"></div></div>
     </div>
     <div class="card">
-      <h2>Segment revenue trend (spėjamos pajamos)</h2>
-      <div class="desc">Total segment revenue (spėjamos pajamos) per year — who is gaining share of the market.</div>
-      <div class="chartbox"><div class="svgwrap" id="chSegTrend" style="position:absolute;inset:0"></div></div>
-    </div>
-    <div class="card">
       <h2>Revenue (spėjamos pajamos) by segment, all years</h2>
-      <div class="desc" id="revAllDesc">Each segment’s median revenue (spėjamos pajamos) per employee, 2019→2024 — the all-years version of the single-year chart in the “Market &lt;year&gt;” tab.</div>
+      <div class="desc" id="revAllDesc">Each segment’s median revenue (spėjamos pajamos) per employee, 2019→2024 — the all-years version of the single-year chart in the “Market &lt;year&gt;” tab. Same segment colours as the bar; “Whole market” shows each segment’s total per year (the old trend view).</div>
       <div class="seg" id="revAllMode" style="margin-bottom:10px">
         <button data-mode="emp" class="active">Per employee</button>
         <button data-mode="company">Per company</button>
@@ -826,7 +821,7 @@ function moneyFlowHtml(T0,R,P,opts){
   const note = R!=null ? `<b>Revenue</b> (spėj. pajamos) ${fmtEur(R)} ${rk(ranks.ei)} = net profit + costs (fee income, excludes pass-through) · <b>Net margin</b> = profit ÷ revenue = ${mtxt}${ranks.profit?` · #${ranks.profit.pos}`:''}` : '';
   const tag = opts.tag? `<span class="ff-scope">${opts.tag}</span>` : '';
   return `<div class="ff"><div class="vf-head"><b>Turnover</b> <span class="ff-sub2">apyvarta</span> <span class="ff-v">${fmtEur(T)}</span> ${tag} ${yo(T0,prev.T)} ${rk(ranks.rev)}</div>`
-    +`<div class="vf-body">${brk}<div class="vf-bar">${bar}</div><div class="vf-legend">${leg}</div></div>`
+    +`<div class="vf-body"><div class="vf-bar">${bar}</div>${brk}<div class="vf-legend">${leg}</div></div>`
     +(note?`<div class="ff-note">${note}</div>`:'')+`</div>`;
 }
 
@@ -1090,10 +1085,7 @@ const segSorted = Object.entries(seg24).sort((a,b)=>b[1]-a[1]);
 renderSegDoughnut(mktYear);
 
 // ---------- Segment trend ----------
-const topSegs = segSorted.slice(0,5).map(s=>s[0]);
-drawFinSvg(chSegTrend, { yTitle:'€M', series: topSegs.map(s=>(
-  {label:s, color:SEGCOLORS[s], data:YEARS.map(y=>({x:y, y:(segTotals(y)[s]||0)/1e6}))}
-)) });
+const topSegs = segSorted.slice(0,5).map(s=>s[0]);   // still used by the size-vs-profit scatter grouping
 
 // ---------- Top-N ranking ----------
 const rankYearSel = document.getElementById('rankYear');
@@ -1217,7 +1209,7 @@ function renderRevSegAll(mode){
 renderRevSegAll('emp');
 
 // Re-render the static SVG dashboard charts at the new size on window resize.
-const SVG_DASH_IDS=['chMine','chMineRank','chMarket','chSegTrend','chTop','chGrowth','chSalary','chRevPerEmp','chRevSegAll'];
+const SVG_DASH_IDS=['chMine','chMineRank','chMarket','chTop','chGrowth','chSalary','chRevPerEmp','chRevSegAll'];
 function redrawDashSvg(){ SVG_DASH_IDS.forEach(id=>{ const el=document.getElementById(id); if(!el) return;
   if(el.__fin) el.__fin.render(); else if(el.__bar) el.__bar.render(); }); }
 let _dashRT; window.addEventListener('resize',()=>{ clearTimeout(_dashRT); _dashRT=setTimeout(redrawDashSvg,160); });
@@ -1225,6 +1217,10 @@ let _dashRT; window.addEventListener('resize',()=>{ clearTimeout(_dashRT); _dash
 // ---------- SP & version history ----------
 // Each entry: title (2-5 words) · desc (5-15 words) · detail (15-50 words).
 const VERSIONS = [
+  {v:'v0.1.132', date:'2026-06-23 00:35', sp:2, title:'Consistent segments + flow flip',
+    desc:'Dropped the old top-5 “Segment revenue trend” (its all-segments, same-colour replacement is the new all-years chart). In the money-flow, the bar moved to the left and the Revenue bracket to its right.',
+    detail:'The all-years segment chart already uses the same SEGCOLORS and per-employee/company/market logic as the single-year bar, so the redundant 5-line whole-market trend chart was removed (its view = the all-years chart in “Whole market”). topSegs is kept for the size-vs-profit scatter. Money-flow .vf-body reordered to bar → bracket → legend, and the gold revenue bracket mirrored to point left.',
+    cat:'CHART'},
   {v:'v0.1.131', date:'2026-06-23 00:15', sp:5, title:'Single-year charts follow year',
     desc:'The segment doughnut and the segment-revenue bars are now in the “Market <year>” tab and follow the year pill; the “Market all time” tab keeps the multi-year graphs and gains an all-years (multi-line) version of the segment-revenue chart.',
     detail:'Single-year views (revenue-by-service-segment doughnut + revenue-by-segment bars, with the per-employee/company/market basis) moved into Market <year> and recompute on each year cycle, with a “No companies reported <year> yet” empty state for 2025–2026. Market all time now holds totals, segment trend, median-salary-by-year, and a new chRevSegAll line chart (one line per segment, same basis toggle). Null points are stripped so lines don’t break.',
