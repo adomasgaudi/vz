@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Market Analytics — LT agencies · v0.1.134</title>
+<title>Market Analytics — LT agencies · v0.1.135</title>
 <script>
   // Apply saved theme + view mode before first paint to avoid a flash.
   // Theme default = dark; view default = advanced (full data sources/tabs).
@@ -305,6 +305,8 @@
   .co-pill:hover{color:var(--text);border-color:var(--muted)}
   .co-pill.active{background:var(--accent);border-color:var(--accent);color:#fff}
   .seg{display:inline-flex;border:1px solid var(--border);border-radius:8px;overflow:hidden}
+  .seg-row{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:10px}
+  .seg-row .seg button{padding:6px 11px}
   .seg button{font-family:inherit;font-size:12.5px;font-weight:600;padding:6px 14px;background:var(--panel2);color:var(--muted);border:none;border-right:1px solid var(--border);cursor:pointer;transition:.12s}
   .seg button:last-child{border-right:none}
   .seg button:hover{color:var(--text)}
@@ -409,7 +411,7 @@
     <div class="settings-menu" id="settingsMenu">
       <button id="themeToggle">🌙 Dark</button>
       <button id="viewToggle"></button>
-      <span class="nav-version">v0.1.134</span>
+      <span class="nav-version">v0.1.135</span>
     </div>
   </div>
   <div class="nav-sub">113 brands · 2019–2024</div>
@@ -464,16 +466,19 @@
   <div class="grid">
     <div class="card">
       <h2 id="segDoughTitle">Revenue (spėjamos pajamos) by service segment</h2>
-      <div class="desc">Companies may belong to multiple segments; revenue (spėjamos pajamos) is attributed to each segment they operate in. Follows the year above.</div>
+      <div class="desc" id="segDoughDesc">Companies may belong to multiple segments; the metric is attributed to each segment they operate in. Follows the year above.</div>
+      <div class="seg-row">
+        <div class="seg" id="segMetric"><button data-m="revenue" class="active">Revenue</button><button data-m="turnover">Turnover</button><button data-m="profit">Profit</button><button data-m="costs">Costs</button></div>
+        <div class="seg" id="segBasis"><button data-mode="total" class="active">Whole market</button><button data-mode="company">Per company</button><button data-mode="emp">Per employee</button></div>
+      </div>
       <div class="chartbox"><span class="eng-tag">Chart.js</span><canvas id="chSegments"></canvas><div class="chart-empty" id="segDoughEmpty"></div></div>
     </div>
     <div class="card">
       <h2 id="revSegTitle">Revenue (spėjamos pajamos) by segment</h2>
       <div class="desc" id="revSegDesc">Median revenue (spėjamos pajamos) per employee in each segment — a productivity proxy. Pass-through ad spend is already excluded.</div>
-      <div class="seg" id="revSegMode" style="margin-bottom:10px">
-        <button data-mode="emp" class="active">Per employee</button>
-        <button data-mode="company">Per company</button>
-        <button data-mode="market">Whole market</button>
+      <div class="seg-row">
+        <div class="seg" id="revSegMetric"><button data-m="revenue" class="active">Revenue</button><button data-m="turnover">Turnover</button><button data-m="profit">Profit</button><button data-m="costs">Costs</button></div>
+        <div class="seg" id="revSegMode"><button data-mode="emp" class="active">Per employee</button><button data-mode="company">Per company</button><button data-mode="total">Whole market</button></div>
       </div>
       <div class="chartbox"><div class="svgwrap" id="chRevPerEmp" style="position:absolute;inset:0"></div><div class="chart-empty" id="revSegEmpty"></div></div>
     </div>
@@ -487,12 +492,11 @@
       <div class="chartbox"><div id="mfaAll" style="position:absolute;inset:0;padding:8px 4px"></div></div>
     </div>
     <div class="card">
-      <h2>Revenue (spėjamos pajamos) by segment, all years</h2>
-      <div class="desc" id="revAllDesc">Each segment’s median revenue (spėjamos pajamos) per employee, 2019→2024 — the all-years version of the single-year chart in the “Market &lt;year&gt;” tab. Same segment colours as the bar; “Whole market” shows each segment’s total per year (the old trend view).</div>
-      <div class="seg" id="revAllMode" style="margin-bottom:10px">
-        <button data-mode="emp" class="active">Per employee</button>
-        <button data-mode="company">Per company</button>
-        <button data-mode="market">Whole market</button>
+      <h2>By segment, all years</h2>
+      <div class="desc" id="revAllDesc">Each segment over 2019→2024 — the all-years version of the single-year chart in the “Market &lt;year&gt;” tab. Same segment colours as the bar.</div>
+      <div class="seg-row">
+        <div class="seg" id="revAllMetric"><button data-m="revenue" class="active">Revenue</button><button data-m="turnover">Turnover</button><button data-m="profit">Profit</button><button data-m="costs">Costs</button></div>
+        <div class="seg" id="revAllMode"><button data-mode="emp" class="active">Per employee</button><button data-mode="company">Per company</button><button data-mode="total">Whole market</button></div>
       </div>
       <div class="chartbox"><div class="svgwrap" id="chRevSegAll" style="position:absolute;inset:0"></div></div>
     </div>
@@ -1078,6 +1082,33 @@ document.getElementById('insights').innerHTML = insights.map(i=>
   `<div class="insight ${i.cls}"><h3>${i.t}</h3><p>${i.p}</p></div>`).join('');
 (function(){ const c=document.getElementById('insCount'); if(c) c.textContent=insights.length; })();
 
+// ---------- Shared segment metric system: metric (revenue/turnover/profit/costs) × basis (per-employee/company/whole-market) ----------
+const median=a=>a.length?a.slice().sort((x,y)=>x-y)[Math.floor(a.length/2)]:0;
+const fmtAbs=v=> v>=1e6 ? (v/1e6).toFixed(v>=1e7?0:1)+'M' : v>=1e3 ? Math.round(v/1e3)+'k' : String(Math.round(v));
+const eur=v=> v==null?'–': (v<0?'−€'+fmtAbs(-v):'€'+fmtAbs(v));
+const METRICS = {
+  revenue:  {label:'Revenue',    short:'revenue (spėj. pajamos)', f:d=>d.estimatedIncome, pos:true},
+  turnover: {label:'Turnover',   short:'turnover (apyvarta)',     f:d=>d.revenue,         pos:true},
+  profit:   {label:'Net profit', short:'net profit',              f:d=>d.profit,          pos:false},
+  costs:    {label:'Costs',      short:'costs',                   f:d=>(d.estimatedIncome!=null&&d.profit!=null)?d.estimatedIncome-d.profit:null, pos:false},
+};
+const basisWord=b=> b==='emp'?'per employee':b==='company'?'per company':'whole-market total';
+// one segment's value for metric+basis+year (null = not enough data)
+function segMetricVal(seg, metric, basis, year){
+  const M=METRICS[metric];
+  const ds=DATA.filter(d=>d.year===year && d.activities.includes(seg)).map(d=>({v:M.f(d), e:d.employees})).filter(o=>o.v!=null && (!M.pos||o.v>0));
+  if(basis==='emp'){ const w=ds.filter(o=>o.e>2).map(o=>o.v/o.e); return w.length>=3?median(w):null; }
+  if(basis==='company'){ return ds.length?median(ds.map(o=>o.v)):null; }
+  return ds.length? ds.reduce((s,o)=>s+o.v,0):null;   // whole market = sum
+}
+function segDesc(metric, basis){
+  const M=METRICS[metric];
+  return basis==='total'
+    ? 'Total '+M.short+' summed across every company in each segment'+(M.pos?' (positive values).':'.')
+    : (basis==='emp'?'Median '+M.short+' per employee in each segment — a productivity proxy.'
+                    :'Median '+M.short+' per company in each segment.');
+}
+
 // ---------- Total-market money-flow, all years (stacked columns, same look as the single-year bar) ----------
 function renderMoneyFlowAll(){
   const host=document.getElementById('mfaAll'); if(!host) return;
@@ -1098,30 +1129,34 @@ function renderMoneyFlowAll(){
 }
 renderMoneyFlowAll();
 
-// ---------- Segments doughnut (single year — follows the Market <year> pill) ----------
-function segTotals(y){
+// ---------- Segments doughnut (single year — follows the Market <year> pill; metric + basis toggles) ----------
+function segTotals(y){   // kept for topSegs / segSorted (revenue, whole-market)
   const s={};
   DATA.forEach(d=>{ if(d.year===y && d.estimatedIncome) d.activities.forEach(a=>s[a]=(s[a]||0)+d.estimatedIncome); });
   return s;
 }
-let segChart=null;
+let segChart=null, segMetric='revenue', segBasis='total';
 function renderSegDoughnut(year){
-  const sorted = Object.entries(segTotals(year)).sort((a,b)=>b[1]-a[1]);
-  const t=document.getElementById('segDoughTitle'); if(t) t.textContent=year+' revenue (spėjamos pajamos) by service segment';
+  const rows=SEGMENTS.map(s=>({s, v:segMetricVal(s,segMetric,segBasis,year)})).filter(o=>o.v!=null).sort((a,b)=>b.v-a.v);
+  const t=document.getElementById('segDoughTitle'); if(t) t.textContent=year+' '+METRICS[segMetric].short+' by service segment'+(segBasis==='total'?'':' · '+basisWord(segBasis));
+  const dd=document.getElementById('segDoughDesc'); if(dd) dd.textContent=segDesc(segMetric,segBasis)+' Slice size = relative magnitude'+(segBasis==='total'?' (share of the market).':'; not a part-of-whole when per company/employee.');
   const empty=document.getElementById('segDoughEmpty');
   if(segChart){ segChart.destroy(); segChart=null; }
-  if(!sorted.length){ if(empty){ empty.textContent='No companies have reported '+year+' figures yet.'; empty.classList.add('show'); } return; }
+  if(!rows.length){ if(empty){ empty.textContent='No companies have reported '+year+' figures yet.'; empty.classList.add('show'); } return; }
   if(empty) empty.classList.remove('show');
   segChart=new Chart(chSegments, {type:'doughnut', data:{
-    labels:sorted.map(s=>s[0]),
-    datasets:[{data:sorted.map(s=>s[1]/1e6), backgroundColor:sorted.map(s=>SEGCOLORS[s[0]]||'#888'), borderColor:cssVar('--chart-bg'), borderWidth:2}]},
+    labels:rows.map(o=>o.s),
+    datasets:[{data:rows.map(o=>Math.max(0,o.v)), backgroundColor:rows.map(o=>SEGCOLORS[o.s]||'#888'), borderColor:cssVar('--chart-bg'), borderWidth:2}]},
     options:{maintainAspectRatio:false, plugins:{legend:{position:'right'},
-      tooltip:{callbacks:{label:c=>` ${c.label}: €${c.parsed.toFixed(1)}M`}}}}
+      tooltip:{callbacks:{label:c=>` ${c.label}: ${eur(rows[c.dataIndex].v)}`}}}}
   });
 }
 const seg24 = segTotals(LAST);
 const segSorted = Object.entries(seg24).sort((a,b)=>b[1]-a[1]);
 renderSegDoughnut(mktYear);
+(function(){ const wire=(id,set)=>{ const seg=document.getElementById(id); if(!seg) return; seg.querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>{
+    seg.querySelectorAll('button').forEach(x=>x.classList.remove('active')); b.classList.add('active'); set(b.dataset.m||b.dataset.mode); renderSegDoughnut(mktYear); })); };
+  wire('segMetric', v=>segMetric=v); wire('segBasis', v=>segBasis=v); })();
 
 // ---------- Segment trend ----------
 const topSegs = segSorted.slice(0,5).map(s=>s[0]);   // still used by the size-vs-profit scatter grouping
@@ -1198,54 +1233,39 @@ drawFinSvg(chSalary, { yTitle:'€/mo', series:[
   {label:'25th pct', color:cssVar('--accent'), dash:[5,4], data:YEARS.map((y,k)=>({x:y, y:sq[k].q1}))},
 ]});
 
-// ---------- Revenue by segment (per employee · per company · whole market) ----------
-const median=a=>a.length?a.slice().sort((x,y)=>x-y)[Math.floor(a.length/2)]:0;
-const eur=v=> v==null?'–': v>=1e6 ? '€'+(v/1e6).toFixed(v>=1e7?0:1)+'M' : v>=1e3 ? '€'+Math.round(v/1e3)+'k' : '€'+Math.round(v);
-const revBasisDesc=(mode,scope)=> mode==='emp'
-  ? 'Median revenue (spėjamos pajamos) per employee'+scope+' — a productivity proxy. Pass-through ad spend is already excluded.'
-  : mode==='company'
-  ? 'Median revenue (spėjamos pajamos) per company'+scope+'. Pass-through ad spend is already excluded.'
-  : 'Total revenue (spėjamos pajamos) summed across every company'+scope+'. Pass-through ad spend is already excluded.';
-// one segment's value for a given basis + year (null = not enough data)
-function segValAt(seg, mode, year){
-  const ds = DATA.filter(d=>d.year===year && d.activities.includes(seg) && d.estimatedIncome>0);
-  if(mode==='emp'){ const w=ds.filter(d=>d.employees>2).map(d=>d.estimatedIncome/d.employees); return w.length>=3? median(w):null; }
-  if(mode==='company'){ return ds.length? median(ds.map(d=>d.estimatedIncome)):null; }
-  return ds.length? ds.reduce((a,d)=>a+d.estimatedIncome,0):null;       // market = sum
-}
-// --- single year (follows the Market <year> pill) ---
-let revSegBasis='emp';
-function renderRevSeg(mode){
-  revSegBasis = mode = mode || revSegBasis;
-  const y=mktYear, per = mode==='emp'?'/ employee':mode==='company'?'/ company':'total';
-  const rows = SEGMENTS.map(s=>({seg:s, value:segValAt(s,mode,y)})).filter(r=>r.value!=null).sort((a,b)=>b.value-a.value);
-  const t=document.getElementById('revSegTitle'); if(t) t.textContent='Revenue (spėjamos pajamos) by segment ('+y+')';
+// ---------- By segment: single-year bar (metric × basis, follows the Market <year> pill) ----------
+let revSegBasis='emp', revSegMetric='revenue';
+function renderRevSeg(){
+  const y=mktYear, m=revSegMetric, b=revSegBasis, per=basisWord(b);
+  const rows = SEGMENTS.map(s=>({seg:s, value:segMetricVal(s,m,b,y)})).filter(r=>r.value!=null).sort((a,c)=>c.value-a.value);
+  const t=document.getElementById('revSegTitle'); if(t) t.textContent=METRICS[m].label+' by segment ('+y+')';
   const empty=document.getElementById('revSegEmpty');
   if(!rows.length){ chRevPerEmp.innerHTML=''; if(empty){ empty.textContent='No companies have reported '+y+' figures yet.'; empty.classList.add('show'); } return; }
   if(empty) empty.classList.remove('show');
   drawBarsSvg(chRevPerEmp, {
     rows: rows.map(r=>({label:r.seg, value:r.value, color:SEGCOLORS[r.seg]||cssVar('--muted')})),
-    xTitle: (mode==='market'?'Total':'Median')+' revenue (spėj. pajamos), €', fmt:eur,
-    tip:r=>`<b>${esc(String(r.label))}</b>: ${eur(r.value)} ${per}`
+    xTitle: (b==='total'?'Total ':'Median ')+METRICS[m].short+', €', fmt:eur,
+    tip:r=>`<b>${esc(String(r.label))}</b>: ${eur(r.value)} (${per})`
   });
-  const d=document.getElementById('revSegDesc'); if(d) d.textContent=revBasisDesc(mode,' in each segment');
+  const d=document.getElementById('revSegDesc'); if(d) d.textContent=segDesc(m,b);
 }
-(function(){ const seg=document.getElementById('revSegMode'); if(seg) seg.querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>{
-  seg.querySelectorAll('button').forEach(x=>x.classList.remove('active')); b.classList.add('active'); renderRevSeg(b.dataset.mode); })); })();
-renderRevSeg('emp');
-// --- all years at once (multi-line version, one line per segment) ---
-let revAllBasis='emp';
-function renderRevSegAll(mode){
-  revAllBasis = mode = mode || revAllBasis;
-  const ranked = SEGMENTS.map(s=>({s, v:segValAt(s,mode,LAST)||0})).sort((a,b)=>b.v-a.v).map(o=>o.s);
+// ---------- By segment: all years (multi-line, metric × basis) ----------
+let revAllBasis='emp', revAllMetric='revenue';
+function renderRevSegAll(){
+  const m=revAllMetric, b=revAllBasis;
+  const ranked = SEGMENTS.map(s=>({s, v:segMetricVal(s,m,b,LAST)||0})).sort((a,c)=>c.v-a.v).map(o=>o.s);
   const series = ranked.map(s=>({label:s, color:SEGCOLORS[s]||cssVar('--muted'),
-    data:YEARS.map(y=>({x:y, y:segValAt(s,mode,y)})).filter(p=>p.y!=null)})).filter(se=>se.data.length);
+    data:YEARS.map(y=>({x:y, y:segMetricVal(s,m,b,y)})).filter(p=>p.y!=null)})).filter(se=>se.data.length);
   drawFinSvg(chRevSegAll, { yTitle:'€', series });
-  const d=document.getElementById('revAllDesc'); if(d) d.textContent=revBasisDesc(mode,', 2019→'+String(LAST).slice(2)+', by segment');
+  const d=document.getElementById('revAllDesc'); if(d) d.textContent=segDesc(m,b)+' Shown 2019→'+String(LAST).slice(2)+', same segment colours as the single-year bar.';
 }
-(function(){ const seg=document.getElementById('revAllMode'); if(seg) seg.querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>{
-  seg.querySelectorAll('button').forEach(x=>x.classList.remove('active')); b.classList.add('active'); renderRevSegAll(b.dataset.mode); })); })();
-renderRevSegAll('emp');
+// wire metric + basis toggles for both charts
+(function(){ const wire=(id,set,render)=>{ const seg=document.getElementById(id); if(!seg) return; seg.querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>{
+    seg.querySelectorAll('button').forEach(x=>x.classList.remove('active')); b.classList.add('active'); set(b.dataset.m||b.dataset.mode); render(); })); };
+  wire('revSegMetric', v=>revSegMetric=v, renderRevSeg);  wire('revSegMode', v=>revSegBasis=v, renderRevSeg);
+  wire('revAllMetric', v=>revAllMetric=v, renderRevSegAll); wire('revAllMode', v=>revAllBasis=v, renderRevSegAll);
+})();
+renderRevSeg(); renderRevSegAll();
 
 // Re-render the static SVG dashboard charts at the new size on window resize.
 const SVG_DASH_IDS=['chMine','chMineRank','chTop','chGrowth','chSalary','chRevPerEmp','chRevSegAll'];
@@ -1256,6 +1276,10 @@ let _dashRT; window.addEventListener('resize',()=>{ clearTimeout(_dashRT); _dash
 // ---------- SP & version history ----------
 // Each entry: title (2-5 words) · desc (5-15 words) · detail (15-50 words).
 const VERSIONS = [
+  {v:'v0.1.135', date:'2026-06-23 01:30', sp:5, title:'Segment metric toggles',
+    desc:'The segment doughnut, the single-year segment bar and the all-years segment chart now switch between Revenue / Turnover / Net profit / Costs, each crossed with Per employee / Per company / Whole market. The doughnut gained the basis toggle too.',
+    detail:'New shared metric system: METRICS map + segMetricVal(seg, metric, basis, year) drives all three segment charts. Doughnut defaults to Revenue · Whole market (true share); negative slices clamp to 0 with the real value in the tooltip. Bar/all-years default to Revenue · Per employee. Titles, axis labels and descriptions follow the chosen metric+basis. Whole-market basis unified to “total” across the bar/all-years toggles.',
+    cat:'CHART'},
   {v:'v0.1.134', date:'2026-06-23 01:10', sp:2, title:'KPI formula dropdowns',
     desc:'Every Market <year> KPI card now has a small “ƒ formula” dropdown explaining exactly how the number is computed, with the live values plugged in.',
     detail:'Each kpi carries a formula string (CAGR = (end ÷ start)^(1/yrs) − 1 with the real €, employees = total ÷ companies, median salary definition, companies-tracked count). Rendered as a compact <details> under the value; the text reflects the current basis (per company / per employee / whole market).',
