@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Market Analytics — LT agencies · v0.1.156</title>
+<title>Market Analytics — LT agencies · v0.1.157</title>
 <script>
   // Apply saved theme + view mode before first paint to avoid a flash.
   // Theme default = dark; view default = advanced (full data sources/tabs).
@@ -322,6 +322,7 @@
   .co-select{position:relative;display:inline-block;min-width:210px}
   /* sticky company picker: stays under the nav while the long profile/charts scroll */
   .co-sticky{position:sticky;top:44px;z-index:80;display:block;background:var(--panel);padding:8px 0;margin:0 0 12px}
+  #companiesView .mkt-sticky{top:98px;z-index:79}   /* sit just below the sticky company picker */
   .co-sticky .co-select-btn{max-width:340px}
   .co-select-btn{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;padding:8px 14px;font-size:13px;font-weight:600;border-radius:8px;border:1px solid var(--border);background:var(--panel);color:var(--text);cursor:pointer;font-family:inherit;transition:.15s}
   .co-select-btn:hover{border-color:var(--muted)}
@@ -416,7 +417,7 @@
     <div class="settings-menu" id="settingsMenu">
       <button id="themeToggle">🌙 Dark</button>
       <button id="viewToggle"></button>
-      <span class="nav-version">v0.1.156</span>
+      <span class="nav-version">v0.1.157</span>
     </div>
   </div>
   <div class="nav-sub">113 brands · 2019–2024</div>
@@ -1355,6 +1356,10 @@ let _dashRT; window.addEventListener('resize',()=>{ clearTimeout(_dashRT); _dash
 // ---------- SP & version history ----------
 // Each entry: title (2-5 words) · desc (5-15 words) · detail (15-50 words).
 const VERSIONS = [
+  {v:'v0.1.157', date:'2026-06-23 07:45', sp:1, title:'Company sticky stacking',
+    desc:'Fixed the Companies page sticky bars overlapping — the year/basis bar now sits just below the sticky company picker.',
+    detail:'#companiesView .mkt-sticky top:98px (under the .co-sticky picker at 44px) with a lower z-index.',
+    cat:'CHART'},
   {v:'v0.1.156', date:'2026-06-23 07:35', sp:3, title:'Company all-time money-flow',
     desc:'The Companies “all time” tab now has the same interactive stacked money-flow as Market (the company’s turnover → net profit / costs / pass-through per year, profit at the bottom, totals + YoY %). A synced Full/Per-employee toggle drives both company tabs.',
     detail:'Part 2 of the Companies rework: renderCompany emits the company’s per-year money-flow into chCoFlowAll (drawFinSvg stacked, basis-aware, empty-state for no data). setCoBasis syncs #coFlowMode + #coFlowMode2 and re-renders. chMine trajectory stays below.',

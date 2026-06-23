@@ -25,11 +25,11 @@ built in v122–v154, without deviating from it. Source of truth for the pattern
 - The **company picker** (sticky, hoisted) — stays.
 
 ## Build order (one part per turn)
-1. **CMP-1/2 structure**: split Company "Overview" into **\<year\>** + **all time** tabs; add the sticky year-row + Total/Per-employee bar (reuse `.mkt-sticky`, `.yr-row`). Picker stays above.
-2. **CMP-4/5 single-year**: profile + money-flow (YoY badges) + KPI grid (YoY + formulas) in the \<year\> tab; everything follows the year + basis.
-3. **CMP-6 all-time money-flow**: company turnover→profit/costs/pass-through stacked SVG (reuse renderMoneyFlowAll pattern).
-4. **CMP-7 all-time charts**: headcount-by-year + avg-salary-by-year (convert/extend chMine).
-5. **CMP-9/10 polish**: company top-facts card, drop descs, English, verify auto-fit/ticks/shadow inherited.
+1. ✅ **CMP-1/2 structure** (v155): \<year\> + all-time tabs, sticky year-row + Full/Per-employee bar, picker hoisted.
+2. ✅ **CMP-4/5 single-year** (v155): profile + money-flow (YoY badges on every item) + KPI grid; follows year + basis; rank is per-year.
+3. ✅ **CMP-6 all-time money-flow** (v156): company turnover→profit/costs/pass-through stacked SVG, synced Full/Per-employee toggle (#coFlowMode2). Sticky stacking fixed (v157).
+4. ⬜ **CMP-7 all-time charts**: avg-salary-by-year line (chMine already shows revenue/turnover/profit/employees).
+5. ⬜ **CMP-9/10 polish**: company top-facts card, verify descs/English/auto-fit inherited, empty-states for unreported years.
 
 ## UI/UX extra tasks (don't deviate from Market)
 - 🟢 UX-1: tab labels show the live company name + year ("Fabula 2024" / "Fabula all time"), like "Market 2024".
