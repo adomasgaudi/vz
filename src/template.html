@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Market Analytics — LT agencies · v0.1.160</title>
+<title>Market Analytics — LT agencies · v0.1.161</title>
 <script>
   // Apply saved theme + view mode before first paint to avoid a flash.
   // Theme default = dark; view default = advanced (full data sources/tabs).
@@ -422,7 +422,7 @@
     <div class="settings-menu" id="settingsMenu">
       <button id="themeToggle">🌙 Dark</button>
       <button id="viewToggle"></button>
-      <span class="nav-version">v0.1.160</span>
+      <span class="nav-version">v0.1.161</span>
     </div>
   </div>
   <div class="nav-sub">113 brands · 2019–2024</div>
@@ -1084,7 +1084,7 @@ function renderMarket(mode){
   const y=mktYear, aCur=marketAgg(y), aPrev=marketAgg(y-1), a0=marketAgg(YEARS[0]);
   const yr=document.getElementById('mktYearRow'); if(yr) yr.querySelectorAll('button').forEach(b=>b.classList.toggle('active',+b.dataset.y===y));
   const tab=[...document.querySelectorAll('.grp-tab')].find(t=>/^Market \d{4}$/.test(t.textContent.trim())); if(tab) tab.textContent='Market '+y;
-  if(typeof renderScatterYear==='function') renderScatterYear();   // size-vs-profit scatter follows the selected year
+  if(window.__scatterReady) renderScatterYear();   // size-vs-profit scatter follows the selected year (skipped until its module inits — avoids TDZ on first render)
   if(!aCur.n){                                        // future / unreported year → empty state
     const mf=document.getElementById('marketFlow'); if(mf){ mf.innerHTML='<div class="ff-empty">No companies have reported '+y+' figures yet.</div>'; mf.style.display=''; }
     document.getElementById('kpis').innerHTML='';
@@ -1370,6 +1370,7 @@ function buildScatterStrip(){
     new Chart(cell.querySelector('canvas'), buildScatterCfg(rows,{mini:true}));
   });
 }
+window.__scatterReady=true;   // now renderMarket (on year change) may drive the single-year scatter
 renderScatterYear();
 buildScatterStrip();
 
@@ -1412,6 +1413,10 @@ let _dashRT; window.addEventListener('resize',()=>{ clearTimeout(_dashRT); _dash
 // ---------- SP & version history ----------
 // Each entry: title (2-5 words) · desc (5-15 words) · detail (15-50 words).
 const VERSIONS = [
+  {v:'v0.1.161', date:'2026-06-23 08:40', sp:1, title:'Fix scatter init crash',
+    desc:'Fixed a blank page / “Cannot access scatterChart before initialization” error: the first renderMarket call fired the new scatter render before its module (scatterChart, topSegs) had initialized.',
+    detail:'renderMarket now gates the single-year scatter behind window.__scatterReady, which the scatter module sets true only after its own state + helpers exist; the initial paint still happens from the module’s own renderScatterYear()/buildScatterStrip() calls. Fixes the TDZ on let scatterChart.',
+    cat:'CHART'},
   {v:'v0.1.160', date:'2026-06-23 08:30', sp:0.5, title:'Drop deep-dive blurb',
     desc:'Removed the long explanatory paragraph above the Company deep-dive charts — the controls speak for themselves.',
     detail:'Deleted the .desc intro under the Company deep-dive heading (SVG-engine / pan-zoom / source legend text).',
