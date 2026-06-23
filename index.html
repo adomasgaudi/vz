@@ -1329,7 +1329,7 @@ const VERSIONS = [
     desc:'Money-flow bars now also show each segment’s value once it’s tall enough (zoom in to reveal more). Fixed total labels getting clipped at the edges. Employees-by-year shows “no data” under Per employee. Removed the money-flow blurb.',
     detail:'Stacked segments print their value (white, outlined) when the slice ≥13px tall. Total/% labels are clamped inside the plot so the first/last year isn’t cut. renderEmpAll shows an empty-state in per-employee mode (headcount ÷ headcount = 1). .chart-empty got an opaque background.',
     cat:'CHART'},
-  {v:'v0.1.153', date:'2026-06-23 06:00', sp:3, title:'Animated auto-fit + bar labels',
+  {v:'v0.1.152', date:'2026-06-23 06:00', sp:3, title:'Animated auto-fit + bar labels',
     desc:'SVG charts now smoothly re-fit (≈0.34s) when the basis/metric changes, so bars no longer end up tiny or clipped. The money-flow shows each year’s total on top of the bar and the year-over-year % between bars.',
     detail:'drawFinSvg sig now includes the fit extent, so a value change triggers an eased (easeOutCubic) animateTo() of the view instead of staying on the old scale. Stacked charts get 14% headroom; spec.totalLabels draws the per-year total + the change vs the previous year.',
     cat:'CHART'},
