@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Market Analytics — LT agencies · v0.1.150</title>
+<title>Market Analytics — LT agencies · v0.1.151</title>
 <script>
   // Apply saved theme + view mode before first paint to avoid a flash.
   // Theme default = dark; view default = advanced (full data sources/tabs).
@@ -204,16 +204,16 @@
   .vf-head{font-size:13px;color:var(--muted);margin-bottom:8px;display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
   .vf-head b{color:var(--text);font-size:15px}
   .vf-body{display:flex;gap:12px;min-height:90px}
-  .vf-bar{width:26px;flex:0 0 auto;display:flex;flex-direction:column;border-radius:6px;overflow:hidden;border:1px solid var(--border)}
+  .vf-bar{width:26px;flex:0 0 auto;display:flex;flex-direction:column-reverse;border-radius:6px;overflow:hidden;border:1px solid var(--border)}
   .vf-seg{width:100%;min-height:4px}
   .vf-seg.rev{background:var(--accent)} .vf-seg.profit{background:var(--green)}
   .vf-seg.cost{background:var(--cost)} .vf-seg.pass{background:var(--cost);opacity:.55} .vf-seg.cost.loss{background:rgba(220,77,77,.25)}
-  .vf-brk{display:flex;flex-direction:column;width:84px;flex:0 0 auto}
+  .vf-brk{display:flex;flex-direction:column-reverse;width:84px;flex:0 0 auto}
   .vf-brk-rev{display:flex;align-items:center;justify-content:flex-start;text-align:left;padding-left:7px;border-left:2px solid var(--gold);position:relative}
   .vf-brk-rev span{font-size:11px;font-weight:600;color:var(--text);line-height:1.25}
   .vf-brk-rev::before,.vf-brk-rev::after{content:'';position:absolute;left:0;width:6px;height:2px;background:var(--gold)}
   .vf-brk-rev::before{top:0} .vf-brk-rev::after{bottom:0}
-  .vf-legend{flex:1;display:flex;flex-direction:column;min-width:0}
+  .vf-legend{flex:1;display:flex;flex-direction:column-reverse;min-width:0}
   .vf-item{display:flex;gap:9px;align-items:center;min-height:32px}
   .vf-dot{width:11px;height:11px;border-radius:3px;flex:0 0 auto}
   .vf-dot.rev{background:var(--accent)} .vf-dot.profit{background:var(--green)}
@@ -416,7 +416,7 @@
     <div class="settings-menu" id="settingsMenu">
       <button id="themeToggle">🌙 Dark</button>
       <button id="viewToggle"></button>
-      <span class="nav-version">v0.1.150</span>
+      <span class="nav-version">v0.1.151</span>
     </div>
   </div>
   <div class="nav-sub">113 brands · 2019–2024</div>
@@ -1052,13 +1052,14 @@ function renderMarket(mode){
   const mf = document.getElementById('marketFlow'); if(mf){ mf.innerHTML=flow; mf.style.display=flow?'':'none'; }
   // Employees card: in per-employee mode headcount is the denominator, so show whole-market total instead.
   const basis = mode==='avg' ? ' ÷ '+aCur.n+' companies' : mode==='emp' ? ' ÷ '+Math.round(aCur.emp).toLocaleString()+' employees' : ' (whole-market total)';
+  const yrLab = hasPrev ? String(y-1).slice(2)+'→'+y2 : String(y);   // “23→24” like the turnover/revenue cards
   let empCard;
   if(mode==='emp'){
-    empCard = {label:'Total employees '+y, value:Math.round(aCur.emp).toLocaleString(), sub:hasPrev?fmtPct(aCur.emp/aPrev.emp-1)+' YoY':'—', cls:hasPrev&&aCur.emp>=aPrev.emp?'pos':'neg',
+    empCard = {label:'Total employees '+yrLab, value:Math.round(aCur.emp).toLocaleString(), sub:hasPrev?fmtPct(aCur.emp/aPrev.emp-1)+' YoY':'—', cls:hasPrev&&aCur.emp>=aPrev.emp?'pos':'neg',
       formula:'Sum of reported headcount across all '+aCur.n+' companies with '+y+' data. YoY = this year ÷ last year − 1.'};
   } else {
     const eC=dv(aCur.emp,aCur), eP=hasPrev?dv(aPrev.emp,aPrev):0;
-    empCard = {label:(mode==='avg'?'Avg employees/co ':'Total employees ')+y, value:mode==='avg'?eC.toFixed(1):Math.round(eC).toLocaleString(), sub:hasPrev?fmtPct(eC/eP-1)+' YoY':'—', cls:hasPrev&&eC>=eP?'pos':'neg',
+    empCard = {label:(mode==='avg'?'Avg employees/co ':'Total employees ')+yrLab, value:mode==='avg'?eC.toFixed(1):Math.round(eC).toLocaleString(), sub:hasPrev?fmtPct(eC/eP-1)+' YoY':'—', cls:hasPrev&&eC>=eP?'pos':'neg',
       formula:(mode==='avg'?'Total headcount ÷ '+aCur.n+' companies':'Sum of reported headcount')+'. YoY = this year ÷ last year − 1.'};
   }
   const py2=String(y-1).slice(2), msC=medianSalary(y), ms0=medianSalary(YEARS[0]);
@@ -1072,7 +1073,7 @@ function renderMarket(mode){
     {label:(mode==='emp'?'Revenue/empl. ':'Revenue ')+py2+'→'+y2, value:tR==null?'—':fmtPct(tR), sub:hasPrev?fmtEur(dv(aPrev.ei,aPrev))+' → '+fmtEur(dv(aCur.ei,aCur)):'first year', cls:tR!=null&&tR>=0?'pos':'neg',
       formula:'Year-over-year change in revenue. '+yoyF(a=>a.ei,'Revenue')},
     empCard,
-    {label:'Median salary '+y, value:'€'+msC.toLocaleString()+'/mo', sub:hasPrev?fmtPct(msC/medianSalary(y-1)-1)+' YoY':'first year', cls:!hasPrev||msC>=medianSalary(y-1)?'pos':'neg',
+    {label:'Median salary '+yrLab, value:'€'+msC.toLocaleString()+'/mo', sub:hasPrev?fmtPct(msC/medianSalary(y-1)-1)+' YoY':'first year', cls:!hasPrev||msC>=medianSalary(y-1)?'pos':'neg',
       formula:'Middle value of every company’s average monthly salary in '+y+' (only companies reporting > €500/mo). YoY = this ÷ '+(y-1)+' − 1.'},
   ];
   document.getElementById('kpis').innerHTML = kpis.map(k=>
@@ -1317,6 +1318,10 @@ let _dashRT; window.addEventListener('resize',()=>{ clearTimeout(_dashRT); _dash
 // ---------- SP & version history ----------
 // Each entry: title (2-5 words) · desc (5-15 words) · detail (15-50 words).
 const VERSIONS = [
+  {v:'v0.1.151', date:'2026-06-23 05:35', sp:1, title:'Flip bar + YoY labels',
+    desc:'The single-year money-flow bar is now inverted to match the all-years one — net profit at the bottom. Employees and Median-salary cards now use the “23→24” range label like Turnover/Revenue.',
+    detail:'CSS: .vf-bar/.vf-legend/.vf-brk use flex-direction:column-reverse so profit sits at the bottom and the legend + revenue bracket stay aligned. KPI labels for employees & median salary switched from the single year to py2→y2 (e.g. 23→24).',
+    cat:'CHART'},
   {v:'v0.1.150', date:'2026-06-23 05:20', sp:5, title:'Money-flow → stacked SVG',
     desc:'The all-years money-flow is now an interactive pan/zoom SVG with net profit at the BOTTOM (then costs, then pass-through). Added stacked-bar support to the SVG engine.',
     detail:'drawFinSvg gained spec.stacked: bar series stack cumulatively (first = bottom), the extent uses per-year sums, and bars take a fill-opacity. renderMoneyFlowAll now emits Net profit / Costs / Pass-through bar series into a .svgwrap (chart id mfaAll, in SVG_DASH_IDS), so it pans/zooms and follows the basis toggle like the other charts.',
