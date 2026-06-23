@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Market Analytics — LT agencies · v0.1.172</title>
+<title>Market Analytics — LT agencies · v0.1.173</title>
 <script>
   // Apply saved theme + view mode before first paint to avoid a flash.
   // Theme default = dark; view default = advanced (full data sources/tabs).
@@ -335,6 +335,7 @@
   .ov-chips{display:flex;gap:5px;margin-top:6px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:2px}
   .ov-chip{flex:0 0 auto;display:inline-flex;align-items:center;gap:5px;font:600 12px/1 inherit;padding:5px 8px;border:1px solid var(--border);border-radius:7px;background:var(--panel2);color:var(--text);white-space:nowrap}
   .ov-chip.primary{border-color:var(--accent);color:var(--accent)}
+  .ov-dot{width:8px;height:8px;border-radius:50%;flex:0 0 auto}
   .ov-chip-x{cursor:pointer;color:var(--muted);font-size:14px;line-height:1}
   .ov-chip-x:hover{color:var(--red)}
   #companiesView .mkt-sticky{top:98px;z-index:79}   /* sit just below the sticky company picker */
@@ -432,7 +433,7 @@
     <div class="settings-menu" id="settingsMenu">
       <button id="themeToggle">🌙 Dark</button>
       <button id="viewToggle"></button>
-      <span class="nav-version">v0.1.172</span>
+      <span class="nav-version">v0.1.173</span>
     </div>
   </div>
   <div class="nav-sub">113 brands · 2019–2024</div>
@@ -572,9 +573,10 @@
     <div id="sddLegend" class="sdd-legend"></div>
     <div class="grid">
       <div class="card full">
-        <div class="seg" id="sddMetric" style="margin-bottom:8px">
+        <div class="seg" id="sddMetric" style="margin-bottom:8px;overflow-x:auto">
           <button data-m="ddRev" class="active">Revenue</button>
-          <button data-m="ddProfit">Profit</button>
+          <button data-m="ddTurnover">Turnover</button>
+          <button data-m="ddProfit">Net profit</button>
           <button data-m="ddEmp">Headcount</button>
           <button data-m="ddWage">Wage</button>
         </div>
@@ -1001,6 +1003,9 @@ function clearChart(el){ if(!el) return;
 
 // Overview company picker — searchable dropdown over EVERY brand (default: Fabula).
 const OV_BRANDS = BRANDS.slice().sort((a,b)=>a.localeCompare(b,'lt'));
+// Compare palette — SHARED with the deep-dive (sddColor) so a chip's colour dot = that company's lines.
+const CMP_PAL=['--accent','--green','--amber','--purple','--red','--gold','--muted'];
+const cmpColor=i=>cssVar(CMP_PAL[i%CMP_PAL.length]);
 // Multi-select: ovBrands = the chosen set; ovBrand = the PRIMARY (first) — drives every single-company
 // widget (profile, money-flow, KPIs, vs-market, rankings). Extra companies overlay ONLY the all-time
 // trajectory graph (the “all year view”), like the deep-dive. Picking toggles + keeps the panel open.
@@ -1010,7 +1015,7 @@ function syncOvLabel(){ const l=document.getElementById('ovCoLabel');
 function renderOvChips(){ const w=document.getElementById('ovCoChips'); if(!w) return;
   if(ovBrands.length<=1){ w.innerHTML=''; w.style.display='none'; return; }
   w.style.display='';
-  w.innerHTML=ovBrands.map((b,i)=>`<span class="ov-chip${i===0?' primary':''}" title="${i===0?'primary company':'compare'}">${esc(b)}<span class="ov-chip-x" data-rm="${esc(b)}">×</span></span>`).join('');
+  w.innerHTML=ovBrands.map((b,i)=>`<span class="ov-chip${i===0?' primary':''}" title="${i===0?'primary company':'compare'}"><i class="ov-dot" style="background:${cmpColor(i)}"></i>${esc(b)}<span class="ov-chip-x" data-rm="${esc(b)}">×</span></span>`).join('');
   w.querySelectorAll('.ov-chip-x').forEach(x=>x.addEventListener('click',e=>{ e.stopPropagation();
     if(ovBrands.length>1){ ovBrands=ovBrands.filter(z=>z!==x.dataset.rm); ovChanged(); } }));
 }
@@ -1390,6 +1395,10 @@ let _dashRT; window.addEventListener('resize',()=>{ clearTimeout(_dashRT); _dash
 // ---------- SP & version history ----------
 // Each entry: title (2-5 words) · desc (5-15 words) · detail (15-50 words).
 const VERSIONS = [
+  {v:'v0.1.173', date:'2026-06-23 11:45', sp:1.5, title:'Turnover, net profit + colour key',
+    desc:'Deep-dive metric toggle gains Turnover and Net profit (now Revenue · Turnover · Net profit · Headcount · Wage). And each company chip now carries its line colour so you can tell which line is which when comparing.',
+    detail:'Split DD_SPECS ddRev (Revenue = estimatedIncome) from new ddTurnover (revenue / Pardavimo pajamos); ddProfit relabelled “Net profit”. Top chips render a colour dot from CMP_PAL, shared with sddColor so chip colour = its deep-dive lines.',
+    cat:'CHART'},
   {v:'v0.1.172', date:'2026-06-23 11:30', sp:0.5, title:'Drop redundant trajectory',
     desc:'Removed the “revenue, profit & headcount” trajectory chart from the all-time tab — it duplicated the money-flow-by-year chart above it and the multi-company deep-dive below.',
     detail:'Deleted the chMine card + its render block (single + multi-company branches) and chMine from the resize list; the money-flow note still flags when a compare set is selected.',
@@ -2058,16 +2067,21 @@ function sodraSeries(co, key){
 // per source, or {empty:'message'} when the source can't supply it.
 const DD_SPECS = {
   ddRev: {
-    title:'Revenue / sales',
+    title:'Revenue',
     initial: co => ({series:[
-        {label:'Turnover €', data:initSeries(co,'revenue'), color:cssVar('--muted')},
         {label:'Revenue €', data:initSeries(co,'estimatedIncome'), color:cssVar('--accent')}
       ], yTitle:'€'}),
-    rekvizitai: co => ({series:[{label:'Pardavimo pajamos €', data:rekYearSeries(co,'Pardavimo pajamos'), color:cssVar('--accent')}], yTitle:'€'}),
+    rekvizitai: () => ({empty:'Rekvizitai exposes sales (turnover), not fee revenue — see Turnover.'}),
     sodra: () => ({empty:'Sodra does not report revenue — it covers headcount, wages and tax only.'}),
   },
+  ddTurnover: {
+    title:'Turnover',
+    initial: co => ({series:[{label:'Turnover €', data:initSeries(co,'revenue'), color:cssVar('--muted')}], yTitle:'€'}),
+    rekvizitai: co => ({series:[{label:'Pardavimo pajamos €', data:rekYearSeries(co,'Pardavimo pajamos'), color:cssVar('--accent')}], yTitle:'€'}),
+    sodra: () => ({empty:'Sodra does not report turnover.'}),
+  },
   ddProfit: {
-    title:'Profit & margin',
+    title:'Net profit',
     initial: co => ({series:[{label:'Net profit €', data:initSeries(co,'profit'), color:cssVar('--green')}], yTitle:'€'}),
     rekvizitai: co => ({series:[
         {label:'Net profit €', data:rekYearSeries(co,'Grynasis pelnas (nuostoliai)'), color:cssVar('--green')},
@@ -2458,7 +2472,7 @@ function drawBarsSvg(container, cfg){
 
 // ---------- Company deep-dive (SVG copy) — reuses DD_SPECS, renders with drawFinSvg ----------
 let sddCos = DD_COMPANIES[0] ? [DD_COMPANIES[0]] : [], sddSrc='combined', sddMetric='ddRev';
-const SDD_PALETTE=['--accent','--green','--amber','--purple','--red','--gold','--muted'];
+const SDD_PALETTE=CMP_PAL;   // shared with the top chip dots (cmpColor) so chip colour = its lines
 const sddColor=i=>cssVar(SDD_PALETTE[i%SDD_PALETTE.length]);
 const coShort=co=>((co.name||co.slug||'').replace(/,?\s*(UAB|MB|VšĮ|AB|AS)\b.*/i,'').trim()||co.slug||'?');
 // One chart spec for the current selection. 1 company → full multi-metric spec (unchanged);
