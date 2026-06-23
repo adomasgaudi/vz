@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Market Analytics — LT agencies · v0.1.146</title>
+<title>Market Analytics — LT agencies · v0.1.147</title>
 <script>
   // Apply saved theme + view mode before first paint to avoid a flash.
   // Theme default = dark; view default = advanced (full data sources/tabs).
@@ -18,13 +18,13 @@
      Brand/data colours (accent/green/red/amber/purple/gold) stay constant
      across themes so charts read consistently; only surfaces flip. */
   :root{
-    --bg:#f5f6f8; --panel:#ffffff; --panel2:#eef0f4; --border:#d8dce4;
+    --bg:#f5f6f8; --panel:#ffffff; --panel2:#eef0f4; --border:#d8dce4; --cost:#aab2c2;
     --text:#1a1f2b; --muted:#5e6678; --accent:#2f6fe0; --green:#1faa72;
     --red:#dc4d4d; --amber:#d08a1f; --purple:#7c5cf0; --gold:#c79410;
     --hover:rgba(47,111,224,.07); --grid:#e6e9ef; --chart-bg:#ffffff; --zebra:rgba(0,0,0,.022);
   }
   [data-theme="dark"]{
-    --bg:#0e1117; --panel:#161b25; --panel2:#1c2230; --border:#2a3245;
+    --bg:#0e1117; --panel:#161b25; --panel2:#1c2230; --border:#2a3245; --cost:#566179;
     --text:#e6e9f0; --muted:#8b93a7; --accent:#4f8ef7; --green:#34c98e;
     --red:#f06a6a; --amber:#f0b04f; --purple:#a78bfa; --gold:#f4c542;
     --hover:rgba(79,142,247,.07); --grid:#222a3a; --chart-bg:#0e1117; --zebra:rgba(255,255,255,.015);
@@ -204,10 +204,10 @@
   .vf-head{font-size:13px;color:var(--muted);margin-bottom:8px;display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
   .vf-head b{color:var(--text);font-size:15px}
   .vf-body{display:flex;gap:12px;min-height:90px}
-  .vf-bar{width:26px;flex:0 0 auto;display:flex;flex-direction:column;border-radius:6px;overflow:hidden}
+  .vf-bar{width:26px;flex:0 0 auto;display:flex;flex-direction:column;border-radius:6px;overflow:hidden;border:1px solid var(--border)}
   .vf-seg{width:100%;min-height:4px}
   .vf-seg.rev{background:var(--accent)} .vf-seg.profit{background:var(--green)}
-  .vf-seg.cost{background:var(--panel2)} .vf-seg.pass{background:var(--panel2);opacity:.5} .vf-seg.cost.loss{background:rgba(220,77,77,.25)}
+  .vf-seg.cost{background:var(--cost)} .vf-seg.pass{background:var(--cost);opacity:.55} .vf-seg.cost.loss{background:rgba(220,77,77,.25)}
   .vf-brk{display:flex;flex-direction:column;width:84px;flex:0 0 auto}
   .vf-brk-rev{display:flex;align-items:center;justify-content:flex-start;text-align:left;padding-left:7px;border-left:2px solid var(--gold);position:relative}
   .vf-brk-rev span{font-size:11px;font-weight:600;color:var(--text);line-height:1.25}
@@ -225,7 +225,7 @@
   .mfa-cols{flex:1;display:flex;align-items:flex-end;gap:8px;min-height:0}
   .mfa-col{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;gap:4px;min-width:0}
   .mfa-barwrap{flex:1;width:100%;display:flex;align-items:flex-end;justify-content:center;min-height:0}
-  .mfa-bar{width:min(82%,34px);display:flex;flex-direction:column;border-radius:6px;overflow:hidden}
+  .mfa-bar{width:min(82%,34px);display:flex;flex-direction:column;border-radius:6px;overflow:hidden;border:1px solid var(--border)}
   .mfa-val{font-size:11px;font-weight:700;color:var(--text)}
   .mfa-yr{font-size:11px;color:var(--muted)}
   .ff-scope{font-size:10px;font-weight:600;color:var(--muted);background:var(--panel2);border:1px solid var(--border);border-radius:5px;padding:1px 6px;vertical-align:middle}
@@ -416,7 +416,7 @@
     <div class="settings-menu" id="settingsMenu">
       <button id="themeToggle">🌙 Dark</button>
       <button id="viewToggle"></button>
-      <span class="nav-version">v0.1.146</span>
+      <span class="nav-version">v0.1.147</span>
     </div>
   </div>
   <div class="nav-sub">113 brands · 2019–2024</div>
@@ -519,6 +519,11 @@
       <h2>Median monthly salary by year</h2>
       <div class="desc">Median of company average salaries across all years (companies reporting > €500/mo only). The single-year median is in the “Market &lt;year&gt;” tab.</div>
       <div class="chartbox"><div class="svgwrap" id="chSalary" style="position:absolute;inset:0"></div></div>
+    </div>
+    <div class="card">
+      <h2 id="empAllTitle">Employees by year</h2>
+      <div class="desc">Reported headcount across all companies, 2019→2024 — total, or per company under “Average / company”.</div>
+      <div class="chartbox"><div class="svgwrap" id="chEmpAll" style="position:absolute;inset:0"></div></div>
     </div>
   </div>
 
@@ -1090,6 +1095,7 @@ renderMarket('avg');
     if(typeof renderSegView==='function') renderSegView();
     if(typeof renderRevSegAll==='function') renderRevSegAll();
     if(typeof renderMoneyFlowAll==='function') renderMoneyFlowAll();
+    if(typeof renderEmpAll==='function') renderEmpAll();
   };
   document.querySelectorAll('#marketMode button, #marketMode2 button').forEach(b=>b.addEventListener('click',()=>setBasis(b.dataset.mode)));
 })();
@@ -1158,6 +1164,14 @@ function renderMoneyFlowAll(){
     +`</div><div class="mfa-cols">${cols}</div></div>`;
 }
 renderMoneyFlowAll();
+// ---------- Employees by year (all years; follows the basis: total or per company) ----------
+function renderEmpAll(){
+  const perCo = mktMode==='avg';
+  const t=document.getElementById('empAllTitle'); if(t) t.textContent = perCo?'Employees per company by year':'Total employees by year';
+  drawFinSvg(chEmpAll, { yTitle:'people', series:[{label:perCo?'Avg employees / company':'Total employees', color:cssVar('--amber'),
+    data:YEARS.map(y=>{ const a=marketAgg(y); return {x:y, y: perCo&&a.n? a.emp/a.n : a.emp}; })}] });
+}
+renderEmpAll();
 
 // ---------- By segment, single year: ONE card, Doughnut OR Bars (shared metric × basis, follows the year) ----------
 function segTotals(y){   // kept for topSegs / segSorted (revenue, whole-market)
@@ -1304,7 +1318,7 @@ function renderRevSegAll(){
 renderRevSegAll();
 
 // Re-render the static SVG dashboard charts at the new size on window resize.
-const SVG_DASH_IDS=['chMine','chMineRank','chTop','chGrowth','chSalary','chRevPerEmp','chRevSegAll'];
+const SVG_DASH_IDS=['chMine','chMineRank','chTop','chGrowth','chSalary','chRevPerEmp','chRevSegAll','chEmpAll'];
 function redrawDashSvg(){ SVG_DASH_IDS.forEach(id=>{ const el=document.getElementById(id); if(!el) return;
   if(el.__fin) el.__fin.render(); else if(el.__bar) el.__bar.render(); }); }
 let _dashRT; window.addEventListener('resize',()=>{ clearTimeout(_dashRT); _dashRT=setTimeout(redrawDashSvg,160); });
@@ -1312,6 +1326,10 @@ let _dashRT; window.addEventListener('resize',()=>{ clearTimeout(_dashRT); _dash
 // ---------- SP & version history ----------
 // Each entry: title (2-5 words) · desc (5-15 words) · detail (15-50 words).
 const VERSIONS = [
+  {v:'v0.1.147', date:'2026-06-23 04:35', sp:2, title:'Employees chart + visible costs',
+    desc:'Added an Employees-by-year chart to the Market all time tab (total, or per company under Average). Gave the money-flow bars an outline and a darker Costs colour so they’re visible, especially in dark mode.',
+    detail:'New chEmpAll line chart follows the basis via setBasis. Added a --cost token (medium slate, lighter in dark mode) for .vf-seg.cost/.pass and a 1px border on .vf-bar / .mfa-bar.',
+    cat:'CHART'},
   {v:'v0.1.146', date:'2026-06-23 04:20', sp:2, title:'Bars %, money-flow YoY',
     desc:'The %/€ toggle now works in Bars view (shows each segment’s share). The money-flow shows the year-over-year % change next to Revenue, Net profit, Costs and Pass-through, like Turnover.',
     detail:'Bars compute share-of-total when % is selected (axis + labels switch to %); %/€ redraws bars / updates the doughnut in place. moneyFlowHtml takes prev {T,R,P}, derives prev costs/pass, and renders a yo() badge on every money item and the Revenue bracket.',
