@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Market Analytics — LT agencies · v0.1.167</title>
+<title>Market Analytics — LT agencies · v0.1.168</title>
 <script>
   // Apply saved theme + view mode before first paint to avoid a flash.
   // Theme default = dark; view default = advanced (full data sources/tabs).
@@ -331,6 +331,12 @@
   .co-stickybar{position:sticky;top:44px;z-index:80;background:var(--bg);padding:8px 0 6px;margin-bottom:10px;border-bottom:1px solid var(--border)}
   .co-stickybar .co-sticky{position:static;top:auto;z-index:auto;background:transparent;padding:0;margin:0 0 6px}
   .co-stickybar .mkt-sticky{position:static;top:auto;z-index:auto;background:transparent;padding:0;margin:0}
+  /* multi-company compare chips under the picker (DATA-16: one scrolling row) */
+  .ov-chips{display:flex;gap:5px;margin-top:6px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:2px}
+  .ov-chip{flex:0 0 auto;display:inline-flex;align-items:center;gap:5px;font:600 12px/1 inherit;padding:5px 8px;border:1px solid var(--border);border-radius:7px;background:var(--panel2);color:var(--text);white-space:nowrap}
+  .ov-chip.primary{border-color:var(--accent);color:var(--accent)}
+  .ov-chip-x{cursor:pointer;color:var(--muted);font-size:14px;line-height:1}
+  .ov-chip-x:hover{color:var(--red)}
   #companiesView .mkt-sticky{top:98px;z-index:79}   /* sit just below the sticky company picker */
   .co-sticky .co-select-btn{max-width:340px}
   .co-select-btn{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;padding:8px 14px;font-size:13px;font-weight:600;border-radius:8px;border:1px solid var(--border);background:var(--panel);color:var(--text);cursor:pointer;font-family:inherit;transition:.15s}
@@ -426,7 +432,7 @@
     <div class="settings-menu" id="settingsMenu">
       <button id="themeToggle">🌙 Dark</button>
       <button id="viewToggle"></button>
-      <span class="nav-version">v0.1.167</span>
+      <span class="nav-version">v0.1.168</span>
     </div>
   </div>
   <div class="nav-sub">113 brands · 2019–2024</div>
@@ -448,6 +454,7 @@
   <h2 class="section mine">Company 2024</h2>
   <div class="co-select co-sticky" id="ovCompanySelect">
     <button class="co-select-btn" id="ovCoBtn" aria-haspopup="listbox" aria-expanded="false"><span id="ovCoLabel">Fabula</span><span class="co-caret">▾</span></button>
+    <div class="ov-chips" id="ovCoChips" style="display:none"></div>
     <div class="co-select-panel" id="ovCoPanel">
       <input class="co-select-search" id="ovCoSearch" placeholder="Search company…" autocomplete="off">
       <div class="co-select-list" id="ovCoList" role="listbox"></div>
@@ -975,7 +982,20 @@ function renderCompany(brand){
 
   // Charts — SVG engine, static. Keep the card but show "No data" if the company lacks it.
   const mineHasData = mineYears.some(y=>{ const r=mine[y]||{}; return r.revenue!=null||r.estimatedIncome!=null||r.profit!=null||r.employees!=null; });
-  if(mineHasData){
+  const multi = (typeof ovBrands!=='undefined') && ovBrands.length>1;   // compare set selected → overlay
+  if(multi){
+    // MULTI-COMPANY (all-year view): one revenue line per selected company, basis-aware. Single-company
+    // widgets (profile/money-flow/KPIs/vs-market) stay on the primary; only this trajectory overlays.
+    const PAL=['--gold','--accent','--green','--amber','--purple','--red','--muted'];
+    const series=ovBrands.map((b,i)=>{ const mm=byBrand[b]||{};
+      return {label:b, color:cssVar(PAL[i%PAL.length]),
+        data:YEARS.map(y=>{ const r=mm[y]||{}; let v=r.estimatedIncome;
+          v = coPerEmp ? ((r.employees>0 && v!=null)? v/r.employees/1e3 : 0) : (v||0)/1e6;
+          return {x:y, y:v}; }) }; });
+    drawFinSvg(chMine, { yTitle: coPerEmp?'revenue €k / employee':'revenue €M', series });
+    document.getElementById('chMineTitle').textContent='Revenue by year — '+ovBrands.length+' companies'+(coPerEmp?' · per employee':'');
+  }
+  else if(mineHasData){
     if(coPerEmp){
       // Per-employee: revenue/turnover/profit divided by headcount (€k/emp), avg pay replaces raw headcount.
       const pv=(y,k)=>{ const r=mine[y]||{}, e=r.employees; return (e>0 && r[k]!=null)? r[k]/e/1e3 : 0; };
@@ -1001,7 +1021,7 @@ function renderCompany(brand){
       const dv=v=> perEmp? ((e>0&&v!=null)? v/e:0) : (v||0);
       const T=dv(r.revenue), R=dv(r.estimatedIncome), P=Math.max(0,dv(r.profit));
       return {x:yy, profit:P, costs:Math.max(0,R-P), pass:Math.max(0,T-R)}; });
-    const t=document.getElementById('chCoFlowTitle'); if(t) t.textContent='Money-flow by year'+(perEmp?' · per employee':'');
+    const t=document.getElementById('chCoFlowTitle'); if(t) t.textContent='Money-flow by year'+(multi?' — '+brand:'')+(perEmp?' · per employee':'');
     if(!rows.some(d=>d.profit||d.costs||d.pass)){ el.innerHTML=''; if(empty){ empty.textContent='No data for this company.'; empty.classList.add('show'); } return; }
     if(empty) empty.classList.remove('show');
     drawFinSvg(el, { stacked:true, totalLabels:true, yTitle:'€', series:[
@@ -1031,20 +1051,32 @@ function clearChart(el){ if(!el) return;
 
 // Overview company picker — searchable dropdown over EVERY brand (default: Fabula).
 const OV_BRANDS = BRANDS.slice().sort((a,b)=>a.localeCompare(b,'lt'));
-let ovBrand = MY_BRAND;
+// Multi-select: ovBrands = the chosen set; ovBrand = the PRIMARY (first) — drives every single-company
+// widget (profile, money-flow, KPIs, vs-market, rankings). Extra companies overlay ONLY the all-time
+// trajectory graph (the “all year view”), like the deep-dive. Picking toggles + keeps the panel open.
+let ovBrands = [MY_BRAND], ovBrand = MY_BRAND;
+function syncOvLabel(){ const l=document.getElementById('ovCoLabel');
+  if(l) l.textContent = ovBrands.length<=1 ? (ovBrands[0]||'Select company') : (ovBrands[0]+' +'+(ovBrands.length-1)); }
+function renderOvChips(){ const w=document.getElementById('ovCoChips'); if(!w) return;
+  if(ovBrands.length<=1){ w.innerHTML=''; w.style.display='none'; return; }
+  w.style.display='';
+  w.innerHTML=ovBrands.map((b,i)=>`<span class="ov-chip${i===0?' primary':''}" title="${i===0?'primary company':'compare'}">${esc(b)}<span class="ov-chip-x" data-rm="${esc(b)}">×</span></span>`).join('');
+  w.querySelectorAll('.ov-chip-x').forEach(x=>x.addEventListener('click',e=>{ e.stopPropagation();
+    if(ovBrands.length>1){ ovBrands=ovBrands.filter(z=>z!==x.dataset.rm); ovChanged(); } }));
+}
+function ovChanged(){ ovBrand=ovBrands[0]; syncOvLabel(); renderOvChips(); buildOvList(); renderCompany(ovBrand); }
 function buildOvList(){
   const list=document.getElementById('ovCoList'); if(!list) return;
-  const lbl=document.getElementById('ovCoLabel'); if(lbl) lbl.textContent=ovBrand;
   const q=(document.getElementById('ovCoSearch')?.value||'').trim().toLowerCase();
   const opts=OV_BRANDS.filter(b=>!q||b.toLowerCase().includes(q));
   list.innerHTML = opts.length
-    ? opts.map(b=>`<div class="co-select-opt${b===ovBrand?' active':''}" role="option" data-brand="${esc(b)}">${srcCubes(b)}${esc(b)}</div>`).join('')
+    ? opts.map(b=>`<div class="co-select-opt${ovBrands.includes(b)?' active':''}" role="option" data-brand="${esc(b)}">${srcCubes(b)}${esc(b)}</div>`).join('')
     : `<div class="co-select-empty">No company matches “${esc(q)}”.</div>`;
   list.querySelectorAll('.co-select-opt').forEach(o=>o.addEventListener('click',()=>{
-    ovBrand=o.dataset.brand;
-    document.getElementById('ovCompanySelect').classList.remove('open');
-    document.getElementById('ovCoBtn').setAttribute('aria-expanded','false');
-    buildOvList(); renderCompany(ovBrand);
+    const b=o.dataset.brand;
+    if(ovBrands.includes(b)){ if(ovBrands.length>1) ovBrands=ovBrands.filter(z=>z!==b); }   // toggle off (keep ≥1)
+    else ovBrands=[...ovBrands, b];                                                          // add to compare set
+    ovChanged();   // panel stays open so you can add several
   }));
 }
 (function(){
@@ -1056,7 +1088,7 @@ function buildOvList(){
   document.addEventListener('click',()=>{ if(sel.classList.contains('open')){ sel.classList.remove('open'); btn.setAttribute('aria-expanded','false'); } });
   document.addEventListener('keydown',e=>{ if(e.key==='Escape'){ sel.classList.remove('open'); btn.setAttribute('aria-expanded','false'); } });
 })();
-buildOvList();
+syncOvLabel(); renderOvChips(); buildOvList();
 renderCompany(ovBrand);
 
 // ---------- Market summary (money-flow + KPIs, avg/total toggle) ----------
@@ -1408,6 +1440,10 @@ let _dashRT; window.addEventListener('resize',()=>{ clearTimeout(_dashRT); _dash
 // ---------- SP & version history ----------
 // Each entry: title (2-5 words) · desc (5-15 words) · detail (15-50 words).
 const VERSIONS = [
+  {v:'v0.1.168', date:'2026-06-23 10:40', sp:3, title:'Multi-company compare on trajectory',
+    desc:'The top company picker now takes several companies (chips with ✕, like the deep-dive). The all-year Revenue/profit/headcount trajectory overlays one revenue line per company so you can compare them; the rest (profile, money-flow, KPIs, vs-market, rankings) stay on the primary (first) company.',
+    detail:'ovBrands[] holds the set, ovBrand = primary; buildOvList toggles membership (panel stays open), renderOvChips shows the scrolling chip row. renderCompany’s chMine block overlays per-company revenue (basis-aware, €M or €k/emp) when >1 selected, else the rich single-company 4-series view.',
+    cat:'CHART'},
   {v:'v0.1.167', date:'2026-06-23 10:20', sp:2, title:'Merge rank + growth chart',
     desc:'Top 20 companies and Growth leaders & laggards are now one chart: each bar shows the value AND a colored year-over-year % badge (green up / red down vs the previous year). Removed the separate growth card.',
     detail:'drawTop computes each company’s prior-year value (same metric + basis) → YoY %, passed as row.delta; drawBarsSvg renders it as a coloured tspan after the value label. drawGrowth + chGrowth card removed; the YoY badge follows the metric/segment/year/basis like the bars.',
