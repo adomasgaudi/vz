@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Market Analytics — LT agencies · v0.1.159</title>
+<title>Market Analytics — LT agencies · v0.1.160</title>
 <script>
   // Apply saved theme + view mode before first paint to avoid a flash.
   // Theme default = dark; view default = advanced (full data sources/tabs).
@@ -422,7 +422,7 @@
     <div class="settings-menu" id="settingsMenu">
       <button id="themeToggle">🌙 Dark</button>
       <button id="viewToggle"></button>
-      <span class="nav-version">v0.1.159</span>
+      <span class="nav-version">v0.1.160</span>
     </div>
   </div>
   <div class="nav-sub">113 brands · 2019–2024</div>
@@ -571,7 +571,6 @@
   </div>
 
   <h2 class="section">Company deep-dive</h2>
-  <div class="desc" style="margin-bottom:6px">Per-company trends from the sources we scraped, drawn with a custom <b>SVG chart engine</b> (no Chart.js). Pick several companies to overlay &amp; compare; drag to pan any direction, scroll or pinch to zoom (Shift/Alt = one axis), ⤢ or double-click/tap to reset. <b>Initial</b> = dashboard dataset (yearly), <b>Rekvizitai</b> = rekvizitai.vz.lt financials, <b>Sodra</b> = monthly headcount &amp; wage.</div>
   <div class="dd-wrap">
     <div class="dd-bar">
       <div class="co-select" id="sddCompanySelect">
@@ -1413,6 +1412,10 @@ let _dashRT; window.addEventListener('resize',()=>{ clearTimeout(_dashRT); _dash
 // ---------- SP & version history ----------
 // Each entry: title (2-5 words) · desc (5-15 words) · detail (15-50 words).
 const VERSIONS = [
+  {v:'v0.1.160', date:'2026-06-23 08:30', sp:0.5, title:'Drop deep-dive blurb',
+    desc:'Removed the long explanatory paragraph above the Company deep-dive charts — the controls speak for themselves.',
+    detail:'Deleted the .desc intro under the Company deep-dive heading (SVG-engine / pan-zoom / source legend text).',
+    cat:'CHART'},
   {v:'v0.1.159', date:'2026-06-23 08:20', sp:3, title:'Scatter moved to Market view',
     desc:'The size-vs-profitability scatter now lives on the Market page: a single-year version in the “Market <year>” tab that follows the year row, and a horizontally scrollable strip of one mini scatter per year in “Market all time”. Removed from Company rankings.',
     detail:'Refactored the bubble chart into scatterDataForYear + buildScatterCfg; renderScatterYear (rebuilt on every renderMarket, destroys the old Chart, empty-state for unreported years) feeds chScatter; buildScatterStrip renders mini bubble charts (no axes/legend) per data year into #scatterStrip.',
