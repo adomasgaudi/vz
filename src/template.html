@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Markets — LT agencies · v0.1.189</title>
+<title>Markets — LT agencies · v0.1.190</title>
 <script>
   // Apply saved theme + view mode before first paint to avoid a flash.
   // Theme default = dark; view default = Default (Dev mode adds the version / changelog popup).
@@ -437,7 +437,7 @@
     <div class="settings-menu" id="settingsMenu">
       <button id="themeToggle">🌙 Dark</button>
       <button id="viewToggle"></button>
-      <span class="nav-version">v0.1.189</span>
+      <span class="nav-version">v0.1.190</span>
     </div>
   </div>
   <div class="nav-sub">113 brands · 2019–2024</div>
@@ -875,7 +875,6 @@ function renderCompany(brand){
   const m24 = mine[coYear] || {};       // m24 = the SELECTED year (kept name to limit churn)
   const m23 = mine[coYear-1] || {};
   const mFirst = mine[mineYears[0]] || {};
-  const mLastFin = mine[LAST] || {};    // latest COMPLETE financial year for this brand (history metrics anchor here, not the selected year)
   const partialYear = coYear>LAST;      // 2025+: Sodra headcount/pay only, financials not filed yet
   const hasFin = m24.revenue!=null;     // does the selected year carry financials for this brand?
   const hasYearRec = mineYears.includes(coYear);
@@ -894,7 +893,8 @@ function renderCompany(brand){
   const mEmp    = (coPerEmp||partialYear) ? null : rankOf(d=>d.employees, m24);
   const mSal    = partialYear ? null : rankOf(d=>d.avgSalary>500?d.avgSalary:null, m24);   // already a ratio
   const mMargin = rankOf(d=>(d.estimatedIncome>50000 && d.profit!=null)? d.profit/d.estimatedIncome*100 : null, m24);
-  const mCagr   = (mLastFin.revenue && mFirst.revenue)? Math.pow(mLastFin.revenue/mFirst.revenue, 1/(LAST-mineYears[0]))-1 : null;
+  const cagrSpan = coYear - mineYears[0];   // CAGR end-year follows the selected year, like every other card
+  const mCagr   = (m24.revenue && mFirst.revenue && cagrSpan>0)? Math.pow(m24.revenue/mFirst.revenue, 1/cagrSpan)-1 : null;
 
   // Compact profile box, shown for every company (missing fields read "no data").
   const fullName = Object.values(mine).map(r=>r.company).find(Boolean) || '';
@@ -962,10 +962,10 @@ function renderCompany(brand){
     +(payroll!=null?`<div class="sub" style="margin-top:6px">≈ ${fmtEur(payroll)} payroll/yr · ${emp} × €${sal.toLocaleString()} × 12</div>`:'')
     +`</div>`;
   const cards = [
-    {label:'Revenue CAGR '+mineYears[0]+'–'+LAST, value:fmtPct(mCagr),
-     sub: mCagr!=null ? '€'+fmtM(mFirst.revenue)+' → €'+fmtM(mLastFin.revenue) : 'no data',
+    {label:'Revenue CAGR '+mineYears[0]+'–'+coYear, value:fmtPct(mCagr),
+     sub: mCagr!=null ? '€'+fmtM(mFirst.revenue)+' → €'+fmtM(m24.revenue) : (partialYear?'no '+coYear+' financials yet':(cagrSpan<=0?'first year':'no data')),
      cls:mCagr>=0?'pos':'neg',
-     formula: mCagr!=null ? `CAGR = (${E(mLastFin.revenue)} ÷ ${E(mFirst.revenue)}) ^ (1 ÷ ${LAST-mineYears[0]}) − 1\n= ${fmtPct(mCagr)} over ${LAST-mineYears[0]} years` : ''},
+     formula: mCagr!=null ? `CAGR = (${E(m24.revenue)} ÷ ${E(mFirst.revenue)}) ^ (1 ÷ ${cagrSpan}) − 1\n= ${fmtPct(mCagr)} over ${cagrSpan} years` : ''},
     {label:'Credit risk', value:m24.risk||'–', sub:'Segments: '+(m24.activities||[]).map(segName).join(', '), cls:'', formula:'Source: rekvizitai.vz.lt credit rating\nSegments = activity tags from the dataset'},
   ];
   document.getElementById('mineKpis').innerHTML = peopleCard + cards.map(k=>
@@ -1412,6 +1412,10 @@ let _dashRT; window.addEventListener('resize',()=>{ clearTimeout(_dashRT); _dash
 // ---------- SP & version history ----------
 // Each entry: title (2-5 words) · desc (5-15 words) · detail (15-50 words).
 const VERSIONS = [
+  {v:'v0.1.190', date:'2026-06-24 14:30', sp:1, title:'Revenue CAGR per year',
+    desc:'The Revenue CAGR card now ends on the selected year like every other company card, instead of being frozen at 2024.',
+    detail:'CAGR end-year + exponent now use coYear (cagrSpan = coYear − firstYear), label reads firstYear–coYear, value/label/formula finally consistent (the value used the selected year while the label/exponent said 2024). First-year → “first year”; a partial year with no financials (2025) → “no <year> financials yet”.',
+    cat:'CHART'},
   {v:'v0.1.189', date:'2026-06-24 14:00', sp:5, title:'Partial 2025 added',
     desc:'Added a partial 2025 year (Sodra headcount + pay for the 12 companies we have); financials aren’t filed yet, so 2024 stays the default everywhere.',
     detail:'12 new 2025 records (employees + avgSalary, financials null). LAST now = latest FINANCIAL year (2024) so every market default/aggregate stays put; FIN_YEARS (2019–2024) drives the Market section + all every-year charts. Company year row offers 2025 (marked *); on 2025 the money-flow/rank/CAGR show a “financials not filed yet” note, People & pay shows the Sodra numbers, rank chips suppressed (pool would be ~12, not 113).',
