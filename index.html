@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Market Analytics — LT agencies · v0.1.182</title>
+<title>Market Analytics — LT agencies · v0.1.183</title>
 <script>
   // Apply saved theme + view mode before first paint to avoid a flash.
   // Theme default = dark; view default = advanced (full data sources/tabs).
@@ -336,7 +336,9 @@
   .ov-chip{flex:0 0 auto;display:inline-flex;align-items:center;gap:5px;font:600 12px/1 inherit;padding:5px 8px;border:1px solid var(--border);border-radius:7px;background:var(--panel2);color:var(--text);white-space:nowrap}
   .ov-chip.primary{border-color:var(--accent);color:var(--accent)}
   .ov-dot{width:8px;height:8px;border-radius:50%;flex:0 0 auto}
-  #companiesView .co-viewbar{margin:8px 0 12px}
+  /* clickable per-year / all-years word inside the page title (coloured = tappable) */
+  .view-word{color:var(--accent);cursor:pointer;text-decoration:underline;text-decoration-style:dotted;text-underline-offset:5px;white-space:nowrap}
+  .view-word:hover,.view-word:active{opacity:.82}
   .ov-chip-x{cursor:pointer;color:var(--muted);font-size:14px;line-height:1}
   .ov-chip-x:hover{color:var(--red)}
   #companiesView .mkt-sticky{top:98px;z-index:79}   /* sit just below the sticky company picker */
@@ -434,7 +436,7 @@
     <div class="settings-menu" id="settingsMenu">
       <button id="themeToggle">🌙 Dark</button>
       <button id="viewToggle"></button>
-      <span class="nav-version">v0.1.182</span>
+      <span class="nav-version">v0.1.183</span>
     </div>
   </div>
   <div class="nav-sub">113 brands · 2019–2024</div>
@@ -463,10 +465,6 @@
     </div>
   </div>
   <div class="mkt-sticky">
-    <div class="seg" id="coViewToggle" style="margin-bottom:8px">
-      <button data-v="0" class="active">Per year</button>
-      <button data-v="1">All time</button>
-    </div>
     <div class="yr-row" id="coYearRow"></div>
     <div class="seg" id="coFlowMode">
       <button data-mode="total" class="active">Full company</button>
@@ -598,7 +596,7 @@
 
 <div class="view" id="companiesView">
 <div class="wrap">
-  <header class="page-hero"><h1>Companies</h1><p>Profiles, rankings &amp; deep-dives for the 113 tracked agencies</p></header>
+  <header class="page-hero"><h1>Companies <span id="coViewWord" class="view-word" role="button" tabindex="0" title="Tap to switch per-year / all-time">per year</span></h1><p>Profiles, rankings &amp; deep-dives for the 113 tracked agencies</p></header>
   <button class="explore-btn" data-view="rekView">Explore the raw data &amp; sources →</button>
   <footer class="mini-foot">by adomasgaudi.github on behalf of Fabula, copyright.</footer>
 </div>
@@ -1403,6 +1401,10 @@ let _dashRT; window.addEventListener('resize',()=>{ clearTimeout(_dashRT); _dash
 // ---------- SP & version history ----------
 // Each entry: title (2-5 words) · desc (5-15 words) · detail (15-50 words).
 const VERSIONS = [
+  {v:'v0.1.183', date:'2026-06-23 13:35', sp:1, title:'View toggle in the title',
+    desc:'The page title now reads “Companies per year”, where the coloured “per year” word is tappable and switches to “all years” — replacing the separate toggle pill above the picker.',
+    detail:'Replaced #coViewToggle with a clickable #coViewWord span in the hero <h1> (accent colour, dotted underline = tappable); it drives the Company-data card tabs and hides the year row in all-time, same as before.',
+    cat:'CHART'},
   {v:'v0.1.182', date:'2026-06-23 13:25', sp:0.5, title:'Soft shadow on bar names',
     desc:'Replaced the heavy outline behind the in-bar company names with a soft drop-shadow, so they read cleanly instead of looking boxed.',
     detail:'drawBarsSvg name text now uses filter=feDropShadow (added a defs to the bar SVG) instead of a thick panel-colour stroke.',
@@ -3031,34 +3033,31 @@ try{ (function(){
   const picker=document.getElementById('ovCompanySelect');
   const ctrl=document.getElementById('coYearRow') && document.getElementById('coYearRow').closest('.mkt-sticky');
   if(!picker && !ctrl) return;
-  // Capture the view toggle NOW (before ctrl is moved into the detached bar, after which
-  // document.getElementById can't find it). It sits ABOVE the sticky bar (page mode switch).
-  const viewT=document.getElementById('coViewToggle');
   const bar=document.createElement('div'); bar.className='co-stickybar';
   if(picker) bar.appendChild(picker);
   if(ctrl) bar.appendChild(ctrl);
   const firstCard=wrap.querySelector('.group-card');
   const before=firstCard || wrap.querySelector('.explore-btn') || wrap.querySelector('.mini-foot');
-  if(viewT){ viewT.classList.add('co-viewbar'); wrap.insertBefore(viewT, before); }
   wrap.insertBefore(bar, before);
 })(); }catch(err){ window.dispatchEvent(new ErrorEvent('error',{message:'liftCompanyControls: '+err.message, error:err})); }
 
-// Per-year / All-time is now a TOP toggle (it changes the whole Companies page) — drive the
-// Company-data card's tabs from it and hide the in-card tab row.
+// Per-year / All-time is the clickable coloured word IN THE TITLE ("Companies per year" ⇄ "…all years").
+// It drives the Company-data card's tabs and hides the in-card tab row + the year picker in all-time.
 try{ (function(){
-  const seg=document.getElementById('coViewToggle'); if(!seg) return;
+  const word=document.getElementById('coViewWord'); if(!word) return;
   const card=document.querySelector('#companiesView .group-card');         // first = Company data (gold)
   const grpTabs=card && card.querySelector('.grp-tabs');
   const tabBtns=grpTabs ? [...grpTabs.querySelectorAll('.grp-tab')] : [];
   if(grpTabs) grpTabs.style.display='none';
-  const yearRow=document.getElementById('coYearRow');   // year picker is only meaningful in "Per year"
-  seg.querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>{
-    seg.querySelectorAll('button').forEach(x=>x.classList.remove('active')); b.classList.add('active');
-    const v=+b.dataset.v;
-    if(yearRow) yearRow.style.display = v===1 ? 'none' : '';
-    const t=tabBtns[v]; if(t) t.click();
-  }));
-})(); }catch(err){ window.dispatchEvent(new ErrorEvent('error',{message:'coViewToggle: '+err.message, error:err})); }
+  const yearRow=document.getElementById('coYearRow');   // year picker is only meaningful in "per year"
+  let v=0;                                               // 0 = per year, 1 = all time
+  const apply=()=>{ word.textContent = v===1?'all years':'per year';
+    if(yearRow) yearRow.style.display = v===1?'none':'';
+    const t=tabBtns[v]; if(t) t.click(); };
+  const toggle=()=>{ v=v?0:1; apply(); };
+  word.addEventListener('click', toggle);
+  word.addEventListener('keydown', e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); toggle(); } });
+})(); }catch(err){ window.dispatchEvent(new ErrorEvent('error',{message:'coViewWord: '+err.message, error:err})); }
 </script>
 </body>
 </html>
