@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Market Analytics — LT agencies · v0.1.179</title>
+<title>Market Analytics — LT agencies · v0.1.180</title>
 <script>
   // Apply saved theme + view mode before first paint to avoid a flash.
   // Theme default = dark; view default = advanced (full data sources/tabs).
@@ -434,7 +434,7 @@
     <div class="settings-menu" id="settingsMenu">
       <button id="themeToggle">🌙 Dark</button>
       <button id="viewToggle"></button>
-      <span class="nav-version">v0.1.179</span>
+      <span class="nav-version">v0.1.180</span>
     </div>
   </div>
   <div class="nav-sub">113 brands · 2019–2024</div>
@@ -1403,6 +1403,10 @@ let _dashRT; window.addEventListener('resize',()=>{ clearTimeout(_dashRT); _dash
 // ---------- SP & version history ----------
 // Each entry: title (2-5 words) · desc (5-15 words) · detail (15-50 words).
 const VERSIONS = [
+  {v:'v0.1.180', date:'2026-06-23 13:05', sp:1, title:'Names inside the bars',
+    desc:'In the ranking chart the company names now sit inside the plot at the start of each bar (moving with the bar) instead of a wide left column — so the bars are much wider.',
+    detail:'drawBarsSvg drops the left label gutter (m.l 10px), draws each name at the bar start with a soft panel-colour halo for legibility, and pushes the value/% label past the name so they never overlap.',
+    cat:'CHART'},
   {v:'v0.1.179', date:'2026-06-23 12:55', sp:0.5, title:'Green leaders, red laggards',
     desc:'In the top 10 / bottom 10 ranking the leaders’ bars are green and the laggards’ bars red, so the two groups are visually distinct.',
     detail:'drawTop tags the top-10 slice grp:top → --green and the bottom-10 slice grp:bot → --red; unsplit small lists keep accent/red-by-sign.',
@@ -2417,30 +2421,33 @@ function drawBarsSvg(container, cfg){
     const view=st.view, rows=st.cfg.rows||[], R=rows.length;
     const W=container.clientWidth||360, H=container.clientHeight||240;
     const grid=cssVar('--grid')||'#2a2f3a', muted=cssVar('--muted')||'#8a93a6', text=cssVar('--text')||'#e6e9ef';
-    const m={t:6,r:30,b:24,l:Math.min(150,Math.max(64,Math.round(W*0.34)))}, pw=W-m.l-m.r, ph=H-m.t-m.b;
+    const m={t:6,r:42,b:24,l:10}, pw=W-m.l-m.r, ph=H-m.t-m.b;   // names now sit INSIDE the plot → tiny left margin, wide bars
     const vspan=(view.vMax-view.vMin)||1, ispan=(view.iMax-view.iMin)||1;
     const xAt=v=> m.l+(v-view.vMin)/vspan*pw, base=xAt(0), rowY=i=> m.t+(i-view.iMin)/ispan*ph;
     const bandH=ph/ispan, barH=Math.max(2,Math.min(22,bandH*0.62));
-    const maxChars=Math.max(4,Math.floor(m.l/6.2));
-    const trunc=v=>{ v=String(v); return v.length>maxChars? v.slice(0,maxChars-1)+'…':v; };
     let s=''; const TICKS=3;
     for(let k=0;k<=TICKS;k++){ const v=view.vMin+vspan*k/TICKS, x=xAt(v); if(x<m.l-1||x>W-m.r+1) continue;
       s+=`<line x1="${x.toFixed(1)}" y1="${m.t}" x2="${x.toFixed(1)}" y2="${(m.t+ph).toFixed(1)}" stroke="${grid}" stroke-width="1"/>`;
       s+=`<text x="${x.toFixed(1)}" y="${(H-12).toFixed(1)}" fill="${muted}" font-size="10" text-anchor="middle">${esc(fmt(v))}</text>`;
     }
     if(cfg.xTitle) s+=`<text x="${(m.l+pw/2).toFixed(1)}" y="${(H-1).toFixed(1)}" fill="${muted}" font-size="10" text-anchor="middle">${esc(cfg.xTitle)}</text>`;
-    let plot='', labels='';
+    let plot='';
     rows.forEach((r,i)=>{ const cy=rowY(i); if(cy<m.t-bandH||cy>m.t+ph+bandH) return;
       const x1=xAt(r.value), bx=Math.min(base,x1), bw=Math.max(0,Math.abs(x1-base));
       plot+=`<rect x="${bx.toFixed(1)}" y="${(cy-barH/2).toFixed(1)}" width="${bw.toFixed(1)}" height="${barH.toFixed(1)}" fill="${r.color||cssVar('--accent')}" rx="2"/>`;
-      const lx=x1>=base?x1+3:x1-3, anchor=x1>=base?'start':'end';
+      // company name INSIDE the graph, at the bar's start (moves with the bar). A soft shadow keeps it
+      // legible whether it sits on a coloured bar or on the dark plot beyond a short bar.
+      const nameX=(x1>=base?base:x1)+4, nm=esc(String(r.label));
+      plot+=`<text x="${nameX.toFixed(1)}" y="${(cy+3).toFixed(1)}" fill="${text}" font-size="10" text-anchor="start" style="paint-order:stroke" stroke="${cssVar('--panel')||'#11151c'}" stroke-width="2.4" stroke-linejoin="round">${nm}</text>`;
+      // value + YoY% after the bar end, never overlapping the name
       const dStr = r.delta!=null ? (r.delta>=0?'+':'')+Math.round(r.delta)+'%' : '';
       const dCol = r.delta>=0 ? (cssVar('--green')||'#3bd16f') : (cssVar('--red')||'#e2575b');
+      const nameW=String(r.label).length*5.8;
+      const lx = x1>=base ? Math.max(x1+4, nameX+nameW+6) : x1-4, anchor = x1>=base?'start':'end';
       plot+=`<text x="${lx.toFixed(1)}" y="${(cy+3).toFixed(1)}" font-size="9" text-anchor="${anchor}"><tspan fill="${muted}">${esc(fmt(r.value))}</tspan>${dStr?` <tspan fill="${dCol}" font-weight="600">${dStr}</tspan>`:''}</text>`;
-      labels+=`<text x="${(m.l-6).toFixed(1)}" y="${(cy+3).toFixed(1)}" fill="${text}" font-size="10" text-anchor="end">${esc(trunc(r.label))}</text>`;
     });
-    s+=`<clipPath id="${st.cid}p"><rect x="${m.l}" y="${m.t}" width="${pw}" height="${ph}"/></clipPath><clipPath id="${st.cid}l"><rect x="0" y="${m.t}" width="${m.l}" height="${ph}"/></clipPath>`;
-    s+=`<g clip-path="url(#${st.cid}p)">${plot}</g><g clip-path="url(#${st.cid}l)">${labels}</g>`;
+    s+=`<clipPath id="${st.cid}p"><rect x="${m.l}" y="${m.t}" width="${pw}" height="${ph}"/></clipPath>`;
+    s+=`<g clip-path="url(#${st.cid}p)">${plot}</g>`;
     container.innerHTML=`<svg viewBox="0 0 ${W} ${H}" width="100%" height="100%" style="overflow:visible;touch-action:none">${s}</svg>`;
     st.geo={W,H,ml:m.l,mt:m.t,pw,ph};
     const tag=document.createElement('span'); tag.className='eng-tag'; tag.textContent='SVG'; container.appendChild(tag);
