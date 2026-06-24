@@ -153,7 +153,7 @@ Each rule = two rows: **description**, then *kind · type*. Sorted by theme, the
 
 | Rule | Description / mechanics |
 | --- | --- |
-| **DATA-40** Model + version line | end each reply with the model and `v.x -> v.y` shift, read not guessed |
+| **DATA-40** Model + version line | end each reply with the model and `v.x -> v.y` shift, read not guessed; ALWAYS name the version AND one line of what that version changed — never a bare number the owner can't decode (if nothing shipped this turn, say which version the live file is at) |
 | <br /> | Context · verifiable · TOP |
 | **DATA-35** Token-efficiency check | on request, judge new-chat-vs-continue, model fit, cache hits, one action |
 | <br /> | Context · judgment · MED |
