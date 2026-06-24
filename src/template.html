@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Markets — LT agencies · v0.1.185</title>
+<title>Markets — LT agencies · v0.1.186</title>
 <script>
   // Apply saved theme + view mode before first paint to avoid a flash.
   // Theme default = dark; view default = advanced (full data sources/tabs).
@@ -436,7 +436,7 @@
     <div class="settings-menu" id="settingsMenu">
       <button id="themeToggle">🌙 Dark</button>
       <button id="viewToggle"></button>
-      <span class="nav-version">v0.1.185</span>
+      <span class="nav-version">v0.1.186</span>
     </div>
   </div>
   <div class="nav-sub">113 brands · 2019–2024</div>
@@ -1401,6 +1401,10 @@ let _dashRT; window.addEventListener('resize',()=>{ clearTimeout(_dashRT); _dash
 // ---------- SP & version history ----------
 // Each entry: title (2-5 words) · desc (5-15 words) · detail (15-50 words).
 const VERSIONS = [
+  {v:'v0.1.186', date:'2026-06-23 14:05', sp:0.5, title:'Rename Financials / Compare',
+    desc:'Renamed the “Company data” card to “Financials” and the all-time deep-dive sub-heading to “Compare financials”.',
+    detail:'buildCard title Company data → Financials; the folded deep-dive heading text → Compare financials.',
+    cat:'CHART'},
   {v:'v0.1.185', date:'2026-06-23 13:55', sp:0.5, title:'Softer bar-name shadow',
     desc:'Toned down the drop-shadow behind the in-bar company names — it was too strong, especially in light mode.',
     detail:'drawBarsSvg feDropShadow flood-opacity 0.85→0.35, stdDeviation 1.1→0.6, dy 0.6→0.4.',
@@ -2991,7 +2995,7 @@ function makeSectionsCollapsible(){
   // The deep-dive is a multi-year time series → it belongs in the "Company all time" (multi-year) tab,
   // not a separate section. Fold its content into the all-time tab under a sub-heading.
   if(secs['Company all time'] && secs['Company deep-dive']){
-    const hd=document.createElement('h2'); hd.textContent='Deep-dive — scraped sources over time'; hd.style.cssText='margin:20px 0 6px';
+    const hd=document.createElement('h2'); hd.textContent='Compare financials'; hd.style.cssText='margin:20px 0 6px';
     secs['Company all time'].nodes = secs['Company all time'].nodes.concat([hd], secs['Company deep-dive'].nodes);
     delete secs['Company deep-dive'];
   }
@@ -3023,7 +3027,7 @@ function makeSectionsCollapsible(){
   };
   const place=(wrap, card)=>{ if(wrap && card){ const before=wrap.querySelector('.explore-btn')||wrap.querySelector('.mini-foot'); wrap.insertBefore(card, before); } };
   // Company → Companies page
-  place(compWrap, buildCard('Company data',     ['Company 2024','Company all time'], {gold:true, hoist:'#ovCompanySelect'}));
+  place(compWrap, buildCard('Financials',       ['Company 2024','Company all time'], {gold:true, hoist:'#ovCompanySelect'}));
   place(compWrap, buildCard('Company rankings', ['Company rankings'],           {collapsible:true}));
   // Market → dashboard
   place(dashWrap, buildCard('Market data',     ['Market 2024','Market all time'], {}));
