@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Markets — LT agencies · v0.1.203</title>
+<title>Markets — LT agencies · v0.1.204</title>
 <script>
   // Apply saved theme + view mode before first paint to avoid a flash.
   // Theme default = dark; view default = Default (Dev mode adds the version / changelog popup).
@@ -453,7 +453,7 @@
     <div class="settings-menu" id="settingsMenu">
       <button id="themeToggle">🌙 Dark</button>
       <button id="viewToggle"></button>
-      <span class="nav-version">v0.1.203</span>
+      <span class="nav-version">v0.1.204</span>
     </div>
   </div>
   <div class="nav-sub">113 brands · 2019–2024</div>
@@ -1523,6 +1523,10 @@ let _dashRT; window.addEventListener('resize',()=>{ clearTimeout(_dashRT); _dash
 // ---------- SP & version history ----------
 // Each entry: title (2-5 words) · desc (5-15 words) · detail (15-50 words).
 const VERSIONS = [
+  {v:'v0.1.204', date:'2026-06-25 11:45', sp:0.5, title:'Keep tab on company switch',
+    desc:'In the Rekvizitai explorer, switching companies now keeps you on the same sub-tab (e.g. Finansai) instead of jumping back to the first one.',
+    detail:'selectCompany preserves the previous rekTab when the newly-picked company has it (all share the Įmonė/Finansai/Darbuotojai/Skolos order), falling back to the first tab only if missing.',
+    cat:'CHART'},
   {v:'v0.1.203', date:'2026-06-25 11:30', sp:1, title:'Dark-mode text fix',
     desc:'Fixed black-on-black text in dark mode: Data Explorer null cells & row numbers used a border colour as text; native dropdowns now follow the theme.',
     detail:'PB-4: td.null + .row-num used color:var(--border) (a near-black slate in dark) → invisible; switched to var(--muted). Added color-scheme:light/dark to :root and [data-theme=dark] so native option lists / scrollbars theme correctly (also helps Samsung force-dark). Guard logged: text/fill may only use --text/--muted/series tokens, never a surface token.',
@@ -3006,7 +3010,8 @@ function selectCompany(slug){
   rekCo = REK_COMPANIES.find(c=>c.slug===slug) || REK_COMPANIES[0] || null;
   ORIG_TABS = buildOrigTabs(rekCo && rekCo.brand);
   SODRA_TABS = buildSodraTabs(rekCo && rekCo.sodra);
-  rekTab = (rekCo && rekCo.order && rekCo.order[0]) || null;
+  const prevTab = rekTab;   // keep the same tab (e.g. Finansai) when switching companies, if the new one has it
+  rekTab = (rekCo && rekCo.order && (rekCo.order.includes(prevTab) ? prevTab : rekCo.order[0])) || null;
   rekSort=-1; const s=document.getElementById('rekSearch'); if(s) s.value='';
   buildRekCompanies(); buildRekTabs(); renderRek();
 }
