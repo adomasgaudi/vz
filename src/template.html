@@ -3,7 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Markets — LT agencies · v0.1.207</title>
+<meta name="color-scheme" content="dark light">
+<meta name="supported-color-schemes" content="dark light">
+<title>Markets — LT agencies · v0.1.208</title>
 <script>
   // Apply saved theme + view mode before first paint to avoid a flash.
   // Theme default = dark; view default = Default (Dev mode adds the version / changelog popup).
@@ -458,7 +460,7 @@
     <div class="settings-menu" id="settingsMenu">
       <button id="themeToggle">🌙 Dark</button>
       <button id="viewToggle"></button>
-      <span class="nav-version">v0.1.207</span>
+      <span class="nav-version">v0.1.208</span>
     </div>
   </div>
   <div class="nav-sub">113 brands · 2019–2024</div>
@@ -1344,6 +1346,22 @@ renderSegView();
     sh.querySelectorAll('button').forEach(x=>x.classList.remove('active')); b.classList.add('active'); segShow=b.dataset.s;
     if(segType==='doughnut' && segChart) segChart.update('none'); else renderSegView(); })); })();
 
+// PB-5 DRASTIC: force active .seg toggle text white via INLINE !important (beats any author-CSS override),
+// reapplied on load + after every .seg click. If text STILL looks dark while the probe below reports
+// rgb(255,255,255), the cause is browser force-dark (not CSS) — defeated by the <meta name=color-scheme>.
+function paintSegActive(){ document.querySelectorAll('.seg button').forEach(b=>{
+  if(b.classList.contains('active')) b.style.setProperty('color','#fff','important'); else b.style.removeProperty('color'); }); }
+paintSegActive();
+document.addEventListener('click',e=>{ if(e.target.closest('.seg')) requestAnimationFrame(paintSegActive); });
+// Dev-only probe: prints the active toggles' COMPUTED colour + the live version (cache check).
+(function(){ if(currentMode()!=='dev') return; setTimeout(()=>{
+  const ver=((document.querySelector('.nav-version')||{}).textContent||'?');
+  const info=[...document.querySelectorAll('.seg button.active')].map(b=>b.textContent.trim()+'='+getComputedStyle(b).color).join(' · ');
+  const p=document.createElement('div'); p.style.cssText='position:fixed;top:58px;left:6px;right:6px;z-index:99999;background:#39c;color:#fff;font:11px/1.35 monospace;padding:6px 8px;border-radius:6px;font-weight:bold';
+  p.textContent='SEG PROBE '+ver+' | '+info+' | white but looks dark? → Brave force-dark';
+  p.addEventListener('click',()=>p.remove()); document.body.appendChild(p); setTimeout(()=>{try{p.remove();}catch(_){}} ,25000);
+}, 600); })();
+
 // ---------- Segment trend ----------
 const topSegs = segSorted.slice(0,5).map(s=>s[0]);   // still used by the size-vs-profit scatter grouping
 
@@ -1566,6 +1584,10 @@ let _dashRT; window.addEventListener('resize',()=>{ clearTimeout(_dashRT); _dash
 // ---------- SP & version history ----------
 // Each entry: title (2-5 words) · desc (5-15 words) · detail (15-50 words).
 const VERSIONS = [
+  {v:'v0.1.208', date:'2026-06-25 13:40', sp:2, title:'Doughnut white — drastic + probe',
+    desc:'v207 didn’t hold, so: meta color-scheme to disable browser force-dark, JS forces the active toggle white inline, and a dev probe prints the computed colour + version to pin the cause.',
+    detail:'PB-5 escalation. Added <meta name=color-scheme content="dark light"> (opts out of Brave/Android force-dark, which repaints AFTER CSS and beats appearance:none + !important). paintSegActive() sets inline color:#fff !important on active .seg buttons on load + every click. Dev probe shows each active toggle’s getComputedStyle colour + the live version — if it reads rgb(255,255,255) but still looks dark, it’s force-dark (now opted out); if it reads dark, it was cache. HARD-REFRESH required.',
+    cat:'CHART'},
   {v:'v0.1.207', date:'2026-06-25 12:40', sp:2, title:'Doughnut toggle white (PB-5)',
     desc:'The active Doughnut toggle showed dark text on Brave despite the CSS saying white — a native-button appearance quirk. Forced appearance:none + white.',
     detail:'Source proved clean (one .seg button.active{color:#fff}, identical HTML to the white siblings, no inline/JS recolour), so the dark text was a UA rendering quirk — some Android browsers impose system button text colour. Fix (PB-5): -webkit-appearance:none;appearance:none on .seg button (root, kills UA button styling) + color:#fff !important on .seg button.active (guarantee). Guard: every custom button gets appearance:none.',
