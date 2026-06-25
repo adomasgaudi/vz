@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Markets — LT agencies · v0.1.197</title>
+<title>Markets — LT agencies · v0.1.198</title>
 <script>
   // Apply saved theme + view mode before first paint to avoid a flash.
   // Theme default = dark; view default = Default (Dev mode adds the version / changelog popup).
@@ -323,7 +323,15 @@
   .scatter-strip{display:flex;gap:10px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:6px;max-width:100%;min-width:0}
   .scrub-yearlbl{font:800 22px/1 inherit;color:var(--text);text-align:center;margin:0 0 8px;letter-spacing:.02em}
   .scrub-ctrl{margin-top:12px}
-  .scrub-range{width:100%;height:28px;accent-color:var(--accent);cursor:pointer}
+  .scrub-range{-webkit-appearance:none;appearance:none;width:100%;height:40px;background:transparent;cursor:pointer;margin:0}
+  .scrub-range::-webkit-slider-runnable-track{height:6px;border-radius:var(--r-pill,4px);background:var(--panel2);border:1px solid var(--border)}
+  .scrub-range::-moz-range-track{height:6px;border-radius:var(--r-pill,4px);background:var(--panel2);border:1px solid var(--border)}
+  .scrub-range::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:30px;height:30px;margin-top:-13px;border-radius:50%;background:var(--accent);border:3px solid var(--panel);box-shadow:0 2px 7px rgba(0,0,0,.5)}
+  .scrub-range::-moz-range-thumb{width:30px;height:30px;border-radius:50%;background:var(--accent);border:3px solid var(--panel);box-shadow:0 2px 7px rgba(0,0,0,.5)}
+  .scrub-range:active::-webkit-slider-thumb{transform:scale(1.1)}
+  .scrub-range:active::-moz-range-thumb{transform:scale(1.1)}
+  .scrub-reset{position:absolute;top:6px;right:6px;z-index:5;width:var(--tap-min,30px);height:var(--tap-min,30px);border-radius:var(--r-pill,7px);background:var(--panel2);border:1px solid var(--border);color:var(--muted);font-size:15px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center}
+  .scrub-reset:active{color:var(--text);border-color:var(--accent)}
   .scrub-ticks{display:flex;justify-content:space-between;font-size:11px;font-weight:600;color:var(--muted);margin-top:2px}
   .scrub-ticks span{cursor:pointer;padding:2px 4px;transition:.12s}
   .scatter-mini{flex:0 0 auto;width:230px}
@@ -442,7 +450,7 @@
     <div class="settings-menu" id="settingsMenu">
       <button id="themeToggle">🌙 Dark</button>
       <button id="viewToggle"></button>
-      <span class="nav-version">v0.1.197</span>
+      <span class="nav-version">v0.1.198</span>
     </div>
   </div>
   <div class="nav-sub">113 brands · 2019–2024</div>
@@ -782,18 +790,7 @@ const SVG_SHAPES = ['circle','diamond','square','triangle']; // SVG chart-engine
 
 // Read a CSS custom property off <html> so charts track the active theme.
 const cssVar = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
-// ---- TEMP on-screen debug console (DATA-51 / #debug) — REMOVE once the per-employee root is confirmed ----
-const DBG_VER='v0.1.197';
-function DBG(msg){ try{
-  let el=document.getElementById('dbgPanel');
-  if(!el){ el=document.createElement('div'); el.id='dbgPanel';
-    el.style.cssText='position:fixed;left:0;right:0;bottom:0;z-index:99999;background:rgba(0,0,0,.88);color:#39ff14;font:11px/1.35 monospace;padding:6px 8px;max-height:42vh;overflow:auto;white-space:pre-wrap;border-top:2px solid #39ff14';
-    const hd=document.createElement('div'); hd.textContent='DEBUG '+DBG_VER+' — tap to clear'; hd.style.cssText='font-weight:bold;color:#fff;margin-bottom:3px';
-    el.appendChild(hd); el.addEventListener('click',()=>el.querySelectorAll('.dbgline').forEach(n=>n.remove()));
-    (document.body||document.documentElement).appendChild(el); }
-  const ln=document.createElement('div'); ln.className='dbgline'; ln.textContent=msg; el.appendChild(ln); el.scrollTop=el.scrollHeight;
-}catch(e){} }
-window.addEventListener('DOMContentLoaded',()=>DBG('boot '+DBG_VER));
+function DBG(){}   // debug console removed (per-employee root confirmed v197); no-op keeps existing call-sites harmless
 const esc=s=>String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); // declared early — SVG dashboard charts (above) escape labels at render time (TDZ fix)
 // GRID/CHART_BG are re-read on theme switch (see applyTheme); the per-chart
 // options reference GRID so a re-render picks up the new value.
@@ -1421,25 +1418,32 @@ function buildScatterScrub(){
     return out;
   }
   const W=640,H=360, m={t:14,r:14,b:30,l:46}, pw=W-m.l-m.r, ph=H-m.t-m.b;
-  const xAt=l=> m.l + (l-xMin)/((xMax-xMin)||1)*pw;
-  const yAt=v=> m.t+ph - (v-yLo)/((yHi-yLo)||1)*ph;
+  // pan/zoom view window (like the other SVG charts): drag to pan, wheel/pinch to zoom, ⤢ to reset.
+  const padX=((xMax-xMin)||1)*0.08, padY=((yHi-yLo)||1)*0.06;
+  const base={xMin:xMin-padX, xMax:xMax+padX, yMin:yLo-padY, yMax:yHi+padY};
+  const view={...base};
+  const xAt=l=> m.l + (l-view.xMin)/((view.xMax-view.xMin)||1)*pw;
+  const yAt=v=> m.t+ph - (v-view.yMin)/((view.yMax-view.yMin)||1)*ph;
+  const xInv=px=> view.xMin + (px-m.l)/pw*(view.xMax-view.xMin);
+  const yInv=py=> view.yMin + (m.t+ph-py)/ph*(view.yMax-view.yMin);
   const X_TICKS=[1e4,3e4,1e5,3e5,1e6,3e6,1e7,3e7,1e8];   // covers total revenue AND the smaller per-employee scale
+  const niceStep=(span,tgt)=>{ const raw=(span||1)/tgt, mag=Math.pow(10,Math.floor(Math.log10(raw))), n=raw/mag; return (n<1.5?1:n<3?2:n<7?5:10)*mag; };
   function draw(t){
     const grid=cssVar('--grid'), muted=cssVar('--muted'), text=cssVar('--text');
     let g='';
-    const yStep=(yHi-yLo)/8;                                   // 8 horizontal gridlines (matches the 2× grid elsewhere)
-    for(let v=yLo; v<=yHi+1e-6; v+=yStep){ const yy=yAt(v);
+    const yStep=niceStep(view.yMax-view.yMin, 8);             // ~8 horizontal gridlines across the current view
+    for(let v=Math.ceil(view.yMin/yStep)*yStep; v<=view.yMax; v+=yStep){ const yy=yAt(v); if(yy<m.t-1||yy>m.t+ph+1) continue;
       g+=`<line x1="${m.l}" y1="${yy.toFixed(1)}" x2="${W-m.r}" y2="${yy.toFixed(1)}" stroke="${grid}" stroke-width="1"/>`
         +`<text x="${m.l-6}" y="${(yy+3).toFixed(1)}" fill="${muted}" font-size="10" text-anchor="end">${Math.round(v)}%</text>`; }
-    X_TICKS.forEach(xv=>{ const l=lx(xv); if(l<xMin-1e-9||l>xMax+1e-9) return; const xx=xAt(l);   // vertical gridlines at log-€ ticks
+    X_TICKS.forEach(xv=>{ const l=lx(xv); if(l<view.xMin||l>view.xMax) return; const xx=xAt(l);   // vertical gridlines at log-€ ticks in view
       g+=`<line x1="${xx.toFixed(1)}" y1="${m.t}" x2="${xx.toFixed(1)}" y2="${m.t+ph}" stroke="${grid}" stroke-width="1"/>`
         +`<text x="${xx.toFixed(1)}" y="${H-10}" fill="${muted}" font-size="10" text-anchor="middle">€${fmtM(xv)}</text>`; });
-    if(yLo<0&&yHi>0){ const y0=yAt(0); g+=`<line x1="${m.l}" y1="${y0.toFixed(1)}" x2="${W-m.r}" y2="${y0.toFixed(1)}" stroke="${muted}" stroke-width="1" stroke-dasharray="3,3" opacity="0.55"/>`; }
-    let fab=''; frameAt(t).sort((a,b)=>b.r-a.r).forEach(p=>{ const cx=xAt(p.lx), cy=yAt(p.y), r=Math.max(2,p.r);
+    if(view.yMin<0&&view.yMax>0){ const y0=yAt(0); g+=`<line x1="${m.l}" y1="${y0.toFixed(1)}" x2="${W-m.r}" y2="${y0.toFixed(1)}" stroke="${muted}" stroke-width="1" stroke-dasharray="3,3" opacity="0.55"/>`; }
+    let bub='', fab=''; frameAt(t).sort((a,b)=>b.r-a.r).forEach(p=>{ const cx=xAt(p.lx), cy=yAt(p.y), r=Math.max(2,p.r);
       if(p.brand===MY_BRAND){ fab=`<circle cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="${Math.max(r,8).toFixed(1)}" fill="rgba(244,197,66,.95)" stroke="${text}" stroke-width="2" opacity="${p.op.toFixed(2)}"/>`; return; }
       const col=SEGCOLORS[p.seg]||'#888';
-      g+=`<circle cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="${r.toFixed(1)}" fill="${col}99" stroke="${col}" stroke-width="1" opacity="${p.op.toFixed(2)}"/>`; });
-    host.innerHTML=`<svg viewBox="0 0 ${W} ${H}" width="100%" height="100%" style="overflow:visible">${g}${fab}</svg>`;
+      bub+=`<circle cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="${r.toFixed(1)}" fill="${col}99" stroke="${col}" stroke-width="1" opacity="${p.op.toFixed(2)}"/>`; });
+    host.innerHTML=`<svg viewBox="0 0 ${W} ${H}" width="100%" height="100%" style="overflow:visible;touch-action:none"><defs><clipPath id="scrubclip"><rect x="${m.l}" y="${m.t}" width="${pw}" height="${ph}"/></clipPath></defs>${g}<g clip-path="url(#scrubclip)">${bub}${fab}</g></svg>`;
   }
   let _t=+(range?range.value:0)||0, _raf=0;
   function render(){ _raf=0; draw(_t);
@@ -1447,7 +1451,27 @@ function buildScatterScrub(){
       lblEl.textContent = f<0.06? String(years[i0]) : f>0.94? String(years[j]) : years[i0]+'–'+String(years[j]).slice(2); }
     if(ticksEl) ticksEl.querySelectorAll('span').forEach(s=>s.style.color=(+s.dataset.i===Math.round(_t))?'var(--text)':''); }
   function setT(t){ _t=Math.max(0,Math.min(lastIdx,t)); if(!_raf) _raf=requestAnimationFrame(render); }
-  host.__scrub={render:()=>draw(_t), setT};       // theme re-tint hook + delegate for the once-wired listeners
+  const redraw=()=>{ if(!_raf) _raf=requestAnimationFrame(render); };
+  // ---- pan / zoom / pinch (mirrors the other SVG charts); handlers re-assigned each build (no stacking) ----
+  const zoomAround=(ax,ay,k)=>{ view.xMin=ax+(view.xMin-ax)*k; view.xMax=ax+(view.xMax-ax)*k; view.yMin=ay+(view.yMin-ay)*k; view.yMax=ay+(view.yMax-ay)*k; };
+  const vbpt=(cx,cy)=>{ const rc=host.getBoundingClientRect(); return [ (cx-rc.left)*W/rc.width, (cy-rc.top)*H/rc.height ]; };
+  const pts=new Map(); let panPrev=null, pinchD=0;
+  host.onpointerdown=e=>{ pts.set(e.pointerId,{x:e.clientX,y:e.clientY}); try{host.setPointerCapture(e.pointerId);}catch(_){}
+    if(pts.size===1){ panPrev={x:e.clientX,y:e.clientY}; } else if(pts.size===2){ const a=[...pts.values()]; pinchD=Math.hypot(a[0].x-a[1].x,a[0].y-a[1].y); panPrev=null; } };
+  host.onpointermove=e=>{ if(!pts.has(e.pointerId)) return; pts.set(e.pointerId,{x:e.clientX,y:e.clientY});
+    if(pts.size>=2){ const a=[...pts.values()]; const nd=Math.hypot(a[0].x-a[1].x,a[0].y-a[1].y);
+      if(pinchD>0&&nd>0){ const mid=vbpt((a[0].x+a[1].x)/2,(a[0].y+a[1].y)/2); zoomAround(xInv(mid[0]),yInv(mid[1]), pinchD/nd); redraw(); } pinchD=nd; }
+    else if(panPrev){ const rc=host.getBoundingClientRect(), sx=W/rc.width, sy=H/rc.height;
+      const dX=(e.clientX-panPrev.x)*sx/pw*(view.xMax-view.xMin), dY=(e.clientY-panPrev.y)*sy/ph*(view.yMax-view.yMin);
+      view.xMin-=dX; view.xMax-=dX; view.yMin+=dY; view.yMax+=dY; panPrev={x:e.clientX,y:e.clientY}; redraw(); } };
+  const up=e=>{ pts.delete(e.pointerId); if(pts.size===1){ const p=[...pts.values()][0]; panPrev={x:p.x,y:p.y}; pinchD=0; } else if(pts.size===0){ panPrev=null; pinchD=0; } };
+  host.onpointerup=up; host.onpointercancel=up;
+  host.onwheel=e=>{ e.preventDefault(); const v=vbpt(e.clientX,e.clientY); zoomAround(xInv(v[0]),yInv(v[1]), e.deltaY>0?1.12:0.89); redraw(); };
+  host.__scrub={render:()=>draw(_t), setT, reset:()=>{ Object.assign(view, base); redraw(); }};   // theme re-tint + reset delegate
+  if(host.parentElement && !host.parentElement.querySelector('.scrub-reset')){   // ⤢ reset button, created once
+    const rb=document.createElement('button'); rb.className='scrub-reset'; rb.type='button'; rb.textContent='⤢'; rb.title='Reset view';
+    rb.addEventListener('click',()=>{ const h=document.getElementById('scrubChart'); if(h&&h.__scrub) h.__scrub.reset(); });
+    host.parentElement.appendChild(rb); }
   // Listeners wired ONCE (buildScatterScrub re-runs on basis change); they delegate to the latest closures.
   if(range && !range.__scrubWired){ range.addEventListener('input',()=>host.__scrub.setT(+range.value)); range.__scrubWired=1; }
   if(ticksEl && !ticksEl.__scrubWired){ ticksEl.addEventListener('click',e=>{ const s=e.target.closest('span'); if(!s) return; const i=+s.dataset.i; if(range) range.value=i; host.__scrub.setT(i); }); ticksEl.__scrubWired=1; }
@@ -1496,6 +1520,10 @@ let _dashRT; window.addEventListener('resize',()=>{ clearTimeout(_dashRT); _dash
 // ---------- SP & version history ----------
 // Each entry: title (2-5 words) · desc (5-15 words) · detail (15-50 words).
 const VERSIONS = [
+  {v:'v0.1.198', date:'2026-06-25 10:40', sp:3, title:'Scatter pan/zoom + nicer knob',
+    desc:'The bubble scatter now pans, zooms and pinches like the other charts (⤢ resets), the slider got a big round smartphone knob, and the debug console is gone.',
+    detail:'buildScatterScrub gained a pan/zoom view window: drag to pan, wheel/pinch to zoom about the cursor, ⤢ button resets to fit; bubbles are clipped to the plot so panning never spills them over the axes, gridlines re-tick across the live view. Handlers re-assigned each build (no stacking). Slider restyled (-webkit/-moz track + 30px circular accent thumb with shadow). Debug console removed (no-op DBG keeps call-sites safe).',
+    cat:'CHART'},
   {v:'v0.1.197', date:'2026-06-25 10:15', sp:1, title:'Per-employee ROOT fixed',
     desc:'The on-screen debug proved it: perEmp reached the data function but scatterDataForYear still ignored it (the divide-by-employees body never landed). Fixed the definition.',
     detail:'scatterDataForYear(y, perEmp) now actually returns x = estimatedIncome/employees when perEmp — the parameter + division had failed to land twice (same lost-edit class as PB-3). Verified the built index.html contains the division and the old total-only line is gone. Debug console kept one version so the owner can confirm the xRange now changes on Per-employee, then it gets removed.',
