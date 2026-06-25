@@ -59,3 +59,18 @@ and leave a `PB-n` comment at the fix site. Read this before touching an area wi
 - **Guard against re-introduction:** after editing `src/template.html`, ALWAYS `grep` the rebuilt
   `index.html` for a unique string from the change before claiming it's shipped. "Edit returned success"
   is not proof it's in the deploy — only the built artifact is. (Candidate for a build-check hook.)
+
+---
+
+## PB-4 — Black-on-black text in dark mode (surface token used as text colour)
+- **Recurrences:** multiple across sessions (owner: "still black on black text left").
+- **Seen on:** Android / Brave (owner's phone), dark theme — Data Explorer null cells + row numbers; native `<select>` option lists.
+- **Symptom:** some text invisible in dark mode (dark text on dark surface).
+- **Root cause:** a **surface/border token was used as a TEXT colour** — `td.null` and `.row-num` used
+  `color:var(--border)`, which is a near-black slate in dark mode → invisible. Plus native controls
+  (option lists, scrollbars) had no `color-scheme`, so the OS rendered them light → dark option text.
+- **Fix:** v0.1.203 — those two → `var(--muted)` (the faint-but-visible text token); added
+  `color-scheme:light/dark` to `:root` / `[data-theme=dark]` so native controls follow the theme.
+- **Guard against re-introduction:** TEXT/`fill` colour may ONLY be `--text`, `--muted`, or a series/
+  accent token — NEVER `--bg/--panel/--panel2/--border/--cost/--chart-bg` (those are surfaces). SVG
+  `<text>` must always carry an explicit `fill`. Candidate for a Stop-hook grep: `color:var(--border|bg|panel...)`.

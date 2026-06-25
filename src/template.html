@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Markets — LT agencies · v0.1.202</title>
+<title>Markets — LT agencies · v0.1.203</title>
 <script>
   // Apply saved theme + view mode before first paint to avoid a flash.
   // Theme default = dark; view default = Default (Dev mode adds the version / changelog popup).
@@ -20,6 +20,7 @@
      Brand/data colours (accent/green/red/amber/purple/gold) stay constant
      across themes so charts read consistently; only surfaces flip. */
   :root{
+    color-scheme:light;   /* native controls (option lists, scrollbars, date pickers) follow the theme — prevents black-on-dark option text */
     --bg:#f5f6f8; --panel:#ffffff; --panel2:#eef0f4; --border:#d8dce4; --cost:#aab2c2;
     --text:#1a1f2b; --muted:#5e6678; --accent:#2f6fe0; --green:#1faa72;
     --red:#dc4d4d; --amber:#d08a1f; --purple:#7c5cf0; --gold:#c79410;
@@ -27,6 +28,7 @@
     --app-w:840px;   /* desktop width limiter — caps the app to ~iPad width so wide screens render the single-column tablet layout */
   }
   [data-theme="dark"]{
+    color-scheme:dark;
     --bg:#0e1117; --panel:#161b25; --panel2:#1c2230; --border:#2a3245; --cost:#566179;
     --text:#e6e9f0; --muted:#8b93a7; --accent:#4f8ef7; --green:#34c98e;
     --red:#f06a6a; --amber:#f0b04f; --purple:#a78bfa; --gold:#f4c542;
@@ -420,13 +422,13 @@
   td.num{text-align:right!important;font-variant-numeric:tabular-nums}
   td.url a{color:var(--accent);text-decoration:none}
   td.url a:hover{text-decoration:underline}
-  td.null{color:var(--border);font-style:italic}
+  td.null{color:var(--muted);font-style:italic}
   .sheet-explorer th:first-child,.sheet-explorer td:first-child{position:sticky;left:0;z-index:1;background:inherit}
   .sheet-explorer th:first-child{z-index:3;background:var(--panel2)}
   .sheet-explorer td:first-child{background:var(--panel);font-weight:600}
   .sheet-explorer tbody tr:nth-child(even) td:first-child{background:var(--panel)}
   .sheet-explorer tr:hover td:first-child{background:var(--hover)!important}
-  .row-num{color:var(--border);font-size:11px;font-weight:400;width:36px;text-align:right;padding-right:10px}
+  .row-num{color:var(--muted);font-size:11px;font-weight:400;width:36px;text-align:right;padding-right:10px}
   .raw-sheets{border:1px solid var(--border);border-radius:10px;padding:0 14px;background:var(--panel)}
   .raw-sheets[open]{padding-bottom:14px}
   .raw-sheets>summary{cursor:pointer;padding:13px 0;font-weight:600;font-size:14px;color:var(--text);list-style:none}
@@ -451,7 +453,7 @@
     <div class="settings-menu" id="settingsMenu">
       <button id="themeToggle">🌙 Dark</button>
       <button id="viewToggle"></button>
-      <span class="nav-version">v0.1.202</span>
+      <span class="nav-version">v0.1.203</span>
     </div>
   </div>
   <div class="nav-sub">113 brands · 2019–2024</div>
@@ -1521,6 +1523,10 @@ let _dashRT; window.addEventListener('resize',()=>{ clearTimeout(_dashRT); _dash
 // ---------- SP & version history ----------
 // Each entry: title (2-5 words) · desc (5-15 words) · detail (15-50 words).
 const VERSIONS = [
+  {v:'v0.1.203', date:'2026-06-25 11:30', sp:1, title:'Dark-mode text fix',
+    desc:'Fixed black-on-black text in dark mode: Data Explorer null cells & row numbers used a border colour as text; native dropdowns now follow the theme.',
+    detail:'PB-4: td.null + .row-num used color:var(--border) (a near-black slate in dark) → invisible; switched to var(--muted). Added color-scheme:light/dark to :root and [data-theme=dark] so native option lists / scrollbars theme correctly (also helps Samsung force-dark). Guard logged: text/fill may only use --text/--muted/series tokens, never a surface token.',
+    cat:'CHART'},
   {v:'v0.1.202', date:'2026-06-25 11:15', sp:0.5, title:'Full-width nav bar',
     desc:'The top nav bar now spans the full screen again; only its contents (logo, tabs, gear) stay centered to the iPad-width column.',
     detail:'.topnav padding switched to max(24px, calc((100% - var(--app-w))/2)) — the bar background + border-bottom go edge-to-edge while the inner items align to --app-w, no HTML wrapper needed. Content .wrap stays a centered --app-w column.',
