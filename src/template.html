@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="color-scheme" content="dark light">
 <meta name="supported-color-schemes" content="dark light">
-<title>Markets — LT agencies · v0.1.214</title>
+<title>Markets — LT agencies · v0.1.215</title>
 <script>
   // Apply saved theme + view mode before first paint to avoid a flash.
   // Theme default = dark; view default = Default (Dev mode adds the version / changelog popup).
@@ -468,7 +468,7 @@
     <div class="settings-menu" id="settingsMenu">
       <button id="themeToggle">🌙 Dark</button>
       <button id="viewToggle"></button>
-      <span class="nav-version">v0.1.214</span>
+      <span class="nav-version">v0.1.215</span>
     </div>
   </div>
   <div class="nav-sub">113 brands · 2019–2024</div>
@@ -1676,6 +1676,9 @@ let _dashRT; window.addEventListener('resize',()=>{ clearTimeout(_dashRT); _dash
 // ---------- SP & version history ----------
 // Each entry: title (2-5 words) · desc (5-15 words) · detail (15-50 words).
 const VERSIONS = [
+  {v:'v0.1.215', date:'2026-06-25 15:37', sp:0.5, title:'Fix black chart tooltip',
+    desc:'SVG chart hover tooltip was black-on-black in light mode.',
+    detail:'The SVG tooltip + fit-button used cssVar("--card") for background, but --card is never defined, so it fell back to hardcoded dark #1b1f27 while text stayed --text (dark in light mode) → invisible black popup on Mac Chrome / light mode. Switched to the real --panel token, so it is theme-aware (white in light, dark in dark).'},
   {v:'v0.1.214', date:'2026-06-25 15:31', sp:1, title:'Market 2025/26 uses Sodra',
     desc:'Future years now surface the Sodra data we have + how many companies reported.',
     detail:'A year with no filed financials (2025+) no longer just says "nothing reported" — it shows the Sodra coverage that exists ("N of 113 companies report monthly Sodra data · X employees · avg wage €Y/mo") and marks revenue/turnover/profit missing. 2025-26 is Sodra-only, headcount+wage, ~12 companies.'},
@@ -2710,7 +2713,7 @@ function drawFinSvg(container, spec, opts){
     container.innerHTML=`<svg viewBox="0 0 ${W} ${H}" width="100%" height="100%" style="overflow:visible;touch-action:${interactive?'none':'auto'}">${defs}${s}</svg>`;
     // hover guide + tooltip (rebuilt each draw, after innerHTML)
     const tip=document.createElement('div');
-    tip.style.cssText='position:absolute;pointer-events:none;background:'+(cssVar('--card')||'#1b1f27')+';border:1px solid '+(cssVar('--border')||'#333')+';border-radius:4px;padding:4px 6px;font-size:11px;color:'+text+';display:none;z-index:6;white-space:nowrap';
+    tip.style.cssText='position:absolute;pointer-events:none;background:'+(cssVar('--panel')||'#fff')+';border:1px solid '+(cssVar('--border')||'#333')+';border-radius:4px;padding:4px 6px;font-size:11px;color:'+text+';display:none;z-index:6;white-space:nowrap';
     const guide=document.createElement('div');
     guide.style.cssText='position:absolute;top:0;bottom:0;width:1px;background:'+muted+';opacity:.45;display:none;pointer-events:none';
     st.geo={W,H,ml:m.l,mt:m.t,pw,ph};
@@ -2723,7 +2726,7 @@ function drawFinSvg(container, spec, opts){
     const engTag=document.createElement('span'); engTag.className='eng-tag'; engTag.textContent='SVG'; container.appendChild(engTag);
     if(interactive){
       const fitBtn=document.createElement('button'); fitBtn.textContent='⤢'; fitBtn.title='Fit — reset zoom & pan';
-      fitBtn.style.cssText='position:absolute;top:4px;right:4px;z-index:7;font:600 12px/1 system-ui;padding:2px 5px;border:1px solid '+(cssVar('--border')||'#333')+';border-radius:4px;background:'+(cssVar('--card')||'#1b1f27')+';color:'+muted+';cursor:pointer;opacity:.6';
+      fitBtn.style.cssText='position:absolute;top:4px;right:4px;z-index:7;font:600 12px/1 system-ui;padding:2px 5px;border:1px solid '+(cssVar('--border')||'#333')+';border-radius:4px;background:'+(cssVar('--panel')||'#fff')+';color:'+muted+';cursor:pointer;opacity:.6';
       fitBtn.onclick=ev=>{ ev.stopPropagation(); st.fit(); };
       container.appendChild(fitBtn);
     }
@@ -2857,10 +2860,10 @@ function drawBarsSvg(container, cfg){
     st.geo={W,H,ml:m.l,mt:m.t,pw,ph};
     const tag=document.createElement('span'); tag.className='eng-tag'; tag.textContent='SVG'; container.appendChild(tag);
     const tip=document.createElement('div');
-    tip.style.cssText='position:absolute;pointer-events:none;background:'+(cssVar('--card')||'#1b1f27')+';border:1px solid '+(cssVar('--border')||'#333')+';border-radius:4px;padding:4px 6px;font-size:11px;color:'+text+';display:none;z-index:6;white-space:nowrap';
+    tip.style.cssText='position:absolute;pointer-events:none;background:'+(cssVar('--panel')||'#fff')+';border:1px solid '+(cssVar('--border')||'#333')+';border-radius:4px;padding:4px 6px;font-size:11px;color:'+text+';display:none;z-index:6;white-space:nowrap';
     container.appendChild(tip);
     const fitBtn=document.createElement('button'); fitBtn.textContent='⤢'; fitBtn.title='Fit — reset zoom & pan';
-    fitBtn.style.cssText='position:absolute;top:4px;right:4px;z-index:7;font:600 12px/1 system-ui;padding:2px 5px;border:1px solid '+(cssVar('--border')||'#333')+';border-radius:4px;background:'+(cssVar('--card')||'#1b1f27')+';color:'+muted+';cursor:pointer;opacity:.6';
+    fitBtn.style.cssText='position:absolute;top:4px;right:4px;z-index:7;font:600 12px/1 system-ui;padding:2px 5px;border:1px solid '+(cssVar('--border')||'#333')+';border-radius:4px;background:'+(cssVar('--panel')||'#fff')+';color:'+muted+';cursor:pointer;opacity:.6';
     fitBtn.onclick=ev=>{ ev.stopPropagation(); st.fit(); };
     container.appendChild(fitBtn);
     container.onmousemove=e=>{ if(st.dragging) return; const rect=container.getBoundingClientRect(); if(!rect.height||!R) return;
