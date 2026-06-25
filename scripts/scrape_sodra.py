@@ -39,9 +39,18 @@ async def _json(pg, url):
 
 
 async def fetch_company(pg, jar):
-    """Resolve a jarCode to Sodra's internal code, then pull its monthly history."""
-    search = await _json(pg, f"{API}/solr/page?text={jar}&start=0&size=20")
-    match = next((c for c in search.get("content", []) if str(c.get("jarCode")) == str(jar)), None)
+    """Resolve a jarCode to Sodra's internal code, then pull its monthly history.
+    Retries the search a few times — under rapid sequential calls Sodra throttles
+    and returns an empty result set, which is NOT the same as 'not in Sodra'."""
+    match = None
+    for attempt in range(4):
+        search = await _json(pg, f"{API}/solr/page?text={jar}&start=0&size=20")
+        content = search.get("content", []) if isinstance(search, dict) else []
+        match = next((c for c in content if str(c.get("jarCode")) == str(jar)), None)
+        if match:
+            break
+        # empty/odd response -> likely throttled; back off and retry
+        await asyncio.sleep(1.5 * (attempt + 1))
     if not match:
         return None
     code = match["code"]
@@ -88,6 +97,7 @@ async def main(jars):
             wages = sum(1 for m in rec["months"] if m["avgWage"] is not None)
             print(f"{jar}: {rec['name']} — {len(rec['months'])} months "
                   f"({wages} with wage, latest insured={rec['latest']['numInsured']}) -> {os.path.relpath(out)}")
+            await asyncio.sleep(0.6)   # pace requests so Sodra doesn't throttle
         await b.close()
 
 
