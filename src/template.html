@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Markets — LT agencies · v0.1.198</title>
+<title>Markets — LT agencies · v0.1.199</title>
 <script>
   // Apply saved theme + view mode before first paint to avoid a flash.
   // Theme default = dark; view default = Default (Dev mode adds the version / changelog popup).
@@ -24,6 +24,7 @@
     --text:#1a1f2b; --muted:#5e6678; --accent:#2f6fe0; --green:#1faa72;
     --red:#dc4d4d; --amber:#d08a1f; --purple:#7c5cf0; --gold:#c79410;
     --hover:rgba(47,111,224,.07); --grid:#e6e9ef; --chart-bg:#ffffff; --zebra:rgba(0,0,0,.022);
+    --app-w:840px;   /* desktop width limiter — caps the app to ~iPad width so wide screens render the single-column tablet layout */
   }
   [data-theme="dark"]{
     --bg:#0e1117; --panel:#161b25; --panel2:#1c2230; --border:#2a3245; --cost:#566179;
@@ -33,7 +34,7 @@
   }
   *{box-sizing:border-box;margin:0;padding:0}
   body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,-apple-system,sans-serif;line-height:1.5}
-  .wrap{max-width:1400px;margin:0 auto;padding:24px}
+  .wrap{max-width:var(--app-w);margin:0 auto;padding:24px}
   .page-hero{margin:6px 0 22px}
   .page-hero h1{font-size:34px;font-weight:800;letter-spacing:-.5px;margin:0;line-height:1.05}
   .page-hero p{margin:6px 0 0;color:var(--muted);font-size:13.5px}
@@ -106,7 +107,7 @@
   .kpi .formula[open]>summary::before{transform:rotate(90deg)}
   .kpi .formula .formula-body{font-size:11px;color:var(--muted);font-family:monospace;line-height:1.4;opacity:.75;margin-top:6px}
   .pos{color:var(--green)} .neg{color:var(--red)}
-  .grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:18px}
+  .grid{display:grid;grid-template-columns:1fr;gap:18px;margin-bottom:18px}   /* single column everywhere — desktop matches the iPad/mobile tablet layout (width-limited) */
   .grid .full{grid-column:1/-1}
   .card{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:18px;min-width:0}
   .card h2{font-size:15px;font-weight:600;margin-bottom:4px}
@@ -269,7 +270,7 @@
   /* ── Top nav ── */
   /* All nav items share font-size + line-height = the nav height, so centred text lines up by
      baseline (PB: "Data exploration misaligned" — was caused by size diff + the 2px underline border). */
-  .topnav{display:flex;align-items:center;gap:0;background:var(--panel);border-bottom:1px solid var(--border);padding:0 24px;position:sticky;top:0;z-index:100;min-height:50px}
+  .topnav{display:flex;align-items:center;gap:0;background:var(--panel);border-bottom:1px solid var(--border);padding:0 24px;position:sticky;top:0;z-index:100;min-height:50px;max-width:var(--app-w);margin:0 auto}   /* nav shares the width limiter so it aligns with the content column */
   .topnav .logo{font-size:15px;font-weight:800;padding:0;margin-right:24px;white-space:normal;line-height:1.15;cursor:pointer;color:var(--text);transition:color .15s}
   .topnav .logo:hover,.topnav .logo:focus-visible{color:var(--accent);outline:none}
   .home-ic{display:none;font-size:1.15em;font-weight:700;color:var(--muted);margin-right:5px;vertical-align:-1px;transition:color .15s}
@@ -450,7 +451,7 @@
     <div class="settings-menu" id="settingsMenu">
       <button id="themeToggle">🌙 Dark</button>
       <button id="viewToggle"></button>
-      <span class="nav-version">v0.1.198</span>
+      <span class="nav-version">v0.1.199</span>
     </div>
   </div>
   <div class="nav-sub">113 brands · 2019–2024</div>
@@ -1520,6 +1521,10 @@ let _dashRT; window.addEventListener('resize',()=>{ clearTimeout(_dashRT); _dash
 // ---------- SP & version history ----------
 // Each entry: title (2-5 words) · desc (5-15 words) · detail (15-50 words).
 const VERSIONS = [
+  {v:'v0.1.199', date:'2026-06-25 11:00', sp:1, title:'Desktop width limiter',
+    desc:'On wide screens the app now caps to ~iPad width and centers, so desktop renders the clean single-column tablet layout instead of sprawling.',
+    detail:'New --app-w token (840px); .wrap and .topnav both max-width:var(--app-w);margin:0 auto so nav + content share one centered column. .grid is now single-column everywhere (desktop matched to the iPad/mobile layout; the old 2-col was the only desktop divergence). Phone/iPad unchanged — their viewport is already ≤840 so the cap is a no-op there.',
+    cat:'CHART'},
   {v:'v0.1.198', date:'2026-06-25 10:40', sp:3, title:'Scatter pan/zoom + nicer knob',
     desc:'The bubble scatter now pans, zooms and pinches like the other charts (⤢ resets), the slider got a big round smartphone knob, and the debug console is gone.',
     detail:'buildScatterScrub gained a pan/zoom view window: drag to pan, wheel/pinch to zoom about the cursor, ⤢ button resets to fit; bubbles are clipped to the plot so panning never spills them over the axes, gridlines re-tick across the live view. Handlers re-assigned each build (no stacking). Slider restyled (-webkit/-moz track + 30px circular accent thumb with shadow). Debug console removed (no-op DBG keeps call-sites safe).',
