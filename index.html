@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Markets — LT agencies · v0.1.192</title>
+<title>Markets — LT agencies · v0.1.193</title>
 <script>
   // Apply saved theme + view mode before first paint to avoid a flash.
   // Theme default = dark; view default = Default (Dev mode adds the version / changelog popup).
@@ -321,6 +321,11 @@
   .yr-row button.active{background:var(--accent);color:#fff;border-color:var(--accent)}
   /* Size-vs-profit small multiples: one horizontally scrollable row of mini scatters (DATA-16). */
   .scatter-strip{display:flex;gap:10px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:6px;max-width:100%;min-width:0}
+  .scrub-yearlbl{font:800 22px/1 inherit;color:var(--text);text-align:center;margin:0 0 8px;letter-spacing:.02em}
+  .scrub-ctrl{margin-top:12px}
+  .scrub-range{width:100%;height:28px;accent-color:var(--accent);cursor:pointer}
+  .scrub-ticks{display:flex;justify-content:space-between;font-size:11px;font-weight:600;color:var(--muted);margin-top:2px}
+  .scrub-ticks span{cursor:pointer;padding:2px 4px;transition:.12s}
   .scatter-mini{flex:0 0 auto;width:230px}
   .scatter-mini-t{font:700 13px/1 inherit;color:var(--text);text-align:center;margin-bottom:4px}
   .scatter-mini-c{position:relative;height:200px;background:var(--panel2);border:1px solid var(--border);border-radius:7px;padding:4px}
@@ -437,7 +442,7 @@
     <div class="settings-menu" id="settingsMenu">
       <button id="themeToggle">🌙 Dark</button>
       <button id="viewToggle"></button>
-      <span class="nav-version">v0.1.192</span>
+      <span class="nav-version">v0.1.193</span>
     </div>
   </div>
   <div class="nav-sub">113 brands · 2019–2024</div>
@@ -548,8 +553,13 @@
     </div>
     <div class="card full">
       <h2>Size vs profitability by year</h2>
-      <div class="desc" style="margin-bottom:6px">Each company = one bubble (revenue × margin, size = headcount); Fabula in gold. Swipe sideways to scan every year.</div>
-      <div class="scatter-strip" id="scatterStrip"></div>
+      <div class="desc" style="margin-bottom:6px">Each company = one bubble (revenue × margin, size = headcount); Fabula in gold. <b>Drag the slider</b> to watch every company glide year to year.</div>
+      <div id="scrubYearLbl" class="scrub-yearlbl">2019</div>
+      <div class="chartbox"><div class="svgwrap" id="scrubChart" style="position:absolute;inset:0"></div></div>
+      <div class="scrub-ctrl">
+        <input type="range" id="scrubRange" class="scrub-range" min="0" max="1" step="0.001" value="0" aria-label="Year scrubber">
+        <div id="scrubTicks" class="scrub-ticks"></div>
+      </div>
     </div>
   </div>
 
@@ -718,6 +728,7 @@ function applyTheme(theme){
   syncThemeButton();
   retintCharts();
   try{ redrawDashSvg(); }catch(e){}     // SVG dashboard charts repaint grid/labels (series colours kept)
+  try{ const sc=document.getElementById('scrubChart'); if(sc&&sc.__scrub) sc.__scrub.render(); }catch(e){}   // scatter scrubber re-tint
   try{ drawSDD(); }catch(e){}           // deep-dive SVG charts rebuild fresh
 }
 syncThemeButton();
@@ -1359,20 +1370,69 @@ function renderScatterYear(){
   if(empty) empty.classList.remove('show'); el.style.display='';
   scatterChart=new Chart(el, buildScatterCfg(rows));
 }
-// All-years (Market all time tab) — a horizontally scrollable row of mini scatters, one per data year.
-function buildScatterStrip(){
-  const row=document.getElementById('scatterStrip'); if(!row) return;
-  row.innerHTML='';
-  FIN_YEARS.forEach(y=>{ const rows=scatterDataForYear(y); if(!rows.length) return;
-    const cell=document.createElement('div'); cell.className='scatter-mini';
-    cell.innerHTML='<div class="scatter-mini-t">'+y+'</div><div class="scatter-mini-c"><canvas></canvas></div>';
-    row.appendChild(cell);
-    new Chart(cell.querySelector('canvas'), buildScatterCfg(rows,{mini:true}));
-  });
+// All-years size-vs-profitability: ONE custom-SVG bubble chart + a draggable year scrubber.
+// Dragging the slider interpolates every company's bubble (x=revenue log, y=margin, r=headcount)
+// smoothly between adjacent years — companies entering/leaving the frame fade in/out.
+// (Replaces the old mini-carousel of separate Chart.js cells.)
+function buildScatterScrub(){
+  const host=document.getElementById('scrubChart'); if(!host) return;
+  const years=FIN_YEARS.filter(y=>scatterDataForYear(y).length);
+  if(years.length<2){ host.innerHTML='<div class="ff-empty" style="padding:20px">Not enough years to animate.</div>'; return; }
+  const perYear=years.map(y=>{ const mm={}; scatterDataForYear(y).forEach(d=>mm[d.brand]=d); return mm; });
+  const lx=v=>Math.log10(Math.max(1,v));
+  let xs=[], ys=[]; perYear.forEach(mm=>Object.values(mm).forEach(d=>{ xs.push(lx(d.x)); ys.push(d.y); }));
+  const xMin=Math.min(...xs), xMax=Math.max(...xs);
+  const yLo=Math.min(-30, Math.floor(Math.min(...ys)/10)*10), yHi=Math.max(45, Math.ceil(Math.max(...ys)/10)*10);
+  const lastIdx=years.length-1;
+  const range=document.getElementById('scrubRange'), ticksEl=document.getElementById('scrubTicks'), lblEl=document.getElementById('scrubYearLbl');
+  if(range){ range.min=0; range.max=lastIdx; range.step=0.001; if(+range.value>lastIdx) range.value=0; }
+  if(ticksEl){ ticksEl.innerHTML=years.map((y,i)=>`<span data-i="${i}">${y}</span>`).join(''); }
+
+  const lerp=(a,b,f)=>a+(b-a)*f;
+  function frameAt(t){
+    const i0=Math.max(0,Math.min(lastIdx,Math.floor(t))), i1=Math.min(lastIdx,i0+1), f=t-i0;
+    const A=perYear[i0], B=perYear[i1], out=[]; const brands=new Set([...Object.keys(A),...Object.keys(B)]);
+    brands.forEach(br=>{ const a=A[br], b=B[br];
+      if(a&&b) out.push({brand:br, lx:lerp(lx(a.x),lx(b.x),f), y:lerp(a.y,b.y,f), r:lerp(a.r,b.r,f), seg:a.seg, op:1});
+      else if(a) out.push({brand:br, lx:lx(a.x), y:a.y, r:a.r, seg:a.seg, op:1-f});
+      else out.push({brand:br, lx:lx(b.x), y:b.y, r:b.r, seg:b.seg, op:f}); });
+    return out;
+  }
+  const W=640,H=360, m={t:14,r:14,b:30,l:46}, pw=W-m.l-m.r, ph=H-m.t-m.b;
+  const xAt=l=> m.l + (l-xMin)/((xMax-xMin)||1)*pw;
+  const yAt=v=> m.t+ph - (v-yLo)/((yHi-yLo)||1)*ph;
+  const X_TICKS=[5e4,1e5,3e5,1e6,3e6,1e7,3e7,1e8];
+  function draw(t){
+    const grid=cssVar('--grid'), muted=cssVar('--muted'), text=cssVar('--text');
+    let g='';
+    const yStep=(yHi-yLo)/8;                                   // 8 horizontal gridlines (matches the 2× grid elsewhere)
+    for(let v=yLo; v<=yHi+1e-6; v+=yStep){ const yy=yAt(v);
+      g+=`<line x1="${m.l}" y1="${yy.toFixed(1)}" x2="${W-m.r}" y2="${yy.toFixed(1)}" stroke="${grid}" stroke-width="1"/>`
+        +`<text x="${m.l-6}" y="${(yy+3).toFixed(1)}" fill="${muted}" font-size="10" text-anchor="end">${Math.round(v)}%</text>`; }
+    X_TICKS.forEach(xv=>{ const l=lx(xv); if(l<xMin-1e-9||l>xMax+1e-9) return; const xx=xAt(l);   // vertical gridlines at log-€ ticks
+      g+=`<line x1="${xx.toFixed(1)}" y1="${m.t}" x2="${xx.toFixed(1)}" y2="${m.t+ph}" stroke="${grid}" stroke-width="1"/>`
+        +`<text x="${xx.toFixed(1)}" y="${H-10}" fill="${muted}" font-size="10" text-anchor="middle">€${fmtM(xv)}</text>`; });
+    if(yLo<0&&yHi>0){ const y0=yAt(0); g+=`<line x1="${m.l}" y1="${y0.toFixed(1)}" x2="${W-m.r}" y2="${y0.toFixed(1)}" stroke="${muted}" stroke-width="1" stroke-dasharray="3,3" opacity="0.55"/>`; }
+    let fab=''; frameAt(t).sort((a,b)=>b.r-a.r).forEach(p=>{ const cx=xAt(p.lx), cy=yAt(p.y), r=Math.max(2,p.r);
+      if(p.brand===MY_BRAND){ fab=`<circle cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="${Math.max(r,8).toFixed(1)}" fill="rgba(244,197,66,.95)" stroke="${text}" stroke-width="2" opacity="${p.op.toFixed(2)}"/>`; return; }
+      const col=SEGCOLORS[p.seg]||'#888';
+      g+=`<circle cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="${r.toFixed(1)}" fill="${col}99" stroke="${col}" stroke-width="1" opacity="${p.op.toFixed(2)}"/>`; });
+    host.innerHTML=`<svg viewBox="0 0 ${W} ${H}" width="100%" height="100%" style="overflow:visible">${g}${fab}</svg>`;
+  }
+  let _t=+(range?range.value:0)||0, _raf=0;
+  function render(){ _raf=0; draw(_t);
+    if(lblEl){ const i0=Math.floor(_t), f=_t-i0, j=Math.min(lastIdx,i0+1);
+      lblEl.textContent = f<0.06? String(years[i0]) : f>0.94? String(years[j]) : years[i0]+'–'+String(years[j]).slice(2); }
+    if(ticksEl) ticksEl.querySelectorAll('span').forEach(s=>s.style.color=(+s.dataset.i===Math.round(_t))?'var(--text)':''); }
+  function setT(t){ _t=Math.max(0,Math.min(lastIdx,t)); if(!_raf) _raf=requestAnimationFrame(render); }
+  if(range){ range.addEventListener('input',()=>setT(+range.value)); }
+  if(ticksEl){ ticksEl.addEventListener('click',e=>{ const s=e.target.closest('span'); if(!s) return; const i=+s.dataset.i; if(range) range.value=i; setT(i); }); }
+  host.__scrub={render:()=>draw(_t)};            // theme re-tint hook (applyTheme calls this)
+  render();
 }
 window.__scatterReady=true;   // now renderMarket (on year change) may drive the single-year scatter
 renderScatterYear();
-buildScatterStrip();
+buildScatterScrub();
 
 // ---------- Salary trend ----------
 function salaryQuartiles(y){
@@ -1413,6 +1473,10 @@ let _dashRT; window.addEventListener('resize',()=>{ clearTimeout(_dashRT); _dash
 // ---------- SP & version history ----------
 // Each entry: title (2-5 words) · desc (5-15 words) · detail (15-50 words).
 const VERSIONS = [
+  {v:'v0.1.193', date:'2026-06-24 16:00', sp:5, title:'Scatter scrubber',
+    desc:'The all-years size-vs-profitability bubble chart is now one custom SVG chart with a draggable slider that glides every company between years, replacing the mini-carousel.',
+    detail:'New buildScatterScrub(): custom-SVG bubbles on a fixed log-revenue × margin frame; a range slider (0..n years) interpolates each company’s x/y/r between adjacent years, companies entering/leaving fade in/out. Year label + clickable year ticks under the slider; Fabula gold. Theme-aware (re-tints via applyTheme). Replaces the Chart.js mini-strip. Single-year Market scatter still Chart.js for now.',
+    cat:'CHART'},
   {v:'v0.1.192', date:'2026-06-24 15:30', sp:1, title:'Denser chart grids',
     desc:'Every SVG chart now has roughly twice as many horizontal gridlines and adds vertical gridlines at each x label, for easier reading.',
     detail:'drawFinSvg TICKS 4→8 (≈2× horizontal lines) and a vertical gridline drawn at every x-axis label; drawBarsSvg value gridlines 4→8. Grid renders behind the series (it sits before body in the SVG string), theme-aware via the grid token. Scatter grid follows when it moves to SVG.',
