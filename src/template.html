@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="color-scheme" content="dark light">
 <meta name="supported-color-schemes" content="dark light">
-<title>Markets — LT agencies · v0.2.1</title>
+<title>Markets — LT agencies · v0.2.2</title>
 <script>
   // Apply saved theme + view mode before first paint to avoid a flash.
   // Theme default = dark; view default = Default (Dev mode adds the version / changelog popup).
@@ -198,6 +198,8 @@
   .grp-panel[hidden]{display:none}
   /* Default view hides the dev-only version + changelog popup; Dev mode shows everything. */
   html[data-mode="default"] .nav-version,html[data-mode="default"] .hist-fab,html[data-mode="default"] .dbg-fab,html[data-mode="default"] #graphPanToggle{display:none}
+  /* Formula disclosures under KPI cards are Dev-only (hidden in the clean Default view). */
+  html[data-mode="default"] .kpi-f,html[data-mode="default"] .kpi .formula{display:none}
   /* Every debug overlay (probes, error banner, audit panel) is Dev-only and vanishes the instant you leave Dev. */
   html[data-mode="default"] .dbg-overlay{display:none!important}
   /* Graph pan OFF (default): let the page scroll over charts by overriding the engines' inline touch-action:none. */
@@ -471,7 +473,7 @@
       <button id="themeToggle">🌙 Dark</button>
       <button id="viewToggle"></button>
       <button id="graphPanToggle">🔒 Graph pan: off</button>
-      <span class="nav-version">v0.2.1</span>
+      <span class="nav-version">v0.2.2</span>
     </div>
   </div>
   <div class="nav-sub">113 brands · 2019–2024</div>
@@ -1687,6 +1689,10 @@ let _dashRT; window.addEventListener('resize',()=>{ clearTimeout(_dashRT); _dash
 // ---------- SP & version history ----------
 // Each entry: title (2-5 words) · desc (5-15 words) · detail (15-50 words).
 const VERSIONS = [
+  {v:'v0.2.2', date:'2026-06-25 16:10', sp:0.5, title:'Formulas Dev-only',
+    desc:'The “ƒ formula” disclosures under the KPI cards now show only in Dev mode; the Default view stays clean.',
+    detail:'html[data-mode=default] hides .kpi-f (market KPIs) and .kpi .formula (company KPIs), same gating as the version badge / changelog / debug overlays.',
+    cat:'CHART'},
   {v:'v0.2.1', date:'2026-06-25 15:48', sp:2.5, title:'Data explorer EN toggle',
     desc:'🌐 toggle translates the company data explorer field names to English.',
     detail:'Added an EN/LT toggle to the Sourced-Data explorer: a LT→EN dictionary covers all 55 registry field bases (Įmonė/Finansai/Darbuotojai/Skolos) + the 4 tab names + credit-risk values, applied to field labels, tabs and activity/risk values. Unmapped labels fall back to Lithuanian; free text (names, addresses, descriptions) and numbers stay as-is.',
