@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="color-scheme" content="dark light">
 <meta name="supported-color-schemes" content="dark light">
-<title>Markets — LT agencies · v0.1.213</title>
+<title>Markets — LT agencies · v0.1.214</title>
 <script>
   // Apply saved theme + view mode before first paint to avoid a flash.
   // Theme default = dark; view default = Default (Dev mode adds the version / changelog popup).
@@ -468,7 +468,7 @@
     <div class="settings-menu" id="settingsMenu">
       <button id="themeToggle">🌙 Dark</button>
       <button id="viewToggle"></button>
-      <span class="nav-version">v0.1.213</span>
+      <span class="nav-version">v0.1.214</span>
     </div>
   </div>
   <div class="nav-sub">113 brands · 2019–2024</div>
@@ -1164,14 +1164,39 @@ function medianSalary(y){
 }
 const MKT_YEARS = FIN_YEARS;                       // Market year row: full-coverage financial years only (2025 is partial → not offered at market level)
 let mktMode='avg', mktYear=LAST;
+// Sodra-only coverage for a year with no filed financials (2025+): how many of
+// the tracked companies report monthly Sodra data, and the headcount/wage we do
+// have. month is an int YYYYMM.
+function sodraYearAgg(y){
+  let cos=0, emp=0, wages=[];
+  ((REK_DATA&&REK_DATA.companies)||[]).forEach(c=>{
+    const inYr=((c.sodra&&c.sodra.months)||[]).filter(m=>Math.floor(m.month/100)===y);
+    if(!inYr.length) return;
+    cos++; const last=inYr[inYr.length-1];
+    if(last.numInsured!=null) emp+=+last.numInsured;
+    if(last.avgWage) wages.push(+last.avgWage);
+  });
+  return {cos, emp, avgWage: wages.length? Math.round(wages.reduce((a,b)=>a+b,0)/wages.length) : null};
+}
 function renderMarket(mode){
   mode = mktMode = mode || mktMode;                  // remember basis across year cycles
   const y=mktYear, aCur=marketAgg(y), aPrev=marketAgg(y-1), a0=marketAgg(YEARS[0]);
   const yr=document.getElementById('mktYearRow'); if(yr) yr.querySelectorAll('button').forEach(b=>b.classList.toggle('active',+b.dataset.y===y));
   const tab=[...document.querySelectorAll('.grp-tab')].find(t=>/^Market \d{4}$/.test(t.textContent.trim())); if(tab) tab.textContent='Market '+y;
   if(window.__scatterReady) renderScatterYear();   // size-vs-profit scatter follows the selected year (skipped until its module inits — avoids TDZ on first render)
-  if(!aCur.n){                                        // future / unreported year → empty state
-    const mf=document.getElementById('marketFlow'); if(mf){ mf.innerHTML='<div class="ff-empty">No companies have reported '+y+' figures yet.</div>'; mf.style.display=''; }
+  if(!aCur.n){                                        // no filed financials for this year (2025+)
+    const sa=sodraYearAgg(y), total=BRANDS.length;
+    const mf=document.getElementById('marketFlow');
+    if(mf){
+      mf.innerHTML = sa.cos
+        ? '<div class="ff-empty"><b>'+y+' — partial data (Sodra only).</b><br>'
+          + sa.cos+' of '+total+' companies report monthly Sodra data so far · '
+          + Math.round(sa.emp).toLocaleString()+' employees'
+          + (sa.avgWage? ' · avg wage €'+sa.avgWage.toLocaleString()+'/mo' : '')
+          + '<br><span style="opacity:.65">Revenue, turnover &amp; profit aren\'t filed yet for '+y+' — shown as missing.</span></div>'
+        : '<div class="ff-empty">No companies have reported '+y+' figures yet.</div>';
+      mf.style.display='';
+    }
     document.getElementById('kpis').innerHTML='';
     return;
   }
@@ -1651,6 +1676,9 @@ let _dashRT; window.addEventListener('resize',()=>{ clearTimeout(_dashRT); _dash
 // ---------- SP & version history ----------
 // Each entry: title (2-5 words) · desc (5-15 words) · detail (15-50 words).
 const VERSIONS = [
+  {v:'v0.1.214', date:'2026-06-25 15:31', sp:1, title:'Market 2025/26 uses Sodra',
+    desc:'Future years now surface the Sodra data we have + how many companies reported.',
+    detail:'A year with no filed financials (2025+) no longer just says "nothing reported" — it shows the Sodra coverage that exists ("N of 113 companies report monthly Sodra data · X employees · avg wage €Y/mo") and marks revenue/turnover/profit missing. 2025-26 is Sodra-only, headcount+wage, ~12 companies.'},
   {v:'v0.1.213', date:'2026-06-25 15:30', sp:1, title:'Debug overlays Dev-only',
     desc:'All debug overlays are Dev-mode-only, vanish on switch, and tap-to-dismiss.',
     detail:'Shared .dbg-overlay class: html[data-mode=default] hides every probe/console so they disappear the instant you leave Dev. SEG PROBE z-index dropped 99999→150 (was covering the settings dropdown, blocking the Dev toggle) and tagged dbg-overlay + tap-to-close. Error banner is now Dev-only + tap-to-dismiss; contrast-audit panel tagged too.'},
