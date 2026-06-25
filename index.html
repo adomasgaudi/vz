@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="color-scheme" content="dark light">
 <meta name="supported-color-schemes" content="dark light">
-<title>Markets — LT agencies · v0.2.2</title>
+<title>Markets — LT agencies · v0.2.3</title>
 <script>
   // Apply saved theme + view mode before first paint to avoid a flash.
   // Theme default = dark; view default = Default (Dev mode adds the version / changelog popup).
@@ -401,6 +401,31 @@
   .src-legend .src-cube{margin-right:5px}
   .co-cubes{display:inline-flex;gap:2px;margin-right:8px;vertical-align:middle}
   .co-cubes .src-cube{width:9px;height:9px}
+  /* ── Data-coverage matrix: a square per company×year, coloured by how much data exists ── */
+  .cov-wrap{margin-bottom:16px;border:1px solid var(--border);border-radius:10px;background:var(--panel);overflow:hidden}
+  .cov-wrap>summary{cursor:pointer;padding:11px 14px;font-weight:600;font-size:14px;color:var(--text);list-style:none;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .cov-wrap>summary::-webkit-details-marker{display:none}
+  .cov-wrap>summary::before{content:'▸';color:var(--muted);transition:.15s;display:inline-block}
+  .cov-wrap[open]>summary::before{transform:rotate(90deg)}
+  .cov-sub{font-weight:400;color:var(--muted);font-size:12px}
+  .cov-body{padding:2px 14px 14px}
+  .cov-tools{display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin:4px 0 12px}
+  .cov-tools input{background:var(--panel2);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:6px 12px;font-size:13px;font-family:inherit;min-width:170px}
+  .cov-legend{display:flex;gap:14px;align-items:center;font-size:12px;color:var(--muted);flex-wrap:wrap}
+  .cov-legend>span{display:inline-flex;align-items:center;gap:5px}
+  .cov-scroll{max-height:430px;overflow:auto;border:1px solid var(--border);border-radius:8px}
+  .cov-grid{display:grid;grid-template-columns:minmax(130px,1.5fr) repeat(7,minmax(28px,1fr));font-size:12px;min-width:380px}
+  .cov-grid>div{padding:5px 6px;display:flex;align-items:center;justify-content:center;border-bottom:1px solid var(--border)}
+  .cov-grid>div.clk{cursor:pointer}
+  .cov-grid>div.clk:hover{background:var(--hover)}
+  .cov-hd{position:sticky;top:0;z-index:2;background:var(--panel2)!important;color:var(--muted);font-size:11px;font-weight:600;border-bottom:2px solid var(--border)}
+  .cov-name{justify-content:flex-start!important;color:var(--text);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;position:sticky;left:0;background:var(--panel);z-index:1}
+  .cov-name.cov-hd{z-index:3}
+  .csq{width:15px;height:15px;border-radius:3px;flex:0 0 auto;background:var(--border);display:inline-block;vertical-align:middle}
+  .csq.cov-f{background:var(--green)}
+  .csq.cov-h{background:var(--green);opacity:.5}
+  .csq.cov-p{background:var(--amber)}
+  .csq.cov-0{background:transparent;border:1px dashed var(--border);opacity:.7}
   /* a row's source-tag cell: small cubes showing which source(s) the row came from */
   .cube-cell{display:flex;gap:3px;align-items:center;flex-wrap:nowrap}
   /* Sourced-data tables: wrap long text, fixed layout */
@@ -473,7 +498,7 @@
       <button id="themeToggle">🌙 Dark</button>
       <button id="viewToggle"></button>
       <button id="graphPanToggle">🔒 Graph pan: off</button>
-      <span class="nav-version">v0.2.2</span>
+      <span class="nav-version">v0.2.3</span>
     </div>
   </div>
   <div class="nav-sub">113 brands · 2019–2024</div>
@@ -662,6 +687,21 @@
       <div class="co-select-list" id="rekCoList" role="listbox"></div>
     </div>
   </div>
+  <details class="cov-wrap" open id="covWrap">
+    <summary>📊 Data coverage by year <span class="cov-sub" id="covStat"></span></summary>
+    <div class="cov-body">
+      <div class="cov-tools">
+        <input type="text" id="covSearch" placeholder="Filter companies…" autocomplete="off">
+        <span class="cov-legend">
+          <span><span class="csq cov-f"></span>Full</span>
+          <span><span class="csq cov-h"></span>Partial</span>
+          <span><span class="csq cov-p"></span>Headcount/pay only</span>
+          <span><span class="csq cov-0"></span>No data</span>
+        </span>
+      </div>
+      <div class="cov-scroll"><div id="covGrid"></div></div>
+    </div>
+  </details>
   <div class="data-tabs" id="rekTabs"></div>
   <div class="data-controls">
     <div class="seg" id="rekMode">
@@ -1689,6 +1729,10 @@ let _dashRT; window.addEventListener('resize',()=>{ clearTimeout(_dashRT); _dash
 // ---------- SP & version history ----------
 // Each entry: title (2-5 words) · desc (5-15 words) · detail (15-50 words).
 const VERSIONS = [
+  {v:'v0.2.3', date:'2026-06-25 16:40', sp:2, title:'Data coverage squares',
+    desc:'Data explorer now opens with a square-per-company×year grid showing how much data each year holds or is missing.',
+    detail:'New “📊 Data coverage by year” matrix at the top of the explorer: one square per company × year (2019–2025), coloured by how many of the 7 core metrics that record carries — Full (all 7) / Partial / Headcount-pay-only (the partial 2025 Sodra rows) / No data (no record). Headline counts how many company-years have data; a filter box narrows the list and clicking a row opens that company in the explorer.',
+    cat:'DATA'},
   {v:'v0.2.2', date:'2026-06-25 16:10', sp:0.5, title:'Formulas Dev-only',
     desc:'The “ƒ formula” disclosures under the KPI cards now show only in Dev mode; the Default view stays clean.',
     detail:'html[data-mode=default] hides .kpi-f (market KPIs) and .kpi .formula (company KPIs), same gating as the version badge / changelog / debug overlays.',
@@ -3204,6 +3248,44 @@ function rekFiltered(){
   return rows;
 }
 
+// ── Data-coverage matrix: one square per company×year, coloured by how many of the
+// 7 core metrics (employees, avgSalary, salaryCosts, revenue, profit, nonSalaryCosts,
+// estimatedIncome) that company-year record carries. Missing record = "No data".
+const COV_FIELDS=['employees','avgSalary','salaryCosts','revenue','profit','nonSalaryCosts','estimatedIncome'];
+function covInfo(rec){
+  if(!rec) return {cls:'cov-0', lbl:'No data', n:0};
+  const n=COV_FIELDS.reduce((a,f)=>a+(rec[f]!=null?1:0),0);
+  if(n>=7) return {cls:'cov-f', lbl:'Full — all 7 metrics', n};
+  if(n>=3) return {cls:'cov-h', lbl:`Partial — ${n}/7 metrics`, n};
+  if(n>=1) return {cls:'cov-p', lbl:`Headcount/pay only — ${n}/7 metrics`, n};
+  return {cls:'cov-0', lbl:'No data', n:0};
+}
+function renderCoverage(){
+  const host=document.getElementById('covGrid'); if(!host) return;
+  const ys=YEARS;
+  // headline stat over ALL companies (not the filter)
+  let have=0, total=0;
+  BRANDS.forEach(b=>ys.forEach(y=>{ total++; if(covInfo(byBrand[b]&&byBrand[b][y]).n>0) have++; }));
+  const stat=document.getElementById('covStat');
+  if(stat) stat.textContent=`· ${have} of ${total} company-years have data (${total-have} missing)`;
+  const q=(document.getElementById('covSearch')?.value||'').trim().toLowerCase();
+  const brands=BRANDS.slice().sort((a,b)=>a.localeCompare(b,'lt')).filter(b=>!q||b.toLowerCase().includes(q));
+  let html=`<div class="cov-grid"><div class="cov-name cov-hd">Company</div>`
+    + ys.map(y=>`<div class="cov-hd">${y}</div>`).join('');
+  brands.forEach(b=>{
+    const slug=(REK_COMPANIES.find(c=>c.brand===b)||{}).slug;
+    const clk=slug?' clk':'', sa=slug?` data-slug="${esc(slug)}"`:'';
+    html+=`<div class="cov-name${clk}"${sa} title="${esc(b)}${slug?' — open in explorer':''}">${esc(b)}</div>`;
+    ys.forEach(y=>{ const info=covInfo(byBrand[b]&&byBrand[b][y]);
+      html+=`<div class="${clk}"${sa} title="${esc(b)} · ${y} — ${info.lbl}"><span class="csq ${info.cls}"></span></div>`; });
+  });
+  html+=`</div>`;
+  host.innerHTML=html;
+  host.querySelectorAll('[data-slug]').forEach(el=>el.addEventListener('click',()=>{
+    selectCompany(el.dataset.slug);
+    document.getElementById('rekTableWrap')?.scrollIntoView({behavior:'smooth',block:'start'});
+  }));
+}
 function buildRekCompanies(){
   const sel=document.getElementById('rekCompanySelect'); if(!sel) return;
   if(REK_COMPANIES.length<2){ sel.style.display='none'; return; }   // single company: no picker
@@ -3382,6 +3464,8 @@ function initRek(){
   buildRekCompanies();
   buildRekTabs();
   renderRek();
+  renderCoverage();
+  document.getElementById('covSearch')?.addEventListener('input', renderCoverage);
   document.querySelectorAll('#rekMode button').forEach(b=>b.addEventListener('click',()=>{
     rekMode=b.dataset.mode; rekSort=-1;
     syncModeButtons(); buildRekTabs(); renderRek();
