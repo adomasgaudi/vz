@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="color-scheme" content="dark light">
 <meta name="supported-color-schemes" content="dark light">
-<title>Markets — LT agencies · v0.1.210</title>
+<title>Markets — LT agencies · v0.1.211</title>
 <script>
   // Apply saved theme + view mode before first paint to avoid a flash.
   // Theme default = dark; view default = Default (Dev mode adds the version / changelog popup).
@@ -466,7 +466,7 @@
     <div class="settings-menu" id="settingsMenu">
       <button id="themeToggle">🌙 Dark</button>
       <button id="viewToggle"></button>
-      <span class="nav-version">v0.1.210</span>
+      <span class="nav-version">v0.1.211</span>
     </div>
   </div>
   <div class="nav-sub">113 brands · 2019–2024</div>
@@ -942,7 +942,7 @@ function moneyFlowHtml(T0,R,P,opts){
   const margin=(R>0 && P!=null)?P/R*100:null;
   const mtxt=margin!=null?(loss?`<b style="color:var(--red)">−${Math.abs(margin).toFixed(1)}%</b>`:`<b>${margin.toFixed(1)}%</b>`):'–';
   return `<div class="ff"><div class="vf-head"><b>Turnover</b> <span class="ff-v">${fmtEur(T)}</span> ${yo(T0,prev.T)} ${rk(ranks.rev)}</div>`
-    +`<div class="vf-body"><div class="vf-bar">${bar}</div>${brk}<div class="vf-legend">${leg}</div></div></div>`;
+    +`<div class="vf-body"><div class="vf-bar">${bar}</div>${brk}</div></div>`;   // breakdown legend (Net profit/Costs/Pass-through) removed — Turnover + Revenue only
 }
 
 let coFlowMode='total', _coFlowRerender=null;
@@ -1060,20 +1060,18 @@ function renderCompany(brand){
   //  multi-company deep-dive; the money-flow note still flags when a compare set is selected.)
   const multi = (typeof ovBrands!=='undefined') && ovBrands.length>1;
 
-  // All-years money-flow for this company — stacked SVG (net profit at bottom), basis-aware.
+  // All-years for this company — Turnover + Revenue only (profit/costs/pass-through breakdown removed), basis-aware.
   (function(){ const el=document.getElementById('chCoFlowAll'), empty=document.getElementById('chCoFlowEmpty'); if(!el) return;
     const perEmp=coFlowMode==='emp';
     const rows=mineYears.map(yy=>{ const r=mine[yy]||{}, e=r.employees;
       const dv=v=> perEmp? ((e>0&&v!=null)? v/e:0) : (v||0);
-      const T=dv(r.revenue), R=dv(r.estimatedIncome), P=Math.max(0,dv(r.profit));
-      return {x:yy, profit:P, costs:Math.max(0,R-P), pass:Math.max(0,T-R)}; });
-    const t=document.getElementById('chCoFlowTitle'); if(t) t.textContent='Money-flow by year'+(multi?' — '+brand:'')+(perEmp?' · per employee':'');
-    if(!rows.some(d=>d.profit||d.costs||d.pass)){ el.innerHTML=''; if(empty){ empty.textContent='No data for this company.'; empty.classList.add('show'); } return; }
+      return {x:yy, turnover:dv(r.revenue), revenue:dv(r.estimatedIncome)}; });
+    const t=document.getElementById('chCoFlowTitle'); if(t) t.textContent='Turnover & revenue by year'+(multi?' — '+brand:'')+(perEmp?' · per employee':'');
+    if(!rows.some(d=>d.turnover||d.revenue)){ el.innerHTML=''; if(empty){ empty.textContent='No data for this company.'; empty.classList.add('show'); } return; }
     if(empty) empty.classList.remove('show');
-    drawFinSvg(el, { stacked:true, totalLabels:true, yTitle:'€', series:[
-      {label:'Net profit',  kind:'bar', color:cssVar('--green'), data:rows.map(d=>({x:d.x,y:d.profit}))},
-      {label:'Costs',       kind:'bar', color:cssVar('--cost'),  data:rows.map(d=>({x:d.x,y:d.costs}))},
-      {label:'Pass-through',kind:'bar', color:cssVar('--cost'),  opacity:0.5, data:rows.map(d=>({x:d.x,y:d.pass}))},
+    drawFinSvg(el, { yTitle:'€', series:[
+      {label:'Turnover', kind:'bar', color:cssVar('--cost'),   data:rows.map(d=>({x:d.x,y:d.turnover}))},
+      {label:'Revenue',  kind:'bar', color:cssVar('--accent'), data:rows.map(d=>({x:d.x,y:d.revenue}))},
     ]});
   })();
 
@@ -1278,17 +1276,15 @@ function segDesc(metric, basis){
                     :'Median '+M.short+' per company in each segment.');
 }
 
-// ---------- Total-market money-flow, all years — interactive STACKED SVG (net profit at the bottom) ----------
+// ---------- Total-market all years — Turnover + Revenue only (profit/costs/pass-through breakdown removed) ----------
 function renderMoneyFlowAll(){
   const el=document.getElementById('mfaAll'); if(!el) return;
   const den = mktMode==='avg'?(a=>a.n):mktMode==='emp'?(a=>a.emp):(a=>1);   // follow the top basis toggle
   const dv=(v,a)=>{ const d=den(a); return d? v/d : 0; };
-  const rows=FIN_YEARS.map(y=>{ const a=marketAgg(y), T=dv(a.rev,a), R=dv(a.ei,a), P=Math.max(0,dv(a.profit,a));
-    return { x:y, profit:P, costs:Math.max(0,R-P), pass:Math.max(0,T-R) }; });
-  drawFinSvg(el, { stacked:true, totalLabels:true, yTitle:'€', series:[
-    {label:'Net profit',  kind:'bar', color:cssVar('--green'), data:rows.map(d=>({x:d.x,y:d.profit}))},
-    {label:'Costs',       kind:'bar', color:cssVar('--cost'),  data:rows.map(d=>({x:d.x,y:d.costs}))},
-    {label:'Pass-through',kind:'bar', color:cssVar('--cost'),  opacity:0.5, data:rows.map(d=>({x:d.x,y:d.pass}))},
+  const rows=FIN_YEARS.map(y=>{ const a=marketAgg(y); return { x:y, turnover:dv(a.rev,a), revenue:dv(a.ei,a) }; });
+  drawFinSvg(el, { yTitle:'€', series:[
+    {label:'Turnover', kind:'bar', color:cssVar('--cost'),   data:rows.map(d=>({x:d.x,y:d.turnover}))},
+    {label:'Revenue',  kind:'bar', color:cssVar('--accent'), data:rows.map(d=>({x:d.x,y:d.revenue}))},
   ]});
 }
 renderMoneyFlowAll();
@@ -1641,6 +1637,10 @@ let _dashRT; window.addEventListener('resize',()=>{ clearTimeout(_dashRT); _dash
 // ---------- SP & version history ----------
 // Each entry: title (2-5 words) · desc (5-15 words) · detail (15-50 words).
 const VERSIONS = [
+  {v:'v0.1.211', date:'2026-06-25 14:30', sp:2, title:'Money-flow: Turnover + Revenue only',
+    desc:'Stripped the Pass-through / Costs / Net-profit breakdown from every money-flow — single-year keeps the bar + Turnover header + Revenue bracket; the two all-years charts now show Turnover + Revenue bars.',
+    detail:'moneyFlowHtml drops the breakdown legend (market + company single-year). The company all-time (chCoFlowAll) and market all-time (renderMoneyFlowAll) stacked profit/costs/pass charts became grouped Turnover + Revenue bars. Applies across one-year, all-years, market and company views.',
+    cat:'CHART'},
   {v:'v0.1.210', date:'2026-06-25 14:15', sp:0.5, title:'KPI card order',
     desc:'Market KPI cards reordered to Revenue, Employees, Salary, Turnover (was Turnover-first), across all basis views.',
     detail:'Reordered the kpis array in renderMarket; one source feeds the avg/per-employee/whole-market views so all stay in sync.',
