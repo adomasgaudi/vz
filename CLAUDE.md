@@ -19,7 +19,7 @@ Shorthands the owner may type; mostly inherited from the Data repo. Unknown tag 
 - **`#careful`** — risky/many-part work: split, plan first, one part per turn
 - **`#senior`** — reason like the long-term owner: SSOT, invariants, root cause, blast radius
 - **`#prune`** — fix the whole class, not just the shown case; sweep every sibling
-- **`#debug`** — stop guessing; log the whole path, smallest increments, one step at a time
+- **`#debug`** — a MODE, not a strong word: ABANDON/simplify the current task, 10× the ON-SCREEN logging (DATA-51, fixed-position panel, version-stamped — owner has no phone devtools), smallest increments one step at a time, leave diagnostics in until the ROOT is proven (enforced by `debug_reminder.py` hook)
 - **`#persistent`** / **`#repeating`** — a recurring bug; log it, fix the root not the symptom
 - **`#super-persistent`** — defied many fixes: bisect history + on-screen diagnostic
 - **`#max-debug`** / **`#max`** — escalate debugging effort

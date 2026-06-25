@@ -4,7 +4,8 @@
       {
         "hooks": [
           { "type": "command", "command": "py .claude/hooks/ui_design_reminder.py" },
-          { "type": "command", "command": "py .claude/hooks/rule_schema_reminder.py" }
+          { "type": "command", "command": "py .claude/hooks/rule_schema_reminder.py" },
+          { "type": "command", "command": "py .claude/hooks/debug_reminder.py" }
         ]
       }
     ],

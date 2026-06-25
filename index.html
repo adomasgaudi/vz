@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Markets — LT agencies · v0.1.195</title>
+<title>Markets — LT agencies · v0.1.196</title>
 <script>
   // Apply saved theme + view mode before first paint to avoid a flash.
   // Theme default = dark; view default = Default (Dev mode adds the version / changelog popup).
@@ -442,7 +442,7 @@
     <div class="settings-menu" id="settingsMenu">
       <button id="themeToggle">🌙 Dark</button>
       <button id="viewToggle"></button>
-      <span class="nav-version">v0.1.195</span>
+      <span class="nav-version">v0.1.196</span>
     </div>
   </div>
   <div class="nav-sub">113 brands · 2019–2024</div>
@@ -782,6 +782,18 @@ const SVG_SHAPES = ['circle','diamond','square','triangle']; // SVG chart-engine
 
 // Read a CSS custom property off <html> so charts track the active theme.
 const cssVar = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+// ---- TEMP on-screen debug console (DATA-51 / #debug) — REMOVE once the per-employee root is confirmed ----
+const DBG_VER='v0.1.196';
+function DBG(msg){ try{
+  let el=document.getElementById('dbgPanel');
+  if(!el){ el=document.createElement('div'); el.id='dbgPanel';
+    el.style.cssText='position:fixed;left:0;right:0;bottom:0;z-index:99999;background:rgba(0,0,0,.88);color:#39ff14;font:11px/1.35 monospace;padding:6px 8px;max-height:42vh;overflow:auto;white-space:pre-wrap;border-top:2px solid #39ff14';
+    const hd=document.createElement('div'); hd.textContent='DEBUG '+DBG_VER+' — tap to clear'; hd.style.cssText='font-weight:bold;color:#fff;margin-bottom:3px';
+    el.appendChild(hd); el.addEventListener('click',()=>el.querySelectorAll('.dbgline').forEach(n=>n.remove()));
+    (document.body||document.documentElement).appendChild(el); }
+  const ln=document.createElement('div'); ln.className='dbgline'; ln.textContent=msg; el.appendChild(ln); el.scrollTop=el.scrollHeight;
+}catch(e){} }
+window.addEventListener('DOMContentLoaded',()=>DBG('boot '+DBG_VER));
 const esc=s=>String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); // declared early — SVG dashboard charts (above) escape labels at render time (TDZ fix)
 // GRID/CHART_BG are re-read on theme switch (see applyTheme); the per-chart
 // options reference GRID so a re-render picks up the new value.
@@ -878,7 +890,7 @@ function setCoBasis(mode){ coFlowMode=mode;   // Full company / Per-employee —
   if(typeof renderCompany==='function') renderCompany(ovBrand);
   if(typeof drawTop==='function') drawTop();
 }
-(function(){ document.querySelectorAll('#coFlowMode button, #coFlowMode2 button').forEach(b=>b.addEventListener('click',()=>setCoBasis(b.dataset.mode))); })();
+(function(){ document.querySelectorAll('#coFlowMode button, #coFlowMode2 button').forEach(b=>b.addEventListener('click',()=>{ DBG('CLICK company-basis="'+b.dataset.mode+'" in #'+(b.parentElement&&b.parentElement.id)+' (this is the COMPANY toggle, NOT the market scatter)'); setCoBasis(b.dataset.mode); })); })();
 
 function renderCompany(brand){
   const mine = byBrand[brand] || {};
@@ -1149,15 +1161,18 @@ try { renderMarket('avg'); } catch(err){ window.dispatchEvent(new ErrorEvent('er
 (function(){ const seg=document.getElementById('marketMode'); if(!seg) return;
   // one global basis: both sticky toggles (#marketMode in Market <year>, #marketMode2 in Market all time) drive EVERY graph and stay in sync
   window.setBasis=function(mode){
+    DBG('setBasis('+mode+') called');
     document.querySelectorAll('#marketMode button, #marketMode2 button').forEach(b=>b.classList.toggle('active', b.dataset.mode===mode));
     renderMarket(mode);
+    DBG('  after renderMarket: mktMode='+(typeof mktMode!=='undefined'?mktMode:'UNDEF'));
     if(typeof renderSegView==='function') renderSegView();
     if(typeof renderRevSegAll==='function') renderRevSegAll();
     if(typeof renderMoneyFlowAll==='function') renderMoneyFlowAll();
     if(typeof renderEmpAll==='function') renderEmpAll();
-    if(typeof buildScatterScrub==='function') buildScatterScrub();   // scatter follows the basis (total revenue ↔ per employee)
+    if(typeof buildScatterScrub==='function'){ DBG('  calling buildScatterScrub()'); buildScatterScrub(); }
+    else DBG('  buildScatterScrub NOT a function!');
   };
-  document.querySelectorAll('#marketMode button, #marketMode2 button').forEach(b=>b.addEventListener('click',()=>setBasis(b.dataset.mode)));
+  document.querySelectorAll('#marketMode button, #marketMode2 button').forEach(b=>b.addEventListener('click',()=>{ DBG('CLICK basis="'+b.dataset.mode+'" in #'+(b.parentElement&&b.parentElement.id)); setBasis(b.dataset.mode); }));
 })();
 
 // ---------- Insights ----------
@@ -1376,8 +1391,9 @@ function renderScatterYear(){
 // smoothly between adjacent years — companies entering/leaving the frame fade in/out.
 // (Replaces the old mini-carousel of separate Chart.js cells.)
 function buildScatterScrub(){
-  const host=document.getElementById('scrubChart'); if(!host) return;
+  const host=document.getElementById('scrubChart'); if(!host){ DBG('buildScatterScrub: #scrubChart NOT FOUND'); return; }
   const perEmp = (typeof mktMode!=='undefined' && mktMode==='emp');   // follow the Average/Per-employee/Whole-market basis toggle
+  DBG('buildScatterScrub: perEmp='+perEmp+' (mktMode='+(typeof mktMode!=='undefined'?mktMode:'UNDEF')+')');
   const years=FIN_YEARS.filter(y=>scatterDataForYear(y, perEmp).length);
   if(years.length<2){ host.innerHTML='<div class="ff-empty" style="padding:20px">Not enough years to animate.</div>'; return; }
   const perYear=years.map(y=>{ const mm={}; scatterDataForYear(y, perEmp).forEach(d=>mm[d.brand]=d); return mm; });
@@ -1386,6 +1402,8 @@ function buildScatterScrub(){
   const lx=v=>Math.log10(Math.max(1,v));
   let xs=[], ys=[]; perYear.forEach(mm=>Object.values(mm).forEach(d=>{ xs.push(lx(d.x)); ys.push(d.y); }));
   const xMin=Math.min(...xs), xMax=Math.max(...xs);
+  { const f=perYear[perYear.length-1]&&perYear[perYear.length-1][MY_BRAND];
+    DBG('  xRange=€'+fmtM(Math.pow(10,xMin))+'..€'+fmtM(Math.pow(10,xMax))+' | Fabula '+years[years.length-1]+' x=€'+(f?fmtM(f.x):'n/a')); }
   const yLo=Math.min(-30, Math.floor(Math.min(...ys)/10)*10), yHi=Math.max(45, Math.ceil(Math.max(...ys)/10)*10);
   const lastIdx=years.length-1;
   const range=document.getElementById('scrubRange'), ticksEl=document.getElementById('scrubTicks'), lblEl=document.getElementById('scrubYearLbl');
@@ -1478,6 +1496,10 @@ let _dashRT; window.addEventListener('resize',()=>{ clearTimeout(_dashRT); _dash
 // ---------- SP & version history ----------
 // Each entry: title (2-5 words) · desc (5-15 words) · detail (15-50 words).
 const VERSIONS = [
+  {v:'v0.1.196', date:'2026-06-25 10:00', sp:2, title:'On-screen debug (#debug)',
+    desc:'Per-employee scatter still reported broken — added a temporary on-screen debug console that logs the whole basis→scatter flow, so the root is visible on the phone.',
+    detail:'TEMP: a fixed-position DBG() panel (version-stamped) logs every step — which toggle was clicked + its container id, setBasis, mktMode after renderMarket, buildScatterScrub perEmp + x-range + Fabula sample. Reveals whether it’s device cache, the wrong toggle, or a logic path. Removed once the root is confirmed. Also persisted the #debug protocol (abandon/simplify + 10× on-screen logging) as a rule + debug_reminder.py hook.',
+    cat:'META'},
   {v:'v0.1.195', date:'2026-06-25 09:40', sp:1, title:'Scatter per-employee (for real)',
     desc:'The per-employee basis now actually drives the scatter scrubber — v194’s edits never reached the build, so it did nothing until now (PB-3).',
     detail:'Re-applied + verified in the built index.html: buildScatterScrub reads mktMode and passes perEmp, setBasis rebuilds it on toggle, the caption switches to “revenue / employee × margin”, x-ticks widened, listeners wired once. Root was a lost-edit (v194 diff was only the function signature + version), now guarded by grepping the built artifact before shipping (PB-3).',
