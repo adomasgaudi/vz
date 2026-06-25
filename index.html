@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Markets — LT agencies · v0.1.189</title>
+<title>Markets — LT agencies · v0.1.190</title>
 <script>
   // Apply saved theme + view mode before first paint to avoid a flash.
   // Theme default = dark; view default = Default (Dev mode adds the version / changelog popup).
@@ -440,7 +440,7 @@
     <div class="settings-menu" id="settingsMenu">
       <button id="themeToggle">🌙 Dark</button>
       <button id="viewToggle"></button>
-      <span class="nav-version">v0.1.189</span>
+      <span class="nav-version">v0.1.190</span>
     </div>
   </div>
   <div class="nav-sub">113 brands · 2019–2024</div>
@@ -1060,14 +1060,39 @@ function medianSalary(y){
 }
 const MKT_YEARS = YEARS.concat([LAST+1, LAST+2]); // cycle also offers future years (empty until reported)
 let mktMode='avg', mktYear=LAST;
+// Sodra-only coverage for a year with no filed financials (2025+): how many of
+// the tracked companies report monthly Sodra data, and the headcount/wage we do
+// have. month is an int YYYYMM.
+function sodraYearAgg(y){
+  let cos=0, emp=0, wages=[];
+  ((REK_DATA&&REK_DATA.companies)||[]).forEach(c=>{
+    const inYr=((c.sodra&&c.sodra.months)||[]).filter(m=>Math.floor(m.month/100)===y);
+    if(!inYr.length) return;
+    cos++; const last=inYr[inYr.length-1];
+    if(last.numInsured!=null) emp+=+last.numInsured;
+    if(last.avgWage) wages.push(+last.avgWage);
+  });
+  return {cos, emp, avgWage: wages.length? Math.round(wages.reduce((a,b)=>a+b,0)/wages.length) : null};
+}
 function renderMarket(mode){
   mode = mktMode = mode || mktMode;                  // remember basis across year cycles
   const y=mktYear, aCur=marketAgg(y), aPrev=marketAgg(y-1), a0=marketAgg(YEARS[0]);
   const yr=document.getElementById('mktYearRow'); if(yr) yr.querySelectorAll('button').forEach(b=>b.classList.toggle('active',+b.dataset.y===y));
   const tab=[...document.querySelectorAll('.grp-tab')].find(t=>/^Market \d{4}$/.test(t.textContent.trim())); if(tab) tab.textContent='Market '+y;
   if(window.__scatterReady) renderScatterYear();   // size-vs-profit scatter follows the selected year (skipped until its module inits — avoids TDZ on first render)
-  if(!aCur.n){                                        // future / unreported year → empty state
-    const mf=document.getElementById('marketFlow'); if(mf){ mf.innerHTML='<div class="ff-empty">No companies have reported '+y+' figures yet.</div>'; mf.style.display=''; }
+  if(!aCur.n){                                        // no filed financials for this year (2025+)
+    const sa=sodraYearAgg(y), total=BRANDS.length;
+    const mf=document.getElementById('marketFlow');
+    if(mf){
+      mf.innerHTML = sa.cos
+        ? '<div class="ff-empty"><b>'+y+' — partial data (Sodra only).</b><br>'
+          + sa.cos+' of '+total+' companies report monthly Sodra data so far · '
+          + Math.round(sa.emp).toLocaleString()+' employees'
+          + (sa.avgWage? ' · avg wage €'+sa.avgWage.toLocaleString()+'/mo' : '')
+          + '<br><span style="opacity:.65">Revenue, turnover &amp; profit aren\'t filed yet for '+y+' — shown as missing.</span></div>'
+        : '<div class="ff-empty">No companies have reported '+y+' figures yet.</div>';
+      mf.style.display='';
+    }
     document.getElementById('kpis').innerHTML='';
     return;
   }
@@ -1397,6 +1422,9 @@ let _dashRT; window.addEventListener('resize',()=>{ clearTimeout(_dashRT); _dash
 // ---------- SP & version history ----------
 // Each entry: title (2-5 words) · desc (5-15 words) · detail (15-50 words).
 const VERSIONS = [
+  {v:'v0.1.190', date:'2026-06-25 14:20', sp:1.5, title:'Market 2025/26 uses Sodra',
+    desc:'Future-year market view now surfaces Sodra data + how many companies reported.',
+    detail:'For years with no filed financials (2025+), the market view no longer just says "nothing reported" — it now shows the Sodra coverage we do have (e.g. "12 of 113 companies report monthly Sodra data · N employees · avg wage €X/mo") and marks revenue/turnover/profit as not-yet-filed. Data reality: 2025–26 exists only in Sodra, headcount+wage, ~12 companies.'},
   {v:'v0.1.189', date:'2026-06-25 14:10', sp:0.5, title:'Dark mode all-white text',
     desc:'Dangerous override: every text element is white in dark mode.',
     detail:'By request — html[data-theme="dark"] *{color:#fff!important} forces all HTML text white in dark mode for maximum contrast. Charts keep their colours (SVG fill / canvas are unaffected). Blunt by design; easy to scope back later.'},
