@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Markets — LT agencies · v0.1.193</title>
+<title>Markets — LT agencies · v0.1.194</title>
 <script>
   // Apply saved theme + view mode before first paint to avoid a flash.
   // Theme default = dark; view default = Default (Dev mode adds the version / changelog popup).
@@ -442,7 +442,7 @@
     <div class="settings-menu" id="settingsMenu">
       <button id="themeToggle">🌙 Dark</button>
       <button id="viewToggle"></button>
-      <span class="nav-version">v0.1.193</span>
+      <span class="nav-version">v0.1.194</span>
     </div>
   </div>
   <div class="nav-sub">113 brands · 2019–2024</div>
@@ -1473,6 +1473,10 @@ let _dashRT; window.addEventListener('resize',()=>{ clearTimeout(_dashRT); _dash
 // ---------- SP & version history ----------
 // Each entry: title (2-5 words) · desc (5-15 words) · detail (15-50 words).
 const VERSIONS = [
+  {v:'v0.1.194', date:'2026-06-24 16:20', sp:2, title:'Scatter per-employee',
+    desc:'The size-vs-profitability scrubber now follows the Per-employee basis — the x-axis switches to revenue per employee when that toggle is on.',
+    detail:'scatterDataForYear(y, perEmp) divides revenue by headcount when perEmp; buildScatterScrub reads mktMode, rebuilds on setBasis, and updates its caption (“revenue / employee × margin”). x-ticks widened to cover the smaller €/employee scale; slider listeners wired once and delegate to the latest closures so rebuilds don’t stack handlers.',
+    cat:'CHART'},
   {v:'v0.1.193', date:'2026-06-24 16:00', sp:5, title:'Scatter scrubber',
     desc:'The all-years size-vs-profitability bubble chart is now one custom SVG chart with a draggable slider that glides every company between years, replacing the mini-carousel.',
     detail:'New buildScatterScrub(): custom-SVG bubbles on a fixed log-revenue × margin frame; a range slider (0..n years) interpolates each company’s x/y/r between adjacent years, companies entering/leaving fade in/out. Year label + clickable year ticks under the slider; Fabula gold. Theme-aware (re-tints via applyTheme). Replaces the Chart.js mini-strip. Single-year Market scatter still Chart.js for now.',
