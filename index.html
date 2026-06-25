@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="color-scheme" content="dark light">
 <meta name="supported-color-schemes" content="dark light">
-<title>Markets — LT agencies · v0.2.6</title>
+<title>Markets — LT agencies · v0.2.7</title>
 <script>
   // Apply saved theme + view mode before first paint to avoid a flash.
   // Theme default = dark; view default = Default (Dev mode adds the version / changelog popup).
@@ -225,7 +225,7 @@
   .vf-body{display:flex;gap:12px;min-height:90px}
   .vf-bar{width:26px;flex:0 0 auto;display:flex;flex-direction:column-reverse;border-radius:6px;overflow:hidden;border:1px solid var(--border)}
   .vf-seg{width:100%;min-height:4px}
-  .vf-seg.rev{background:var(--accent)} .vf-seg.profit{background:var(--green)}
+  .vf-seg.rev{background:var(--mf-rev)} .vf-seg.profit{background:var(--green)} .vf-seg.turn{background:var(--mf-turn)}
   .vf-seg.cost{background:var(--cost)} .vf-seg.pass{background:var(--cost);opacity:.55} .vf-seg.cost.loss{background:rgba(220,77,77,.25)}
   .vf-brk{display:flex;flex-direction:column-reverse;width:84px;flex:0 0 auto}
   .vf-brk-rev{display:flex;align-items:center;justify-content:flex-start;text-align:left;padding-left:7px;border-left:2px solid var(--gold);position:relative}
@@ -235,7 +235,7 @@
   .vf-legend{flex:1;display:flex;flex-direction:column-reverse;min-width:0}
   .vf-item{display:flex;gap:9px;align-items:center;min-height:32px}
   .vf-dot{width:11px;height:11px;border-radius:3px;flex:0 0 auto}
-  .vf-dot.rev{background:var(--accent)} .vf-dot.profit{background:var(--green)}
+  .vf-dot.rev{background:var(--mf-rev)} .vf-dot.profit{background:var(--green)} .vf-dot.turn{background:var(--mf-turn)}
   .vf-dot.pass,.vf-dot.cost{background:var(--panel2);border:1px solid var(--border)} .vf-dot.pass{opacity:.6}
   /* All-years money-flow: one stacked column per year, same segment colours as the single-year bar. */
   .mfa{display:flex;flex-direction:column;gap:10px;height:100%}
@@ -507,7 +507,7 @@
       <button id="themeToggle">🌙 Dark</button>
       <button id="viewToggle"></button>
       <button id="graphPanToggle">🔒 Graph pan: off</button>
-      <span class="nav-version">v0.2.6</span>
+      <span class="nav-version">v0.2.7</span>
     </div>
   </div>
   <div class="nav-sub">113 brands · 2019–2024</div>
@@ -997,18 +997,22 @@ function moneyFlowHtml(T0,R,P,opts){
   const pctOf=v=> T>0? v/T*100 : 0;
   const pr=prev.R, pp=prev.P;   // previous-year revenue & profit (same basis) → YoY per item
   const prevCosts=(pr!=null&&pp!=null)?pr-pp:null, prevPass=(prev.T!=null&&pr!=null&&prev.T>pr)?prev.T-pr:null;
+  // ONLY Net profit + Revenue + Turnover in the bar (Costs / Pass-through dropped). Bottom→top:
+  // Net profit (green), rest-of-Revenue (dark gray), rest-of-Turnover (light gray) = the Turnover column.
+  const pSeg=(P!=null && P>0)?P:0;
+  const revRest=(R!=null)?Math.max(0,R-pSeg):0;
+  const passRest=pass>0?pass:0;
   const segs=[];
-  if(P!=null && !loss) segs.push({cls:'profit', pct:pctOf(P), name:'Net profit', val:fmtEur(P), desc:'', yoy:yo(P,pp)});
-  if(costs!=null) segs.push({cls:loss?'cost loss':'cost', pct:pctOf(loss?R:costs), name:loss?'Costs (loss)':'Costs', val:fmtEur(costs), desc:'salaries, overheads & other expenses', yoy:yo(costs,prevCosts)});
-  else if(R!=null) segs.push({cls:'rev', pct:pctOf(R), name:'Revenue', val:fmtEur(R), desc:'fee income kept', yoy:yo(R,pr)});
-  if(pass>0) segs.push({cls:'pass', pct:pctOf(pass), name:'Pass-through', val:fmtEur(pass), desc:'media spend bought for clients, billed through the agency', yoy:yo(pass,prevPass)});
+  if(pSeg>0)    segs.push({cls:'profit', pct:pctOf(pSeg)});
+  if(revRest>0) segs.push({cls:'rev',    pct:pctOf(revRest)});
+  if(passRest>0)segs.push({cls:'turn',   pct:pctOf(passRest)});
   const fx=s=>Math.max(s.pct,3).toFixed(2);
   const bar=segs.map(s=>`<div class="vf-seg ${s.cls}" style="flex:${fx(s)}"></div>`).join('');
-  // Legend shows Turnover, Revenue, Net profit (Costs + Pass-through dropped; Net profit kept).
+  // Legend = Net profit, Revenue, Turnover — always written (net profit too, even when its bar is tiny or a loss).
   const legItems=[
-    (P!=null && !loss)? {cls:'profit', name:'Net profit', val:fmtEur(P), yoy:yo(P,pp)} : null,
-    (R!=null)?          {cls:'rev',    name:'Revenue',    val:fmtEur(R), yoy:yo(R,pr)} : null,
-    (T!=null)?          {cls:'pass',   name:'Turnover',   val:fmtEur(T), yoy:yo(T0,prev.T)} : null,
+    (P!=null)? {cls:'profit', name:'Net profit', val:fmtEur(P), yoy:yo(P,pp)} : null,
+    (R!=null)? {cls:'rev',    name:'Revenue',    val:fmtEur(R), yoy:yo(R,pr)} : null,
+    (T!=null)? {cls:'turn',   name:'Turnover',   val:fmtEur(T), yoy:yo(T0,prev.T)} : null,
   ].filter(Boolean);
   const leg=legItems.map(s=>`<div class="vf-item" style="flex:1"><span class="vf-dot ${s.cls}"></span><div class="vf-txt"><b>${s.name} ${s.val} ${s.yoy||''}</b></div></div>`).join('');
   const revPct = R!=null ? Math.max(0,Math.min(100,pctOf(R))) : 100;
@@ -1145,7 +1149,7 @@ function renderCompany(brand){
     if(empty) empty.classList.remove('show');
     // ONE stacked bar per year = Turnover (total label). Bottom→top: Net profit, rest-of-Revenue (dark gray),
     // rest-of-Turnover (light gray) — profit at the base, each colour's top marks its metric.
-    drawFinSvg(el, { stacked:true, totalLabels:true, yTitle:'€', series:[
+    drawFinSvg(el, { stacked:true, totalLabels:true, zoomOut:0.2, yTitle:'€', series:[
       {label:'Net profit', kind:'bar', color:cssVar('--green'),   data:rows.map(d=>({x:d.x,y:Math.max(0,d.profit)}))},
       {label:'Revenue',    kind:'bar', color:cssVar('--mf-rev'),  data:rows.map(d=>({x:d.x,y:Math.max(0,d.revenue-Math.max(0,d.profit))}))},
       {label:'Turnover',   kind:'bar', color:cssVar('--mf-turn'), data:rows.map(d=>({x:d.x,y:Math.max(0,d.turnover-d.revenue)}))},
@@ -1387,7 +1391,7 @@ function renderMoneyFlowAll(){
   const rows=FIN_YEARS.map(y=>{ const a=marketAgg(y); return { x:y, turnover:dv(a.rev,a), revenue:dv(a.ei,a), profit:dv(a.profit,a) }; });
   // ONE stacked bar per year = Turnover (total label). Bottom→top: Net profit, rest-of-Revenue (dark gray),
   // rest-of-Turnover (light gray) — so profit sits at the base and each colour's top marks its metric.
-  drawFinSvg(el, { stacked:true, totalLabels:true, yTitle:'€', series:[
+  drawFinSvg(el, { stacked:true, totalLabels:true, zoomOut:0.2, yTitle:'€', series:[
     {label:'Net profit', kind:'bar', color:cssVar('--green'),   data:rows.map(d=>({x:d.x,y:Math.max(0,d.profit)}))},
     {label:'Revenue',    kind:'bar', color:cssVar('--mf-rev'),  data:rows.map(d=>({x:d.x,y:Math.max(0,d.revenue-Math.max(0,d.profit))}))},
     {label:'Turnover',   kind:'bar', color:cssVar('--mf-turn'), data:rows.map(d=>({x:d.x,y:Math.max(0,d.turnover-d.revenue)}))},
@@ -1750,6 +1754,10 @@ let _dashRT; window.addEventListener('resize',()=>{ clearTimeout(_dashRT); _dash
 // ---------- SP & version history ----------
 // Each entry: title (2-5 words) · desc (5-15 words) · detail (15-50 words).
 const VERSIONS = [
+  {v:'v0.2.7', date:'2026-06-25 17:50', sp:2, title:'Money-flow: 3 metrics only + zoom-out',
+    desc:'Company money-flow bar drops the Costs/Pass-through segments — only Net profit, Revenue, Turnover (profit always written, even a tiny bar); all-years money-flow defaults 20% zoomed out.',
+    detail:'moneyFlowHtml’s bar is now Net profit (green) · rest-of-Revenue (dark gray) · rest-of-Turnover (light gray) — the Costs/Pass-through segments are gone, matching the all-years chart; the legend always writes Net profit even at a 3%-min sliver or a loss. New drawFinSvg spec.zoomOut expands the initial view to (1+z)× the data box (content centred); both all-years money-flow charts pass 0.2 so they open 20% zoomed out with margin all round.',
+    cat:'CHART'},
   {v:'v0.2.6', date:'2026-06-25 17:30', sp:3, title:'Money-flow fixes + fit on load',
     desc:'Money-flow bars: profit stacked at the base, Revenue dark-gray, Turnover light-gray; and charts now fit correctly on first load.',
     detail:'Both all-years money-flow charts now stack ONE turnover bar bottom→top as Net profit (green) · rest-of-Revenue (--mf-rev dark gray) · rest-of-Turnover (--mf-turn light gray) — profit moved from a separate line to the base of the stack, and the blue/cost colours reverted to the gray pair (new theme-aware tokens). PB-6 root fix: makeSectionsCollapsible() reparents the charts into cards AFTER they render, changing their width, so they were sized for the old layout and "didn’t fit" on first load (worse since pan went off by default). A double-rAF + window-load now re-fits every chart in the active view once the card layout settles.',
@@ -2712,7 +2720,10 @@ function drawFinSvg(container, spec, opts){
     return [lo,hi]; };
   // Full fit = x over the category index + y over each axis' data extent — all pannable/zoomable.
   const fitState=()=>{ const [lLo,lHi]=ext(left), [rLo,rHi]= right.length?ext(right):[0,1];
-    return { view:{ xMin:n<=1?-0.5:0, xMax:n<=1?0.5:n-1, yMin:lLo, yMax:lHi }, ry:{ yMin:rLo, yMax:rHi } }; };
+    let xMin=n<=1?-0.5:0, xMax=n<=1?0.5:n-1, yMin=lLo, yMax=lHi;
+    const z=spec.zoomOut||0;   // default "zoom out" margin: view is (1+z)× the data box, content centred (e.g. 0.2 = 20% out)
+    if(z>0){ const xs=(xMax-xMin)||1, ys=(yMax-yMin)||1; xMin-=xs*z/2; xMax+=xs*z/2; yMin-=ys*z/2; yMax+=ys*z/2; }
+    return { view:{ xMin, xMax, yMin, yMax }, ry:{ yMin:rLo, yMax:rHi } }; };
   const f0=fitState();
   // sig now includes the fit EXTENT, so a value change (basis/metric) — not just new categories — triggers a refit.
   const sig = cats.join('|')+'#'+spec.series.map(s=>s.label).join('|')+'#'+[f0.view.yMin,f0.view.yMax,f0.ry.yMin,f0.ry.yMax].map(v=>Math.round(v*1e3)).join(',');
