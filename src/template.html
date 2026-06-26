@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="color-scheme" content="dark light">
 <meta name="supported-color-schemes" content="dark light">
-<title>Markets — LT agencies · v0.2.11</title>
+<title>Markets — LT agencies · v0.2.12</title>
 <script>
   // Apply saved theme + view mode before first paint to avoid a flash.
   // Theme default = dark; view default = Default (Dev mode adds the version / changelog popup).
@@ -328,8 +328,10 @@
   /* ── Data explorer view ── */
   /* The explorer is data-dense, so it breaks OUT of the --app-w iPad cap: full screen width +
      near-full-height scrollable tables (the dashboard/company pages stay the centred column). */
-  #rekView .wrap{max-width:none;padding:16px 8px}
-  #rekView .sheet-explorer{max-width:none;padding:8px}
+  /* Explorer: much wider than the iPad cap, but NOT edge-to-edge — comfortable side margins
+     (a scroll gutter) at every size, and a centred cap so very wide screens keep side margin too. */
+  #rekView .wrap{max-width:1500px;margin:0 auto;padding:16px clamp(16px,5vw,48px)}
+  #rekView .sheet-explorer{max-width:none;padding:0}
   .sheet-explorer{max-width:100%;margin:0 auto;padding:20px 24px;overflow-x:hidden}
   .data-tabs{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:16px;border-bottom:2px solid var(--border);padding-bottom:0;overflow-x:auto;-webkit-overflow-scrolling:touch}
   .data-tab{padding:10px 18px;font-size:13px;font-weight:600;color:var(--muted);cursor:pointer;border:none;background:none;border-bottom:2px solid transparent;margin-bottom:-2px;transition:.15s;white-space:nowrap;font-family:inherit}
@@ -523,7 +525,7 @@
       <button id="themeToggle">🌙 Dark</button>
       <button id="viewToggle"></button>
       <button id="graphPanToggle">🔒 Graph pan: off</button>
-      <span class="nav-version">v0.2.11</span>
+      <span class="nav-version">v0.2.12</span>
     </div>
   </div>
   <div class="nav-sub">113 brands · 2019–2024</div>
@@ -749,6 +751,12 @@
     <summary>📑 Initial data — raw Excel sheets (all companies)</summary>
     <div class="desc" style="margin:8px 0">The full original Excel export — pick a sheet, search, sort, export CSV.</div>
     <div id="expSourced"></div>
+  </details>
+
+  <details class="raw-sheets" style="margin-top:16px">
+    <summary>🗂️ Initial data — organised (my version)</summary>
+    <div class="desc" style="margin:8px 0">A separate, reorganisable copy of the initial data — the original above stays untouched. For now it shows just the Raw tab.</div>
+    <div id="expOrganised"></div>
   </details>
 </div>
 </div>
@@ -1770,6 +1778,10 @@ let _dashRT; window.addEventListener('resize',()=>{ clearTimeout(_dashRT); _dash
 // ---------- SP & version history ----------
 // Each entry: title (2-5 words) · desc (5-15 words) · detail (15-50 words).
 const VERSIONS = [
+  {v:'v0.2.12', date:'2026-06-26 12:20', sp:1, title:'Organised-data copy + side margins',
+    desc:'New “organised” copy of the initial data in the explorer (Raw tab for now); explorer gets side margins again so it’s easier to scroll.',
+    detail:'Added a second mountSheetExplorer instance (#expOrganised, order=[Raw]) under a new “🗂️ Initial data — organised (my version)” fold — a separate copy to reorganise while the original raw-sheets section stays untouched. Also walked back the edge-to-edge width: #rekView .wrap now caps at 1500px centred with clamp(16px,5vw,48px) side padding (was 8px), so there’s a scroll gutter on phone and margins on wide screens instead of full-bleed.',
+    cat:'DATA'},
   {v:'v0.2.11', date:'2026-06-26 12:00', sp:0.5, title:'Explorer tables maxed',
     desc:'Explorer scroll areas grow closer to full screen height and the view uses more of the screen width.',
     detail:'Bumped every explorer scroll area toward full viewport height — sourced-data .table-wrap 86→92vh, raw-sheets .tablebox 82→92vh, coverage .cov-scroll 72→88vh — and trimmed the #rekView horizontal padding (.wrap 16→8px sides, .sheet-explorer 24→8px) so the tables fill the screen width.',
@@ -3644,6 +3656,9 @@ function initRek(){
 // Initialize Data Explorer eagerly so it works on first visit without a click
 try { mountSheetExplorer(document.getElementById('expSourced'), ALL_SHEETS); }
 catch (err) { window.dispatchEvent(new ErrorEvent('error', {message:'mountSheetExplorer: '+err.message, error:err})); }
+// New, separately-organisable copy of the initial data — for now just the Raw tab (original above unchanged).
+try { mountSheetExplorer(document.getElementById('expOrganised'), ['Raw']); }
+catch (err) { window.dispatchEvent(new ErrorEvent('error', {message:'mountSheetExplorer organised: '+err.message, error:err})); }
 try { initRek(); }
 catch (err) { window.dispatchEvent(new ErrorEvent('error', {message:'initRek: '+err.message, error:err})); }
 try { initSDD(); }
