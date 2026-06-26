@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="color-scheme" content="dark light">
 <meta name="supported-color-schemes" content="dark light">
-<title>Markets — LT agencies · v0.2.8</title>
+<title>Markets — LT agencies · v0.2.9</title>
 <script>
   // Apply saved theme + view mode before first paint to avoid a flash.
   // Theme default = dark; view default = Default (Dev mode adds the version / changelog popup).
@@ -88,6 +88,18 @@
   .ch-body{margin-top:6px}
   .ch-desc{font-size:12.5px;color:var(--text)}
   .ch-detail{font-size:11.5px;color:var(--muted);margin-top:4px;line-height:1.45}
+  /* Grouped version history: ~100-SP group → ~30-SP sub-group → release leaf (like the Data repo). */
+  details.ch-group{border-top:2px solid var(--border)} details.ch-group:first-child{border-top:none}
+  details.ch-group>summary,details.ch-sub>summary{list-style:none;cursor:pointer;user-select:none;display:flex;align-items:center;gap:8px;padding:9px 2px}
+  details.ch-group>summary::-webkit-details-marker,details.ch-sub>summary::-webkit-details-marker{display:none}
+  details.ch-group>summary::after,details.ch-sub>summary::after{content:'▸';font-size:10px;color:var(--muted);transition:transform .15s;flex:0 0 auto}
+  details.ch-group[open]>summary::after,details.ch-sub[open]>summary::after{transform:rotate(90deg)}
+  .chg-head{font-size:14px;font-weight:700;color:var(--text)} .chs-head{font-size:12.5px;font-weight:600;color:var(--text)}
+  .chg-head,.chs-head{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;flex:1}
+  .chg-span,.chs-span{color:var(--muted);font-size:11px;white-space:nowrap;flex:0 0 auto}
+  .ch-sub-wrap{padding-left:11px;margin-left:3px;border-left:2px solid var(--border)}
+  details.ch-sub{border-top:1px solid var(--border)} details.ch-sub:first-child{border-top:none}
+  .ch-leaf-wrap{padding-left:10px}
   header p{color:var(--muted);font-size:14px;margin-top:4px}
   .top-cards{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:16px 0}
   .src-list{display:flex;flex-direction:column;gap:6px;margin-top:7px;font-size:13px;color:var(--text)}
@@ -507,7 +519,7 @@
       <button id="themeToggle">🌙 Dark</button>
       <button id="viewToggle"></button>
       <button id="graphPanToggle">🔒 Graph pan: off</button>
-      <span class="nav-version">v0.2.8</span>
+      <span class="nav-version">v0.2.9</span>
     </div>
   </div>
   <div class="nav-sub">113 brands · 2019–2024</div>
@@ -1754,6 +1766,10 @@ let _dashRT; window.addEventListener('resize',()=>{ clearTimeout(_dashRT); _dash
 // ---------- SP & version history ----------
 // Each entry: title (2-5 words) · desc (5-15 words) · detail (15-50 words).
 const VERSIONS = [
+  {v:'v0.2.9', date:'2026-06-25 18:20', sp:2, title:'Grouped version history',
+    desc:'The version-history modal now nests releases into ~30-SP sub-groups and those into ~100-SP groups, like the Data repo.',
+    detail:'Replaced the 10-per-page changelog with a collapsible tree: a greedy SP bucketer (histBucketBySp, mirroring the Data repo’s buildChangelogTree) folds the chronological releases into ~30-SP sub-groups, then folds those into ~100-SP groups. Each level shows its summed SP, version span and the highest-SP leaf’s title; the newest group + sub-group open by default, the rest collapsed. Pagination removed.',
+    cat:'META'},
   {v:'v0.2.8', date:'2026-06-25 18:00', sp:0.5, title:'Hide pass-through number',
     desc:'The all-years money-flow no longer prints the pass-through residual (turnover − revenue) inside the top bar segment.',
     detail:'drawFinSvg stacked segments take a per-series noVal flag that suppresses the inline value label; the Turnover (top) series in both money-flow charts sets it, so the confusing pass-through residual number is gone while the Net-profit value and the Turnover total stay.',
@@ -2452,9 +2468,6 @@ const VERSIONS = [
 const spTotal = VERSIONS.reduce((s,v)=>s+v.sp,0);
 document.getElementById('spTotal').textContent = spTotal;
 document.getElementById('verCount').textContent = VERSIONS.length;
-// Paginated changelog (VERSIONS is newest-first)
-const HIST_PAGE_SIZE = 10;
-let histPage = 0;
 // Escape — declared earlier (by cssVar) so charts can use it at load.
 // Changelog date: versions ship by the minute, so show "21, 16:23" (day + h:min)
 // when a time is logged; fall back to "Jun 21" for older day-only entries.
@@ -2465,29 +2478,60 @@ function fmtChDate(d){
   const day=+m[3];
   return m[4] ? `${day}, ${m[4]}:${m[5]}` : `${CH_MONTHS[+m[2]-1]} ${day}`;
 }
-function renderHistPage(){
-  const total = VERSIONS.length, pages = Math.ceil(total/HIST_PAGE_SIZE);
-  const start = histPage*HIST_PAGE_SIZE;
-  document.getElementById('histBody').innerHTML = VERSIONS.slice(start, start+HIST_PAGE_SIZE).map(v=>{
-    const meta = `<div class="ch-meta"><span class="ch-ver">${esc(v.v)}</span>`
-      + `<span class="sp-badge">${esc(v.sp)} SP</span>`
-      + `<span class="ch-date">${fmtChDate(v.date)}</span></div>`;
-    // New entries (title/desc/detail) collapse: summary = meta + title, body = desc+detail.
-    if(v.title){
-      const body = `<div class="ch-body"><div class="ch-desc">${esc(v.desc)}</div>`
-        + (v.detail?`<div class="ch-detail">${esc(v.detail)}</div>`:'') + `</div>`;
-      return `<details class="ch-card"><summary>${meta}<div class="ch-title">${esc(v.title)}</div></summary>${body}</details>`;
-    }
-    // Back-compat: old entries had only `desc` — show it inline, nothing to collapse.
-    return `<div class="ch-card">${meta}<div class="ch-desc">${esc(v.desc)}</div></div>`;
-  }).join('');
-  document.getElementById('histPageInfo').textContent = `Page ${histPage+1} of ${pages}`;
-  document.getElementById('histPrev').disabled = histPage===0;
-  document.getElementById('histNext').disabled = start+HIST_PAGE_SIZE>=total;
+// One release leaf (collapsible card). VERSIONS entries are newest-first.
+function histLeaf(v){
+  const meta = `<div class="ch-meta"><span class="ch-ver">${esc(v.v)}</span>`
+    + `<span class="sp-badge">${esc(v.sp)} SP</span>`
+    + `<span class="ch-date">${fmtChDate(v.date)}</span></div>`;
+  if(v.title){
+    const body = `<div class="ch-body"><div class="ch-desc">${esc(v.desc)}</div>`
+      + (v.detail?`<div class="ch-detail">${esc(v.detail)}</div>`:'') + `</div>`;
+    return `<details class="ch-card"><summary>${meta}<div class="ch-title">${esc(v.title)}</div></summary>${body}</details>`;
+  }
+  return `<div class="ch-card">${meta}<div class="ch-desc">${esc(v.desc)}</div></div>`;   // back-compat (old desc-only entries)
 }
-renderHistPage();
-document.getElementById('histPrev').addEventListener('click', ()=>{ if(histPage>0){histPage--;renderHistPage();} });
-document.getElementById('histNext').addEventListener('click', ()=>{ if((histPage+1)*HIST_PAGE_SIZE<VERSIONS.length){histPage++;renderHistPage();} });
+// Grouped version history (mirrors the Data repo's buildChangelogTree): leaves are bucketed into
+// ~30-SP sub-groups, then those into ~100-SP groups. Greedy SP buckets over the chronological list.
+const HIST_SUB_SP=30, HIST_GROUP_SP=100;
+const histSumSp=a=>a.reduce((s,x)=>s+(x.sp||0),0);
+function histBucketBySp(items, target){   // items oldest-first, each exposes .sp
+  const buckets=[]; let cur=[], curSp=0;
+  for(const it of items){ const s=it.sp||0;
+    if(cur.length && curSp>=target*0.6 && curSp+s>target*1.25){ buckets.push(cur); cur=[]; curSp=0; }   // start fresh before a big overshoot
+    cur.push(it); curSp+=s;
+    if(curSp>=target){ buckets.push(cur); cur=[]; curSp=0; }
+  }
+  if(cur.length){ if(buckets.length && curSp<target*0.5) buckets[buckets.length-1].push(...cur); else buckets.push(cur); }   // fold a tiny tail back
+  return buckets;
+}
+const histSpan=nf=>{ const a=nf[nf.length-1].v, b=nf[0].v; return a===b?a:`${a} → ${b}`; };   // nf = newest-first
+const histHeadline=ns=>{ const top=ns.reduce((bst,r)=>(r.sp||0)>(bst.sp||0)?r:bst, ns[0]); return top.title||top.desc||top.v; };
+function renderHistTree(){
+  const chrono=[...VERSIONS].reverse();                         // oldest-first
+  const subs=histBucketBySp(chrono, HIST_SUB_SP).map(leaves=>({ leaves, sp:histSumSp(leaves) }));
+  const groups=histBucketBySp(subs, HIST_GROUP_SP).map(gsubs=>({ subs:gsubs, sp:histSumSp(gsubs) }));
+  let html='';
+  [...groups].reverse().forEach((g,gi)=>{                       // newest group first
+    const gsubs=[...g.subs].reverse();
+    const gLeaves=gsubs.flatMap(s=>[...s.leaves].reverse());    // newest-first
+    html+=`<details class="ch-group"${gi===0?' open':''}><summary>`
+      +`<span class="sp-badge">${g.sp} SP</span>`
+      +`<span class="chg-head">${esc(histHeadline(gLeaves))}</span>`
+      +`<span class="chg-span">${esc(histSpan(gLeaves))} · ${gLeaves.length}</span></summary><div class="ch-sub-wrap">`;
+    gsubs.forEach((s,si)=>{
+      const leaves=[...s.leaves].reverse();
+      html+=`<details class="ch-sub"${gi===0&&si===0?' open':''}><summary>`
+        +`<span class="sp-badge">${s.sp} SP</span>`
+        +`<span class="chs-head">${esc(histHeadline(leaves))}</span>`
+        +`<span class="chs-span">${esc(histSpan(leaves))}</span></summary>`
+        +`<div class="ch-leaf-wrap">`+leaves.map(histLeaf).join('')+`</div></details>`;
+    });
+    html+=`</div></details>`;
+  });
+  document.getElementById('histBody').innerHTML=html;
+  const pager=document.querySelector('.hist-pager'); if(pager) pager.style.display='none';   // tree replaces pagination
+}
+renderHistTree();
 const histModal = document.getElementById('histModal');
 document.getElementById('histBtn').addEventListener('click', ()=>histModal.classList.add('open'));
 document.getElementById('histClose').addEventListener('click', ()=>histModal.classList.remove('open'));
