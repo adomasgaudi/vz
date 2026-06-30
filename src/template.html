@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="color-scheme" content="dark light">
 <meta name="supported-color-schemes" content="dark light">
-<title>Markets — LT agencies · v0.2.13</title>
+<title>Markets — LT agencies · v0.2.14</title>
 <script>
   // Apply saved theme + view mode before first paint to avoid a flash.
   // Theme default = dark; view default = Default (Dev mode adds the version / changelog popup).
@@ -352,12 +352,6 @@
   .seg button:last-child{border-right:none}
   .seg button:hover{color:var(--text)}
   .seg button.active{background:var(--accent);color:#fff !important}   /* PB-5: some Android browsers (Brave) imposed system text colour on the active <button> despite this rule — appearance:none above is the root, !important guarantees white */
-  /* New segment chart (v2) — pill toggles built as <span>, NOT <button>, to dodge any UA/force-dark button quirk (PB-5). */
-  .sg2-bar{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:10px}
-  .sg2-grp{display:inline-flex;border:1px solid var(--border);border-radius:8px;overflow:hidden}
-  .sg2-pill{font:600 12.5px/1 inherit;padding:9px 13px;background:var(--panel2);color:var(--muted);cursor:pointer;user-select:none;border-right:1px solid var(--border);display:inline-flex;align-items:center;transition:.12s;-webkit-tap-highlight-color:transparent}
-  .sg2-pill:last-child{border-right:none}
-  .sg2-pill.active{background:var(--accent);color:#fff}
   /* "Filter by segment" pills — multi-select toggles in one horizontally-scrolling row */
   .seg-filter{display:flex;gap:6px;overflow-x:auto;padding-bottom:3px;margin:8px 0 2px;-webkit-overflow-scrolling:touch}
   .seg-filter .sf-pill{flex:0 0 auto;display:inline-flex;align-items:center;gap:5px;font:600 11.5px/1 inherit;padding:0 11px;min-height:var(--tap-min,30px);border:1px solid var(--border);border-radius:var(--r-pill,7px);background:var(--panel2);color:var(--muted);cursor:pointer;white-space:nowrap;user-select:none;-webkit-tap-highlight-color:transparent;transition:.12s}
@@ -526,7 +520,7 @@
       <button id="themeToggle">🌙 Dark</button>
       <button id="viewToggle"></button>
       <button id="graphPanToggle">🔒 Graph pan: off</button>
-      <span class="nav-version">v0.2.13</span>
+      <span class="nav-version">v0.2.14</span>
     </div>
   </div>
   <div class="nav-sub">113 brands · 2019–2024</div>
@@ -604,15 +598,6 @@
         <div class="seg" id="segShow"><button data-s="pct" class="active">%</button><button data-s="eur">€</button></div>
       </div>
       <div class="chartbox"><span class="eng-tag" id="segEng">Chart.js</span><canvas id="chSegments"></canvas><div class="svgwrap" id="chRevPerEmp" style="position:absolute;inset:0;display:none"></div><div class="chart-empty" id="segViewEmpty"></div></div>
-    </div>
-    <div class="card full" id="sg2Card">
-      <h2 id="sg2Title">Revenue by segment (2024)</h2>
-      <div class="sg2-bar">
-        <div class="sg2-grp" id="sg2Type"><span class="sg2-pill active" data-v="doughnut" role="button" tabindex="0">Doughnut</span><span class="sg2-pill" data-v="bars" role="button" tabindex="0">Bars</span></div>
-        <div class="sg2-grp" id="sg2Metric"><span class="sg2-pill active" data-m="revenue" role="button" tabindex="0">Revenue</span><span class="sg2-pill" data-m="turnover" role="button" tabindex="0">Turnover</span><span class="sg2-pill" data-m="profit" role="button" tabindex="0">Profit</span></div>
-        <div class="sg2-grp" id="sg2Show"><span class="sg2-pill active" data-s="pct" role="button" tabindex="0">%</span><span class="sg2-pill" data-s="eur" role="button" tabindex="0">€</span></div>
-      </div>
-      <div class="chartbox"><span class="eng-tag">new · v2</span><canvas id="sg2Canvas"></canvas><div class="svgwrap" id="sg2Svg" style="position:absolute;inset:0;display:none"></div><div class="chart-empty" id="sg2Empty"></div></div>
     </div>
     <div class="card full">
       <h2 id="chScatterTitle">Size vs profitability (2024)</h2>      <div class="chartbox tall"><span class="eng-tag">Chart.js</span><canvas id="chScatter"></canvas><div class="chart-empty" id="chScatterEmpty"></div></div>
@@ -857,7 +842,6 @@ function applyTheme(theme){
   try{ redrawDashSvg(); }catch(e){}     // SVG dashboard charts repaint grid/labels (series colours kept)
   try{ const sc=document.getElementById('scrubChart'); if(sc&&sc.__scrub) sc.__scrub.render(); }catch(e){}   // scatter scrubber re-tint
   try{ if(typeof renderSegView==='function') renderSegView(); }catch(e){}   // market doughnut/bars — full rebuild so legend/axis pick up --text (PB-4)
-  try{ if(typeof renderSeg2==='function') renderSeg2(); }catch(e){}
   try{ if(typeof renderScatterYear==='function') renderScatterYear(); }catch(e){}   // market bubble scatter — axis/legend colours baked at create
   try{ drawSDD(); }catch(e){}           // deep-dive SVG charts rebuild fresh
 }
@@ -1356,7 +1340,7 @@ try { renderMarket('avg'); } catch(err){ window.dispatchEvent(new ErrorEvent('er
   const paint=()=>row.querySelectorAll('button').forEach(b=>b.classList.toggle('active',+b.dataset.y===mktYear));
   row.innerHTML=MKT_YEARS.map(y=>`<button data-y="${y}">${y}</button>`).join(''); paint();
   row.addEventListener('click',e=>{ const b=e.target.closest('button'); if(!b) return; mktYear=+b.dataset.y; paint();
-    renderMarket(); renderSegView(); if(typeof renderSeg2==='function') renderSeg2(); }); })();
+    renderMarket(); renderSegView(); }); })();
 // Companies page year row — selects coYear, re-renders the whole company view
 (function(){ const row=document.getElementById('coYearRow'); if(!row) return;
   row.innerHTML=YEARS.map(y=>`<button data-y="${y}"${y===coYear?' class="active"':''}>${y}${y>LAST?'*':''}</button>`).join(''); // company row offers partial 2025 (marked *)
@@ -1370,7 +1354,6 @@ try { renderMarket('avg'); } catch(err){ window.dispatchEvent(new ErrorEvent('er
     renderMarket(mode);
     DBG('  after renderMarket: mktMode='+(typeof mktMode!=='undefined'?mktMode:'UNDEF'));
     if(typeof renderSegView==='function') renderSegView();
-    if(typeof renderSeg2==='function') renderSeg2();
     if(typeof renderRevSegAll==='function') renderRevSegAll();
     if(typeof renderMoneyFlowAll==='function') renderMoneyFlowAll();
     if(typeof renderEmpAll==='function') renderEmpAll();
@@ -1515,46 +1498,6 @@ function paintSegActive(){ document.querySelectorAll('.seg button').forEach(b=>{
   if(b.classList.contains('active')) b.style.setProperty('color','#fff','important'); else b.style.removeProperty('color'); }); }
 paintSegActive();
 document.addEventListener('click',e=>{ if(e.target.closest('.seg')) requestAnimationFrame(paintSegActive); });
-
-// ---------- NEW segment chart (v2): independent card below the old one; pill toggles (<span>), shared compute ----------
-let sg2Chart=null, sg2Type='doughnut', sg2Metric='revenue', sg2Show='pct';
-function renderSeg2(){
-  const card=document.getElementById('sg2Card'); if(!card) return;
-  const y=mktYear, m=sg2Metric, b=basisFromMode(mktMode), isD=sg2Type==='doughnut';
-  const rows=SEGMENTS.map(s=>({s, v:segMetricVal(s,m,b,y)})).filter(o=>o.v!=null).sort((a,c)=>c.v-a.v);
-  const t=document.getElementById('sg2Title'); if(t) t.textContent=y+' '+METRICS[m].label+' by segment'+(b==='total'?'':' · '+basisWord(b))+' (new)';
-  const canvas=document.getElementById('sg2Canvas'), svg=document.getElementById('sg2Svg'), empty=document.getElementById('sg2Empty');
-  if(canvas) canvas.style.display=isD?'':'none';
-  if(svg) svg.style.display=isD?'none':'';
-  if(sg2Chart){ sg2Chart.destroy(); sg2Chart=null; }
-  if(!rows.length){ if(svg) svg.innerHTML=''; if(empty){ empty.textContent='No companies have reported '+y+' figures yet.'; empty.classList.add('show'); } return; }
-  if(empty) empty.classList.remove('show');
-  if(isD){
-    const slice=rows.map(o=>Math.max(0,o.v)), tot=slice.reduce((a,c)=>a+c,0)||1, pct=i=>slice[i]/tot*100;
-    const shown=i=> sg2Show==='pct'? pct(i).toFixed(pct(i)<10?1:0)+'%' : eur(rows[i].v);
-    const onSlice={ id:'sg2OnSlice', afterDatasetsDraw(ch){ const ctx=ch.ctx, meta=ch.getDatasetMeta(0);
-      ctx.save(); ctx.font='700 11px system-ui'; ctx.textAlign='center'; ctx.textBaseline='middle';
-      ctx.shadowColor='rgba(0,0,0,.6)'; ctx.shadowBlur=3; ctx.fillStyle='#fff';
-      meta.data.forEach((arc,i)=>{ if(pct(i)<5) return; const pos=arc.tooltipPosition(); ctx.fillText(shown(i),pos.x,pos.y); }); ctx.restore(); } };
-    sg2Chart=new Chart(canvas, {type:'doughnut', data:{labels:rows.map(o=>segName(o.s)),
-      datasets:[{data:slice, backgroundColor:rows.map(o=>SEGCOLORS[o.s]||'#888'), borderColor:cssVar('--chart-bg'), borderWidth:2}]},
-      options:{maintainAspectRatio:false, plugins:{
-        legend:{position:'right', labels:{color:chartInk(), boxWidth:12, font:{size:11,color:chartInk()}, generateLabels:ch=>ch.data.labels.map((lab,i)=>(
-          {text:lab+' · '+shown(i), fillStyle:ch.data.datasets[0].backgroundColor[i], strokeStyle:'transparent', lineWidth:0, index:i, fontColor:chartInk(), color:chartInk()}))}},
-        tooltip:{titleColor:chartInk(), bodyColor:chartInk(), backgroundColor:cssVar('--panel'), borderColor:cssVar('--border'), callbacks:{label:c=>` ${c.label}: ${eur(rows[c.dataIndex].v)} (${pct(c.dataIndex).toFixed(1)}%)`}}}}, plugins:[onSlice]});
-  } else {
-    const isPct=sg2Show==='pct', tot=rows.reduce((a,o)=>a+Math.max(0,o.v),0)||1;
-    drawBarsSvg(svg, { rows: rows.map(o=>({label:segName(o.s), value:isPct?Math.max(0,o.v)/tot*100:o.v, color:SEGCOLORS[o.s]||cssVar('--muted'), raw:o.v})),
-      xTitle:isPct?'Share of total, %':(b==='total'?'Total ':'Median ')+METRICS[m].short+', €', fmt:isPct?(v=>v.toFixed(v<10?1:0)+'%'):eur,
-      tip:r=> isPct?`<b>${esc(String(r.label))}</b>: ${r.value.toFixed(1)}% (${eur(r.raw)})`:`<b>${esc(String(r.label))}</b>: ${eur(r.value)} (${basisWord(b)})` });
-  }
-}
-(function(){ const wire=(id,set)=>{ const g=document.getElementById(id); if(!g) return;
-  g.querySelectorAll('.sg2-pill').forEach(p=>p.addEventListener('click',()=>{
-    g.querySelectorAll('.sg2-pill').forEach(x=>x.classList.remove('active')); p.classList.add('active');
-    set(p.dataset.v||p.dataset.m||p.dataset.s); renderSeg2(); })); };
-  wire('sg2Type', v=>sg2Type=v); wire('sg2Metric', v=>sg2Metric=v); wire('sg2Show', v=>sg2Show=v); })();
-try{ renderSeg2(); }catch(err){ window.dispatchEvent(new ErrorEvent('error',{message:'renderSeg2: '+err.message, error:err})); }
 
 // ---------- Segment trend ----------
 const topSegs = segSorted.slice(0,5).map(s=>s[0]);   // still used by the size-vs-profit scatter grouping
@@ -1794,6 +1737,9 @@ let _dashRT; window.addEventListener('resize',()=>{ clearTimeout(_dashRT); _dash
 // ---------- SP & version history ----------
 // Each entry: title (2-5 words) · desc (5-15 words) · detail (15-50 words).
 const VERSIONS = [
+  {v:'v0.2.14', date:'2026-06-29', sp:0.5, title:'Drop experimental donut',
+    desc:'Removed the duplicate “(new)” segment doughnut card — it was only a text-colour experiment.',
+    detail:'Deleted sg2Card HTML, sg2-* CSS, renderSeg2() and every call-site (applyTheme, setBasis, year row). The original segment doughnut/bars card stays.'},
   {v:'v0.2.13', date:'2026-06-29', sp:2, title:'Chart text dark mode',
     desc:'Market Chart.js charts (doughnut legend, scatter axes) now use --text in dark mode and fully rebuild on theme toggle.',
     detail:'PB-4 root: Chart.js was missing explicit tick/legend colours on custom generateLabels (fell back to black), applyTheme skipped renderSegView/renderScatterYear so colours stayed baked from the prior theme, and retintCharts used --muted not --text. Fix: chartInk() helper, canvas{color:var(--text)}, explicit axis/legend/tooltip colours in buildScatterCfg + both doughnuts, retintCharts upgraded, applyTheme rebuilds all three market Chart.js charts.'},
