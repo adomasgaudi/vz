@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="color-scheme" content="dark light">
 <meta name="supported-color-schemes" content="dark light">
-<title>Markets — LT agencies · v0.2.14</title>
+<title>Markets — LT agencies · v0.2.15</title>
 <script>
   // Apply saved theme + view mode before first paint to avoid a flash.
   // Theme default = dark; view default = Default (Dev mode adds the version / changelog popup).
@@ -520,7 +520,7 @@
       <button id="themeToggle">🌙 Dark</button>
       <button id="viewToggle"></button>
       <button id="graphPanToggle">🔒 Graph pan: off</button>
-      <span class="nav-version">v0.2.14</span>
+      <span class="nav-version">v0.2.15</span>
     </div>
   </div>
   <div class="nav-sub">113 brands · 2019–2024</div>
@@ -1737,6 +1737,10 @@ let _dashRT; window.addEventListener('resize',()=>{ clearTimeout(_dashRT); _dash
 // ---------- SP & version history ----------
 // Each entry: title (2-5 words) · desc (5-15 words) · detail (15-50 words).
 const VERSIONS = [
+  {v:'v0.2.15', date:'2026-06-30', sp:3, title:'2025 Sodra employees + wages',
+    desc:'Every agency now has a 2025 row — average insured headcount and monthly wage from Sodra open data (financials pending 2025 annual filings).',
+    detail:'data.json grew from 12 partial to 113 full 2025 rows. rekvizitai.vz.lt is now Cloudflare-gated (old Playwright scraper blocked), so 2025 employees/avgSalary come from atvira.sodra.lt open data: solr/page resolves each company code (Įmonės-sheet Kodas, else rek_tabs) to an internal id, values/monthly/page gives monthly numInsured + avgWage, and the 2025 figure = mean of the available 2025 months (rounded) — the exact method that produced the pre-existing 12 rows (verified to the unit). Financial fields (revenue/profit/salaryCosts/…) stay null until 2025 statements are filed; risk/city/activities carry forward from 2024. 10 MBs/dormant firms with no Sodra-insured persons sit at 0 employees (consistent with their full history); 3 firms have a partial 2025 (6–11 months).',
+    cat:'DATA'},
   {v:'v0.2.14', date:'2026-06-29', sp:0.5, title:'Drop experimental donut',
     desc:'Removed the duplicate “(new)” segment doughnut card — it was only a text-colour experiment.',
     detail:'Deleted sg2Card HTML, sg2-* CSS, renderSeg2() and every call-site (applyTheme, setBasis, year row). The original segment doughnut/bars card stays.'},
